@@ -42,6 +42,7 @@ int LLVMRuntime(int repl, char *path) {
     char *filename = path;
     AST *ast = parse_file(filename);
     print_ast(*ast, 0);
+    printf("\n");
     codegen(ast);
     free_ast(ast);
   }
@@ -53,6 +54,7 @@ int LLVMRuntime(int repl, char *path) {
       repl_input(input, INPUT_BUFSIZE, "> ");
       AST *ast = parse(input);
       print_ast(*ast, 0);
+      printf("\n");
       codegen(ast);
       free_ast(ast);
     }
