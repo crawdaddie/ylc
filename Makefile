@@ -32,3 +32,15 @@ HelloWorld: hello.o
 
 hello.o: experiments/hello.s
 	as -o hello.o experiments/hello.s
+
+TEST_SRC = $(filter-out src/main.c, $(src))
+TEST_SRC += src/test/utils.c 
+TEST_SRC += src/test/parse.c 
+
+TEST_OBJ = $(TEST_SRC:.c=.o)
+
+test_parser: $(TEST_OBJ)
+	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC)
+	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ 
+	./test_parser
+

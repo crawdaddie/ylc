@@ -47,7 +47,6 @@ void print_ast(AST ast, int indent) {
     printf("statements: \n");
     for (int i = 0; i < ast.data.AST_STATEMENT_LIST.length; i++) {
       print_ast(**(ast.data.AST_STATEMENT_LIST.statements + i), indent + 1);
-      printf("\n");
     }
     break;
   }
