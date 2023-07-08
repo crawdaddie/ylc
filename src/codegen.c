@@ -1,4 +1,7 @@
 #include "codegen.h"
+#include <llvm-c/Analysis.h>
+#include <llvm-c/Core.h>
+#include <llvm-c/Types.h>
 #include <stdio.h>
 void codegen(AST *ast) {
 
@@ -10,13 +13,12 @@ void codegen(AST *ast) {
 
   case AST_INTEGER:
 
-    printf("codegen int\n");
     break;
 
-  case AST_NUMBER:
-
-    printf("codegen number\n");
+  case AST_NUMBER: {
+    LLVMValueRef val = LLVMConstReal(LLVMDoubleType(), ast->data.AST_NUMBER.value);
     break;
+  }
 
   case AST_BINOP: {
     codegen(ast->data.AST_BINOP.left);

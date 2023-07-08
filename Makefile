@@ -6,9 +6,12 @@ obj = $(src:.c=.o)
 CC=clang
 LD=clang
 
+LLVM_CC_FLAGS=`llvm-config --cflags`
+LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+
 lang: $(obj)
-	$(CC) -c $(src) $(INCLUDES)
-	$(LD) $(obj) -o $@ 
+	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
+	$(LD) $(LLVM_LINK_FLAGS) $(obj) -o $@ 
 
 .PHONY: clean
 clean:
