@@ -1,0 +1,14 @@
+function $dputs(l %s, w %fd) {
+@start
+@loop
+	%ch =w loadub %s	
+	%cmp =w ceqw %ch, 0	
+	jnz %cmp, @done, @pbyte	
+@pbyte
+	storew %ch, $ch		
+	call $write(w %fd, l $ch, w 1)
+	%s =l add %s, 1		
+	jmp @loop
+@done
+	ret		
+}

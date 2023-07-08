@@ -1,19 +1,14 @@
+BACKEND=lib/qbe
 src = $(wildcard src/*.c)
+
 obj = $(src:.c=.o)
 
-# cc `llvm-config --cflags` -c src/*.c
-# c++ `llvm-config --cxxflags --ldflags --libs core executionengine mcjit interpreter analysis native bitwriter --system-libs` *.o -o lang
-
-
 CC=clang
-CFLAGS=-g `llvm-config --cflags`
-LD=clang++
-LDFLAGS=`llvm-config --cxxflags --ldflags --libs core executionengine mcjit interpreter analysis native bitwriter --system-libs`
-
+LD=clang
 
 lang: $(obj)
-	$(CC) $(CFLAGS) -c $(src)
-	$(LD) $(LDFLAGS) $(obj) -o $@ 
+	$(CC) -c $(src) $(INCLUDES)
+	$(LD) $(obj) -o $@ 
 
 .PHONY: clean
 clean:

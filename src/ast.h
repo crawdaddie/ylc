@@ -1,12 +1,14 @@
 #ifndef _LANG_AST_H
 #define _LANG_AST_H
 #include "lexer.h"
+#include <stdbool.h>
 typedef struct AST AST;
 
 struct AST {
   enum {
     AST_INTEGER,
     AST_NUMBER,
+    AST_BOOL,
     AST_ADD,
     AST_SUBTRACT,
     AST_MUL,
@@ -25,6 +27,11 @@ struct AST {
   } tag;
 
   union {
+
+    struct AST_BOOL {
+      bool value;
+    } AST_BOOL;
+
     struct AST_INTEGER {
       int value;
     } AST_INTEGER;

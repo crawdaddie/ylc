@@ -156,6 +156,27 @@ void print_token(token token) {
     printf("let");
     break;
   }
+
+  case TOKEN_LT: {
+
+    printf("<");
+    break;
+  }
+  case TOKEN_GT: {
+
+    printf(">");
+    break;
+  }
+  case TOKEN_LTE: {
+
+    printf("<=");
+    break;
+  }
+  case TOKEN_GTE: {
+
+    printf(">=");
+    break;
+  }
   }
 }
 

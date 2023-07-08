@@ -1,12 +1,12 @@
 #include "compiler.h"
 #include "ast.h"
+#include "codegen.h"
 #include "lexer.h"
+#include "parse_expression.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parse_expression.h"
-
 Parser parser;
 
 void print_current() { print_token(parser.current); }
@@ -149,6 +149,6 @@ void compile(char *source) {
   rec_parse(&ast);
   printf("\n");
   print_ast(ast, 0);
-  codegen(ast);
+  codegen(&ast);
   free_ast(&ast);
 }
