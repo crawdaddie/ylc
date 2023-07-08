@@ -113,10 +113,12 @@ void free_ast(AST *ast) {
   }
 
   case AST_ASSIGNMENT: {
-    // AST *expr = ast->data.AST_ASSIGNMENT.expression;
-    // free_ast(expr);
-    // free_ast(ast->data.AST_ASSIGNMENT.expression);
-    // free(ast->data.AST_ASSIGNMENT.identifier);
+    AST *expr = ast->data.AST_ASSIGNMENT.expression;
+    if (expr) {
+      free_ast(expr);
+      free(ast->data.AST_ASSIGNMENT.identifier);
+      free(ast);
+    }
     break;
   }
   }

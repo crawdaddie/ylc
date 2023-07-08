@@ -3,7 +3,8 @@
 #include "ast.h"
 #include "lexer.h"
 #include <stdbool.h>
-void compile(char *source);
+AST *parse(char *source);
+AST *parse_file(const char *path);
 
 typedef struct Parser {
   token previous;

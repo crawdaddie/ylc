@@ -1,6 +1,7 @@
-#include "compiler.h"
+#include "parse.h"
 #include "ast.h"
 #include "codegen.h"
+#include "lang_runner.h"
 #include "lexer.h"
 #include "parse_expression.h"
 #include <stdbool.h>
@@ -126,9 +127,7 @@ static AST *rec_parse(AST *ast) {
   case AST_MAIN: {
     AST *body = malloc(sizeof(AST));
     body->tag = AST_STATEMENT_LIST;
-
     body = rec_parse(body);
-    printf("statements in body: %d\n", body->data.AST_STATEMENT_LIST.length);
     ast->data.AST_MAIN.body = body;
     return ast;
   }
@@ -139,16 +138,20 @@ static AST *rec_parse(AST *ast) {
   }
 }
 
-void compile(char *source) {
+AST *parse(char *source) {
+
+  AST *ast = malloc(sizeof(AST));
+  ast->tag = AST_MAIN;
   init_scanner(source);
-  printf("[src]: '%s'\n", source);
-
-  AST ast = {AST_MAIN};
-
   advance();
-  rec_parse(&ast);
-  printf("\n");
-  print_ast(ast, 0);
-  codegen(&ast);
-  free_ast(&ast);
+  rec_parse(ast);
+  return ast;
+}
+
+AST *parse_file(const char *path) {
+  AST *ast = malloc(sizeof(AST));
+  char *source = read_file(path);
+  parse(source);
+  free(source);
+  return ast;
 }

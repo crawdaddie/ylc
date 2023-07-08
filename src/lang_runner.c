@@ -1,7 +1,6 @@
-#include "compiler.h"
 #include "lang_runner.h"
 
-static char *read_file(const char *path) {
+char *read_file(const char *path) {
   FILE *file = fopen(path, "rb");
   if (file == NULL) {
     fprintf(stderr, "Could not open file \"%s\"", path);
@@ -26,12 +25,6 @@ static char *read_file(const char *path) {
 
   fclose(file);
   return buffer;
-}
-
-void run_file(const char *path) {
-  char *source = read_file(path);
-  compile(source);
-  free(source);
 }
 
 void repl_input(char *input, int bufsize, const char *prompt) {
