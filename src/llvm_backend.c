@@ -11,14 +11,45 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
 
+int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
+  // Wrap in an anonymous function if it's a top-level expression.
+  // bool is_top_level = (node->type != KAL_AST_TYPE_FUNCTION &&
+  //                      node->type != KAL_AST_TYPE_PROTOTYPE);
+  // if (is_top_level) {
+  //   kal_ast_node *prototype = kal_ast_prototype_create("", NULL, 0);
+  //   node = kal_ast_function_create(prototype, node);
+  // }
+
+  if (value == NULL) {
+    fprintf(stderr, "Unable to codegen for node\n");
+    return 1;
+  }
+
+  // Dump IR.
+  LLVMDumpValue(value);
+
+  // Run it if it's a top level expression.
+  void *fp = LLVMGetPointerToGlobal(engine, value);
+  double (*FP)() = (double (*)())(intptr_t)fp;
+  fprintf(stderr, "Evaluted to %f\n", FP());
+  // If this is a function then optimize it.
+  //
+  // else if (node->type == KAL_AST_TYPE_FUNCTION) {
+  //   LLVMRunFunctionPassManager(pass_manager, value);
+  // }
+}
+
 int LLVMRuntime(int repl, char *path) {
   // LLVM stuff
-  LLVMModuleRef module = LLVMModuleCreateWithName("ylc");
-  LLVMBuilderRef builder = LLVMCreateBuilder();
+  LLVMContextRef context = LLVMContextCreate();
+  LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
+  LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
   LLVMExecutionEngineRef engine;
 
   LLVMInitializeNativeTarget();
   LLVMLinkInMCJIT();
+  LLVMInitializeNativeAsmPrinter();
+  LLVMInitializeNativeAsmParser();
 
   char *msg;
   if (LLVMCreateExecutionEngineForModule(&engine, module, &msg) == 1) {
@@ -43,7 +74,8 @@ int LLVMRuntime(int repl, char *path) {
     AST *ast = parse_file(filename);
     print_ast(*ast, 0);
     printf("\n");
-    codegen(ast);
+    LLVMValueRef value = codegen(ast, module, builder);
+    run_value(engine, value);
     free_ast(ast);
   }
 
@@ -55,7 +87,8 @@ int LLVMRuntime(int repl, char *path) {
       AST *ast = parse(input);
       print_ast(*ast, 0);
       printf("\n");
-      codegen(ast);
+      LLVMValueRef value = codegen(ast, module, builder);
+      run_value(engine, value);
       free_ast(ast);
     }
   }
@@ -66,5 +99,6 @@ int LLVMRuntime(int repl, char *path) {
   LLVMDisposePassManager(pass_manager);
   LLVMDisposeBuilder(builder);
   LLVMDisposeModule(module);
+  LLVMContextDispose(context);
   return 0;
 }

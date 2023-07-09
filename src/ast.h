@@ -102,6 +102,7 @@ struct AST {
 
     struct AST_SYMBOL_DECLARATION {
       char *identifier;
+      AST *expression;
     } AST_SYMBOL_DECLARATION;
 
   } data;
@@ -111,4 +112,10 @@ void print_ast(AST ast, int indent);
 struct AST_STATEMENT_LIST *new_ast_stmt_list();
 
 void free_ast(AST *ast);
+
+AST *ast_new(AST ast);
+#define AST_NEW(tag, ...)                                                      \
+  ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
+
+AST *ast_statement_list(int length, ...);
 #endif /* end of include guard: _LANG_AST_H */

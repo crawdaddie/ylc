@@ -3,34 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-AST *ast_new(AST ast) {
-  AST *ptr = malloc(sizeof(AST));
-  if (ptr)
-    *ptr = ast;
-  return ptr;
-}
-
-AST *ast_statement_list(int length, ...) {
-
-  // Define a va_list to hold the variable arguments
-  va_list args;
-
-  // Initialize the va_list with the variable arguments
-  va_start(args, length);
-
-  AST *stmt_list = AST_NEW(AST_STATEMENT_LIST, length);
-  AST **list = malloc(sizeof(AST *) * length);
-  for (int i = 0; i < length; i++) {
-    AST *arg = va_arg(args, AST *);
-    list[i] = arg;
-  }
-  stmt_list->data.AST_STATEMENT_LIST.statements = list;
-
-  va_end(args);
-
-  return stmt_list;
-}
-
 int compare_ast(AST *a, AST *b) {
   if (a->tag != b->tag) {
     return 1;

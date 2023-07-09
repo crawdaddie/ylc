@@ -9,11 +9,31 @@ int main() {
   char *test_input = "let a = 1 + 2";
   AST *ast = parse(test_input);
   AST *expected_ast = AST_NEW(
-      AST_MAIN, ast_statement_list(2, AST_NEW(AST_SYMBOL_DECLARATION, "a"),
-                                   AST_NEW(AST_ASSIGNMENT, "a",
-                                           AST_NEW(AST_BINOP, TOKEN_PLUS,
-                                                   AST_NEW(AST_INTEGER, 1),
-                                                   AST_NEW(AST_INTEGER, 2)))));
+      MAIN, ast_statement_list(
+                1, AST_NEW(ASSIGNMENT, "a",
+                           AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                                   AST_NEW(INTEGER, 2)))));
+
+  assert_ast_compare(ast, expected_ast, test_input);
+
+  test_input = "let a\n"
+               "a = 1 + 2";
+  ast = parse(test_input);
+  expected_ast = AST_NEW(
+      MAIN,
+      ast_statement_list(2, AST_NEW(SYMBOL_DECLARATION, "a"),
+                         AST_NEW(ASSIGNMENT, "a",
+                                 AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                                         AST_NEW(INTEGER, 2)))));
+
+  assert_ast_compare(ast, expected_ast, test_input);
+
+  test_input = "let a = -1";
+  ast = parse(test_input);
+  expected_ast = AST_NEW(
+      MAIN, ast_statement_list(
+                1, AST_NEW(ASSIGNMENT, "a",
+                           AST_NEW(UNOP, TOKEN_MINUS, AST_NEW(INTEGER, 1)))));
 
   assert_ast_compare(ast, expected_ast, test_input);
 }

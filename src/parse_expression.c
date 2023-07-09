@@ -13,11 +13,7 @@ static AST *parse_unary(bool can_assign) {
   switch (op_type) {
   case TOKEN_BANG:
   case TOKEN_MINUS: {
-    AST *ast = malloc(sizeof(AST));
-    ast->tag = AST_UNOP;
-    ast->data.AST_UNOP.op = op_type;
-    ast->data.AST_UNOP.operand = operand;
-    return ast;
+    return AST_NEW(UNOP, op_type, operand);
   }
   default:
     return NULL;
@@ -57,26 +53,17 @@ static AST *parse_binary(bool can_assign) {
 
 static AST *number(bool can_assign) {
   token token = parser.previous;
-  AST *expr = malloc(sizeof(AST));
-  expr->tag = AST_NUMBER;
-  expr->data.AST_NUMBER.value = token.as.vfloat;
-  return expr;
+  return AST_NEW(NUMBER, token.as.vfloat);
 }
 
 static AST *integer(bool can_assign) {
   token token = parser.previous;
-  AST *expr = malloc(sizeof(AST));
-  expr->tag = AST_INTEGER;
-  expr->data.AST_INTEGER.value = token.as.vint;
-  return expr;
+  return AST_NEW(INTEGER, token.as.vint);
 }
 
 static AST *parse_literal(bool can_assign) {
   token token = parser.previous;
-  AST *expr = malloc(sizeof(AST));
-  expr->tag = AST_BOOL;
-  expr->data.AST_BOOL.value = token.type == TOKEN_TRUE;
-  return expr;
+  return AST_NEW(BOOL, token.type == TOKEN_TRUE);
 }
 
 ParseRule rules[] = {

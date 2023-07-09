@@ -2,10 +2,6 @@
 #define _LANG_TEST_UTILS_H
 #include "../ast.h"
 
-AST *ast_new(AST ast);
-
-AST *ast_statement_list(int length, ...);
-
 int compare_ast(AST *a, AST *b);
 
 #define assert_ast_compare(a, b, message)                                      \
@@ -22,6 +18,4 @@ int compare_ast(AST *a, AST *b);
     }                                                                          \
   } while (0)
 
-#define AST_NEW(tag, ...)                                                      \
-  ast_new((AST){tag, {.tag = (struct tag){__VA_ARGS__}}})
 #endif /* ifndef _LANG_TEST_UTILS_H */

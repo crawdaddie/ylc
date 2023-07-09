@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "lexer.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -123,10 +124,33 @@ void free_ast(AST *ast) {
   }
 }
 
-struct AST_STATEMENT_LIST *new_ast_stmt_list() {
-  AST *body = malloc(sizeof(AST));
-  body->tag = AST_STATEMENT_LIST;
-  body->data.AST_STATEMENT_LIST.length = 1;
-  body->data.AST_STATEMENT_LIST.statements = malloc(sizeof(AST_STATEMENT));
-  return body;
-};
+AST *ast_new(AST ast) {
+  AST *ptr = malloc(sizeof(AST));
+  if (ptr)
+    *ptr = ast;
+  return ptr;
+}
+
+AST *ast_statement_list(int length, ...) {
+
+  AST *stmt_list = AST_NEW(STATEMENT_LIST, length);
+  if (length == 0) {
+    return stmt_list;
+  }
+  // Define a va_list to hold the variable arguments
+  va_list args;
+
+  // Initialize the va_list with the variable arguments
+  va_start(args, length);
+
+  AST **list = malloc(sizeof(AST *) * length);
+  for (int i = 0; i < length; i++) {
+    AST *arg = va_arg(args, AST *);
+    list[i] = arg;
+  }
+  stmt_list->data.AST_STATEMENT_LIST.statements = list;
+
+  va_end(args);
+
+  return stmt_list;
+}

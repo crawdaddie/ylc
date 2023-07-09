@@ -2,5 +2,7 @@
 #define _LANG_CODEGEN_H
 #include "ast.h"
 
-void codegen(AST *ast);
+#include <llvm-c/Core.h>
+
+LLVMValueRef codegen(AST *ast, LLVMModuleRef module, LLVMBuilderRef builder);
 #endif /* ifndef _LANG_CODEGEN_H */

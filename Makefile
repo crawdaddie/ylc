@@ -40,5 +40,5 @@ TEST_OBJ = $(TEST_SRC:.c=.o)
 build/test_parser: $(TEST_OBJ)
 	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC)
 	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ 
-	./test_parser
+	./build/test_parser
 
