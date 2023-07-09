@@ -31,7 +31,19 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
   // Run it if it's a top level expression.
   void *fp = LLVMGetPointerToGlobal(engine, value);
   double (*FP)() = (double (*)())(intptr_t)fp;
-  fprintf(stderr, "Evaluted to %f\n", FP());
+
+  // printf("FP %p\n", FP);
+  // printf("fn %p\n", value);
+  // LLVMRunFunction(engine, value, 0, NULL);
+  //
+  //
+  if (FP) {
+    fprintf(stderr, "Evaluted to %f\n", FP());
+    return 0;
+  } else {
+    fprintf(stderr, "Could not find function pointer");
+    return 1;
+  }
   // If this is a function then optimize it.
   //
   // else if (node->type == KAL_AST_TYPE_FUNCTION) {
@@ -41,9 +53,11 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
 
 int LLVMRuntime(int repl, char *path) {
   // LLVM stuff
-  LLVMContextRef context = LLVMContextCreate();
-  LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
-  LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
+  // LLVMContextRef context = LLVMContextCreate();
+  // LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
+  LLVMModuleRef module = LLVMModuleCreateWithName("ylc");
+  // LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
+  LLVMBuilderRef builder = LLVMCreateBuilder();
   LLVMExecutionEngineRef engine;
 
   LLVMInitializeNativeTarget();
@@ -89,6 +103,7 @@ int LLVMRuntime(int repl, char *path) {
       printf("\n");
       LLVMValueRef value = codegen(ast, module, builder);
       run_value(engine, value);
+
       free_ast(ast);
     }
   }
@@ -99,6 +114,6 @@ int LLVMRuntime(int repl, char *path) {
   LLVMDisposePassManager(pass_manager);
   LLVMDisposeBuilder(builder);
   LLVMDisposeModule(module);
-  LLVMContextDispose(context);
+  // LLVMContextDispose(context);
   return 0;
 }

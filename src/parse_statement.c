@@ -65,6 +65,8 @@ AST *parse_statement() {
     case TOKEN_RETURN: {
       return return_statement();
     }
+    default:
+      return parse_expression();
     }
   }
   return NULL;

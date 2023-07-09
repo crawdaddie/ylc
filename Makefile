@@ -42,3 +42,6 @@ build/test_parser: $(TEST_OBJ)
 	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ 
 	./build/test_parser
 
+.PHONY: debug-lang
+debug-lang:
+	make && lldb build/lang
