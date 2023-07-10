@@ -5,29 +5,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static int counter = 0;
-static LLVMValueRef codegen_main(AST *ast, LLVMModuleRef module,
-                                 LLVMBuilderRef builder) {
+static LLVMValueRef get_int(int val, Context *ctx);
 
-  // LLVMContextRef context = LLVMGetModuleContext(module);
+Symbol *SymbolTable = NULL;
+
+
+LLVMValueRef lookup_symbol(char *name) {
+  // Lookup variable reference.
+  Symbol *val = NULL;
+  HASH_FIND_STR(SymbolTable, name, val);
+
+  if (val != NULL) {
+    return val->value;
+  } else {
+    return NULL;
+  }
+}
+
+static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
+  // Generate body.
+  LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
 
   // Create function type.
-  LLVMTypeRef funcType = LLVMFunctionType(LLVMDoubleType(), NULL, 0, 0);
+  LLVMTypeRef funcType = LLVMFunctionType(
+    LLVMTypeOf(body),
+    NULL, 0, 0);
 
   // Create function.
-  char name[10];
-  snprintf(name, sizeof(name), "main_%d", counter);
-  counter++;
-
-  LLVMValueRef func = LLVMAddFunction(module, name, funcType);
+  LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
 
   // Create basic block.
-  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, name);
-  LLVMPositionBuilderAtEnd(builder, block);
+  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
+  LLVMPositionBuilderAtEnd(ctx->builder, block);
 
-  // Generate body.
-  LLVMValueRef body = codegen(ast->data.AST_MAIN.body, module, builder);
+
 
   if (body == NULL) {
     printf("delete func??");
@@ -36,7 +48,9 @@ static LLVMValueRef codegen_main(AST *ast, LLVMModuleRef module,
   }
 
   // Insert body as return vale.
-  LLVMBuildRet(builder, body);
+  //
+  // printf("build %p mod %p cont %p\n", ctx->builder, ctx->module, ctx->context);
+  LLVMBuildRet(ctx->builder, body);
 
   // Verify function.
   if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
@@ -47,65 +61,62 @@ static LLVMValueRef codegen_main(AST *ast, LLVMModuleRef module,
 
   return func;
 }
-static LLVMValueRef codegen_add(LLVMValueRef left, LLVMValueRef right, LLVMModuleRef module, LLVMBuilderRef builder) {
 
+static LLVMValueRef codegen_add(LLVMValueRef left, LLVMValueRef right,
+                                Context *ctx) {}
+static LLVMValueRef get_int(int val, Context *ctx) {
+  return LLVMConstInt(LLVMInt32TypeInContext(ctx->context), val, false);
+}
+static LLVMValueRef codegen_int(AST *ast, Context *ctx) {
+  return get_int(ast->data.AST_INTEGER.value, ctx);
 }
 
-static LLVMValueRef codegen_int(AST *ast, LLVMModuleRef module,
-                                LLVMBuilderRef builder) {
-
-  // LLVMContextRef context = LLVMGetModuleContext(module);
-  return LLVMConstInt(LLVMInt32Type(), ast->data.AST_NUMBER.value, false);
+static LLVMValueRef codegen_number(AST *ast, Context *ctx) {
+  return LLVMConstReal(LLVMDoubleTypeInContext(ctx->context), ast->data.AST_NUMBER.value);
 }
 
-static LLVMValueRef codegen_number(AST *ast, LLVMModuleRef module,
-                                   LLVMBuilderRef builder) {
-
+LLVMValueRef codegen(AST *ast, Context *ctx) {
   // LLVMContextRef context = LLVMGetModuleContext(module);
-  return LLVMConstReal(LLVMDoubleType(), ast->data.AST_NUMBER.value);
-}
-
-LLVMValueRef codegen(AST *ast, LLVMModuleRef module, LLVMBuilderRef builder) {
-  // LLVMContextRef context = LLVMGetModuleContext(module);
+  //
 
   switch (ast->tag) {
   case AST_MAIN: {
-    return codegen_main(ast, module, builder);
+    return codegen_main(ast, ctx);
   }
 
   case AST_INTEGER:
-    return codegen_int(ast, module, builder);
+    return codegen_int(ast, ctx);
 
   case AST_NUMBER: {
-    return codegen_number(ast, module, builder);
+    return codegen_number(ast, ctx);
   }
 
   case AST_BINOP: {
-    LLVMValueRef left = codegen(ast->data.AST_BINOP.left, module, builder);
-    LLVMValueRef right = codegen(ast->data.AST_BINOP.right, module, builder);
+    LLVMValueRef left = codegen(ast->data.AST_BINOP.left, ctx);
+    LLVMValueRef right = codegen(ast->data.AST_BINOP.right, ctx);
     switch (ast->data.AST_BINOP.op) {
-        case TOKEN_PLUS: {
-          return codegen_add(left, right, module, builder);
-        }
-      }
+    case TOKEN_PLUS: {
+      return codegen_add(left, right, ctx);
+    }
+    }
     break;
   }
 
   case AST_UNOP: {
-    LLVMValueRef operand = codegen(ast->data.AST_UNOP.operand, module, builder);
-      LLVMTypeRef datatype = LLVMTypeOf(operand);
+    LLVMValueRef operand = codegen(ast->data.AST_UNOP.operand, ctx);
+    LLVMTypeRef datatype = LLVMTypeOf(operand);
 
     switch (ast->data.AST_UNOP.op) {
-        case TOKEN_MINUS: {
-          if (datatype == LLVMInt32Type()) {
-            return LLVMBuildNeg(builder, operand, "tmp_neg");
-          }
+    case TOKEN_MINUS: {
+      if (datatype == LLVMInt32TypeInContext(ctx->context)) {
+        return LLVMBuildNeg(ctx->builder, operand, "tmp_neg");
+      }
 
-          if (datatype == LLVMDoubleType()) {
-            return LLVMBuildFNeg(builder, operand, "tmp_neg");
-          }
-          return NULL;
-        }
+      if (datatype == LLVMDoubleType()) {
+        return LLVMBuildFNeg(ctx->builder, operand, "tmp_neg");
+      }
+      return NULL;
+    }
     }
     break;
   }
@@ -114,7 +125,7 @@ LLVMValueRef codegen(AST *ast, LLVMModuleRef module, LLVMBuilderRef builder) {
     LLVMValueRef statement = NULL;
     for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
       LLVMValueRef tmp_stmt =
-          codegen(ast->data.AST_STATEMENT_LIST.statements[i], module, builder);
+          codegen(ast->data.AST_STATEMENT_LIST.statements[i], ctx);
 
       if (tmp_stmt != NULL) {
         statement = tmp_stmt;
@@ -129,14 +140,26 @@ LLVMValueRef codegen(AST *ast, LLVMModuleRef module, LLVMBuilderRef builder) {
     // LLVMContextRef context = LLVMGetModuleContext(module);
     // LLVMValueRef global =
     //     LLVMAddGlobal(module, LLVMVoidTypeInContext(context), name);
-          return NULL;
+    return NULL;
   }
 
   case AST_ASSIGNMENT: {
-    char *identifier = ast->data.AST_ASSIGNMENT.identifier;
-    AST *expr = ast->data.AST_ASSIGNMENT.expression;
-    codegen(expr, module, builder);
-    return NULL;
+      char *identifier = ast->data.AST_ASSIGNMENT.identifier;
+      AST *expr = ast->data.AST_ASSIGNMENT.expression;
+      LLVMValueRef value = codegen(expr, ctx);
+
+
+      Symbol *sym = malloc(sizeof(Symbol));
+      sym->name = strdup(identifier);
+      sym->value = value;
+      HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
+
+      LLVMTypeRef globalVarType = LLVMTypeOf(value);
+      LLVMValueRef globalVar = LLVMAddGlobal(ctx->module, globalVarType, identifier);
+
+
+      LLVMSetInitializer(globalVar, value);
+      return globalVar;
   }
   }
   return NULL;
