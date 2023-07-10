@@ -11,6 +11,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx);
 typedef struct Symbol {
     const char *name;             
     LLVMValueRef value;
+    LLVMTypeRef type;
     UT_hash_handle hh;
 } Symbol;
 

@@ -1,6 +1,5 @@
 #include "parse.h"
 #include "ast.h"
-#include "codegen.h"
 #include "lang_runner.h"
 #include "lexer.h"
 #include "parse_expression.h"

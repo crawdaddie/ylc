@@ -19,6 +19,7 @@ static AST *parse_unary(bool can_assign) {
     return NULL;
   }
 }
+
 static AST *parse_binary(bool can_assign) {
   enum token_type op_type = parser.previous.type;
   ParseRule *rule = get_rule(op_type);

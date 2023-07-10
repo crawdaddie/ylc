@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "codegen.h"
+#include "llvm_codegen.h"
 #include "llvm_backend.h"
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
@@ -43,6 +43,18 @@ int init_ctx(Context *ctx) {
   ctx->engine = engine;
   ctx->module = module;
   return 0;
+}
+
+static void dump_ast(AST *ast) {
+  printf("\n\033[1;35m");
+  print_ast(*ast, 0);
+  printf("\033[1;0m\n");
+}
+
+static void dump_module(LLVMModuleRef module) {
+  printf("\n\033[1;36m");
+  LLVMDumpModule(module);
+  printf("\033[1;0m\n");
 }
 
 int reinit_ctx(Context *ctx) {
@@ -101,17 +113,13 @@ int LLVMRuntime(int repl, char *path) {
     for (;;) {
 
       repl_input(input, INPUT_BUFSIZE, "> ");
+
       AST *ast = parse(input);
-      printf("\n\033[1;35m");
-      print_ast(*ast, 0);
-      printf("\033[1;0m\n");
+      dump_ast(ast);
+
       LLVMValueRef value = codegen(ast, &ctx);
+      dump_module(ctx.module);
 
-
-
-      printf("\n\033[1;36m");
-      LLVMDumpModule(ctx.module);
-      printf("\033[1;0m\n");
       run_value(ctx.engine, value);
       free_ast(ast);
       reinit_ctx(&ctx);

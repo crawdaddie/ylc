@@ -1,14 +1,20 @@
-#include "codegen.h"
+#include "llvm_codegen.h"
+#include "llvm_codegen_arithmetic.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Types.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-static LLVMValueRef get_int(int val, Context *ctx);
+static bool value_is_numeric(LLVMValueRef value) {
+  LLVMTypeRef type = LLVMTypeOf(value);
+  LLVMTypeKind type_kind = LLVMGetTypeKind(type);
+
+  return type_kind == LLVMIntegerTypeKind || type_kind == LLVMFloatTypeKind ||
+         type_kind == LLVMDoubleTypeKind;
+}
 
 Symbol *SymbolTable = NULL;
-
 
 LLVMValueRef lookup_symbol(char *name) {
   // Lookup variable reference.
@@ -27,9 +33,15 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
 
   // Create function type.
-  LLVMTypeRef funcType = LLVMFunctionType(
-    LLVMTypeOf(body),
-    NULL, 0, 0);
+  //
+  LLVMTypeRef funcType;
+  if (body == NULL) {
+    // funcType =
+    //     LLVMFunctionType(LLVMVoidTypeInContext(ctx->context), NULL, 0, 0);
+    return NULL;
+  } else {
+    funcType = LLVMFunctionType(LLVMTypeOf(body), NULL, 0, 0);
+  }
 
   // Create function.
   LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
@@ -39,17 +51,12 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
 
-
-
   if (body == NULL) {
-    printf("delete func??");
     LLVMDeleteFunction(func);
     return NULL;
   }
 
   // Insert body as return vale.
-  //
-  // printf("build %p mod %p cont %p\n", ctx->builder, ctx->module, ctx->context);
   LLVMBuildRet(ctx->builder, body);
 
   // Verify function.
@@ -62,23 +69,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   return func;
 }
 
-static LLVMValueRef codegen_add(LLVMValueRef left, LLVMValueRef right,
-                                Context *ctx) {}
-static LLVMValueRef get_int(int val, Context *ctx) {
-  return LLVMConstInt(LLVMInt32TypeInContext(ctx->context), val, false);
-}
-static LLVMValueRef codegen_int(AST *ast, Context *ctx) {
-  return get_int(ast->data.AST_INTEGER.value, ctx);
-}
-
-static LLVMValueRef codegen_number(AST *ast, Context *ctx) {
-  return LLVMConstReal(LLVMDoubleTypeInContext(ctx->context), ast->data.AST_NUMBER.value);
-}
-
 LLVMValueRef codegen(AST *ast, Context *ctx) {
-  // LLVMContextRef context = LLVMGetModuleContext(module);
-  //
-
   switch (ast->tag) {
   case AST_MAIN: {
     return codegen_main(ast, ctx);
@@ -94,28 +85,20 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_BINOP: {
     LLVMValueRef left = codegen(ast->data.AST_BINOP.left, ctx);
     LLVMValueRef right = codegen(ast->data.AST_BINOP.right, ctx);
-    switch (ast->data.AST_BINOP.op) {
-    case TOKEN_PLUS: {
-      return codegen_add(left, right, ctx);
+
+    if (value_is_numeric(left) && value_is_numeric(right)) {
+
+      return numerical_binop(ast->data.AST_BINOP.op, left, right, ctx);
     }
-    }
-    break;
+    return NULL;
   }
 
   case AST_UNOP: {
     LLVMValueRef operand = codegen(ast->data.AST_UNOP.operand, ctx);
-    LLVMTypeRef datatype = LLVMTypeOf(operand);
-
     switch (ast->data.AST_UNOP.op) {
-    case TOKEN_MINUS: {
-      if (datatype == LLVMInt32TypeInContext(ctx->context)) {
-        return LLVMBuildNeg(ctx->builder, operand, "tmp_neg");
-      }
 
-      if (datatype == LLVMDoubleType()) {
-        return LLVMBuildFNeg(ctx->builder, operand, "tmp_neg");
-      }
-      return NULL;
+    case TOKEN_MINUS: {
+      return codegen_neg_unop(operand, ctx);
     }
     }
     break;
@@ -137,29 +120,53 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_SYMBOL_DECLARATION: {
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
 
-    // LLVMContextRef context = LLVMGetModuleContext(module);
-    // LLVMValueRef global =
-    //     LLVMAddGlobal(module, LLVMVoidTypeInContext(context), name);
+    Symbol *sym = malloc(sizeof(Symbol));
+    sym->name = strdup(name);
+    sym->value = NULL;
+    HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
     return NULL;
   }
 
   case AST_ASSIGNMENT: {
-      char *identifier = ast->data.AST_ASSIGNMENT.identifier;
+    char *identifier = ast->data.AST_ASSIGNMENT.identifier;
+
+    Symbol *sym;
+    LLVMValueRef global;
+
+    HASH_FIND_STR(SymbolTable, identifier, sym);
+    if (sym) {
+      global = LLVMGetNamedGlobal(ctx->module, identifier);
+
       AST *expr = ast->data.AST_ASSIGNMENT.expression;
       LLVMValueRef value = codegen(expr, ctx);
+      LLVMTypeRef value_type = LLVMTypeOf(value);
 
+      if (sym->type != value_type) {
+        fprintf(stderr,
+                "Error assigning value of type %s to variable of type %s",
+                LLVMPrintTypeToString(value_type),
+                LLVMPrintTypeToString(sym->type));
+        return NULL;
+      }
 
-      Symbol *sym = malloc(sizeof(Symbol));
-      sym->name = strdup(identifier);
-      sym->value = value;
-      HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
+      LLVMSetInitializer(global, value);
+      return global;
+    }
 
-      LLVMTypeRef globalVarType = LLVMTypeOf(value);
-      LLVMValueRef globalVar = LLVMAddGlobal(ctx->module, globalVarType, identifier);
+    AST *expr = ast->data.AST_ASSIGNMENT.expression;
+    LLVMValueRef value = codegen(expr, ctx);
 
+    sym = malloc(sizeof(Symbol));
+    sym->name = strdup(identifier);
+    LLVMTypeRef type = LLVMTypeOf(value);
 
-      LLVMSetInitializer(globalVar, value);
-      return globalVar;
+    global = LLVMAddGlobal(ctx->module, type, identifier);
+    LLVMSetInitializer(global, value);
+    sym->value = global;
+    sym->type = type;
+
+    HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
+    return global;
   }
   }
   return NULL;
