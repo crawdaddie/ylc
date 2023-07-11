@@ -1,4 +1,4 @@
-#include "lang_runner.h"
+#include "input.h"
 
 char *read_file(const char *path) {
   FILE *file = fopen(path, "rb");

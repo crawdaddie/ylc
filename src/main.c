@@ -1,5 +1,5 @@
-#include "lang_runner.h"
 #include "llvm_backend.h"
+#include <stdio.h>
 
 int main(int argc, char **argv) {
   setbuf(stdout, NULL); // turn off line buffering for stdout
