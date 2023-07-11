@@ -99,12 +99,12 @@ int LLVMRuntime(int repl, char *path) {
   if (path) {
     char *filename = path;
     AST *ast = parse_file(filename);
-    print_ast(*ast, 0);
-    printf("\n");
+    dump_ast(ast);
 
     LLVMValueRef value = codegen(ast, &ctx);
-    LLVMDumpModule(ctx.module);
+    dump_module(ctx.module);
     run_value(ctx.engine, value);
+
     free_ast(ast);
   }
 
@@ -126,8 +126,6 @@ int LLVMRuntime(int repl, char *path) {
     }
   }
 
-  // Dump entire module.
-  LLVMDumpModule(ctx.module);
 
   // LLVMDisposePassManager(pass_anager);
   LLVMDisposeBuilder(ctx.builder);

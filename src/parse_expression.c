@@ -1,6 +1,7 @@
 #include "parse_expression.h"
 #include "lexer.h"
 #include "parse.h"
+#include "parse_function.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -100,7 +101,7 @@ ParseRule rules[] = {
     [TOKEN_TRUE] = {parse_literal, NULL, PREC_NONE},
     [TOKEN_FALSE] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_FOR] = {NULL, NULL, PREC_NONE}, */
-    // [TOKEN_FN] = {parse_anonymous_function, NULL, PREC_NONE},
+    [TOKEN_FN] = {parse_function, NULL, PREC_NONE},
     /* [TOKEN_IF] = {NULL, NULL, PREC_NONE}, */
     // [TOKEN_NIL] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */
@@ -118,6 +119,10 @@ ParseRule rules[] = {
 static ParseRule *get_rule(enum token_type type) { return &(rules[type]); }
 
 static AST *parse_precedence(Precedence precedence) {
+  if (check(TOKEN_EOF)) {
+    return NULL;
+  }
+
   while (check(TOKEN_NL)) {
     advance();
   }
@@ -125,8 +130,9 @@ static AST *parse_precedence(Precedence precedence) {
 
   ParseFn prefix_rule = get_rule(parser.previous.type)->prefix;
   if (prefix_rule == NULL) {
-    printf("error: Expected expression ");
+    printf("error: Expected expression, found ");
     print_token(parser.previous);
+    printf("\n");
     return NULL;
   }
   bool can_assign =

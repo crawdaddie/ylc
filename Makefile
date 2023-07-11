@@ -33,8 +33,8 @@ build/hello.o: experiments/hello.s
 	as -o $@ experiments/hello.s
 
 TEST_SRC = $(filter-out src/main.c, $(src))
-TEST_SRC += src/test/utils.c 
-TEST_SRC += src/test/parse.c 
+TEST_SRC += tests/utils.c 
+TEST_SRC += tests/parse_test.c 
 TEST_OBJ = $(TEST_SRC:.c=.o)
 
 build/test_parser: $(TEST_OBJ)

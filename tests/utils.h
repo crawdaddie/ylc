@@ -1,6 +1,6 @@
 #ifndef _LANG_TEST_UTILS_H
 #define _LANG_TEST_UTILS_H
-#include "../ast.h"
+#include "../src/ast.h"
 
 int compare_ast(AST *a, AST *b);
 

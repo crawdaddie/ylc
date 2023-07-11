@@ -31,7 +31,6 @@ static AST *assignment_statement() {
   advance();
   return AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
 }
-
 /**
  * match on tokens that begin a statement and call corresponding statement-type
  *constructors
@@ -56,6 +55,8 @@ AST *parse_statement() {
     // case TOKEN_WHILE: {
     // }
     // case TOKEN_FN: {
+    // printf("fn decl\n");
+    // return function_declaration();
     // }
     // case TOKEN_LEFT_BRACE: {
     // }

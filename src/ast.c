@@ -154,3 +154,26 @@ AST *ast_statement_list(int length, ...) {
 
   return stmt_list;
 }
+AST *ast_fn_prototype(int length, ...) {
+
+  AST *proto = AST_NEW(FN_PROTOTYPE, length);
+  if (length == 0) {
+    return proto;
+  }
+  // Define a va_list to hold the variable arguments
+  va_list args;
+
+  // Initialize the va_list with the variable arguments
+  va_start(args, length);
+
+  AST **list = malloc(sizeof(AST *) * length);
+  for (int i = 0; i < length; i++) {
+    AST *arg = va_arg(args, AST *);
+    list[i] = arg;
+  }
+  proto->data.AST_FN_PROTOTYPE.identifiers = list;
+
+  va_end(args);
+
+  return proto;
+}

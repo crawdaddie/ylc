@@ -1,6 +1,6 @@
-#include "../parse.h"
-#include "../ast.h"
-#include "../lexer.h"
+#include "../src/ast.h"
+#include "../src/lexer.h"
+#include "../src/parse.h"
 #include "utils.h"
 #include <stdio.h>
 #include <stdlib.h>

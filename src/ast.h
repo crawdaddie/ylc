@@ -24,6 +24,7 @@ struct AST {
     AST_ASSIGNMENT,
     AST_IDENTIFIER,
     AST_SYMBOL_DECLARATION,
+    AST_FN_PROTOTYPE,
   } tag;
 
   union {
@@ -90,7 +91,14 @@ struct AST {
     } AST_CALL_EXPRESSION;
 
     struct AST_FN_DECLARATION {
+      AST *prototype;
+      AST *body;
     } AST_FN_DECLARATION;
+
+    struct AST_FN_PROTOTYPE {
+      int length;
+      AST **identifiers;
+    } AST_FN_PROTOTYPE;
 
     struct AST_ASSIGNMENT {
       char *identifier;
@@ -98,6 +106,7 @@ struct AST {
     } AST_ASSIGNMENT;
 
     struct AST_IDENTIFIER {
+      char *identifier;
     } AST_IDENTIFIER;
 
     struct AST_SYMBOL_DECLARATION {
@@ -118,4 +127,6 @@ AST *ast_new(AST ast);
   ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
 
 AST *ast_statement_list(int length, ...);
+
+AST *ast_fn_prototype(int length, ...);
 #endif /* end of include guard: _LANG_AST_H */
