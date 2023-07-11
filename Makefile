@@ -2,11 +2,11 @@ src = $(wildcard src/*.c)
 
 obj = $(src:.c=.o)
 
-CC=clang
-LD=clang
+CC=/opt/homebrew/opt/llvm/bin/clang
+LD=/opt/homebrew/opt/llvm/bin/clang
 
-LLVM_CC_FLAGS=`llvm-config --cflags`
-LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+LLVM_CC_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --cflags`
+LLVM_LINK_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 
 build/lang: $(obj)
 	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
@@ -26,12 +26,6 @@ lang_test_suite: $(wildcard $(TEST_DIR)/*.test.simple)
 		./test_file.sh $${file} ; \
   done
 	
-build/HelloWorld: build/hello.o
-	ld -macosx_version_min 11.0.0 -o $@ build/hello.o -lSystem -syslibroot `xcrun -sdk macosx --show-sdk-path` -e _start -arch arm64 
-
-build/hello.o: experiments/hello.s
-	as -o $@ experiments/hello.s
-
 TEST_SRC = $(filter-out src/main.c, $(src))
 TEST_SRC += tests/utils.c 
 TEST_SRC += tests/parse_test.c 

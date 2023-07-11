@@ -98,7 +98,10 @@ int LLVMRuntime(int repl, char *path) {
 
   if (path) {
     char *filename = path;
-    AST *ast = parse_file(filename);
+    char *input = read_file(path);
+    AST *ast = parse(input);
+    free(input);
+
     dump_ast(ast);
 
     LLVMValueRef value = codegen(ast, &ctx);

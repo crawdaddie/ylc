@@ -1,6 +1,5 @@
 #include "parse.h"
 #include "ast.h"
-#include "lang_runner.h"
 #include "lexer.h"
 #include "parse_expression.h"
 #include "parse_statement.h"
@@ -72,9 +71,3 @@ AST *parse(char *source) {
   return ast;
 }
 
-AST *parse_file(const char *path) {
-  char *source = read_file(path);
-  AST *ast = parse(source);
-  free(source);
-  return ast;
-}

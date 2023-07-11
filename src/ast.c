@@ -48,9 +48,25 @@ void print_ast(AST ast, int indent) {
     printf("statements: \n");
     for (int i = 0; i < ast.data.AST_STATEMENT_LIST.length; i++) {
       print_ast(**(ast.data.AST_STATEMENT_LIST.statements + i), indent + 1);
+      printf("\n");
+
+
     }
     break;
   }
+
+  case AST_FN_PROTOTYPE: {
+    left_pad(indent);
+    printf("args: \n");
+    for (int i = 0; i < ast.data.AST_FN_PROTOTYPE.length; i++) {
+      print_ast(**(ast.data.AST_FN_PROTOTYPE.identifiers + i), indent + 1);
+    }
+    break;
+  }
+    case AST_IDENTIFIER: {
+      left_pad(indent);
+      printf("id: %s ", ast.data.AST_IDENTIFIER.identifier);
+    }
 
   case AST_SYMBOL_DECLARATION: {
     left_pad(indent);
@@ -106,6 +122,15 @@ void free_ast(AST *ast) {
     break;
   }
 
+  case AST_FN_PROTOTYPE: {
+
+    for (int i = 0; i < ast->data.AST_FN_PROTOTYPE.length; i++) {
+      free_ast(ast->data.AST_FN_PROTOTYPE.identifiers[i]);
+    }
+    free(ast);
+    break;
+  }
+
   case AST_SYMBOL_DECLARATION: {
 
     free(ast->data.AST_SYMBOL_DECLARATION.identifier);
@@ -131,49 +156,3 @@ AST *ast_new(AST ast) {
   return ptr;
 }
 
-AST *ast_statement_list(int length, ...) {
-
-  AST *stmt_list = AST_NEW(STATEMENT_LIST, length);
-  if (length == 0) {
-    return stmt_list;
-  }
-  // Define a va_list to hold the variable arguments
-  va_list args;
-
-  // Initialize the va_list with the variable arguments
-  va_start(args, length);
-
-  AST **list = malloc(sizeof(AST *) * length);
-  for (int i = 0; i < length; i++) {
-    AST *arg = va_arg(args, AST *);
-    list[i] = arg;
-  }
-  stmt_list->data.AST_STATEMENT_LIST.statements = list;
-
-  va_end(args);
-
-  return stmt_list;
-}
-AST *ast_fn_prototype(int length, ...) {
-
-  AST *proto = AST_NEW(FN_PROTOTYPE, length);
-  if (length == 0) {
-    return proto;
-  }
-  // Define a va_list to hold the variable arguments
-  va_list args;
-
-  // Initialize the va_list with the variable arguments
-  va_start(args, length);
-
-  AST **list = malloc(sizeof(AST *) * length);
-  for (int i = 0; i < length; i++) {
-    AST *arg = va_arg(args, AST *);
-    list[i] = arg;
-  }
-  proto->data.AST_FN_PROTOTYPE.identifiers = list;
-
-  va_end(args);
-
-  return proto;
-}

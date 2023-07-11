@@ -6,4 +6,6 @@ AST *parse_fn_arg();
 AST *parse_fn_body();
 AST *parse_fn_prototype();
 AST *parse_function(bool can_assign);
+
+AST *ast_fn_prototype(int length, ...);
 #endif /* ifndef _LANG_PARSE_FUNCTION_H */

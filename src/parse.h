@@ -4,7 +4,6 @@
 #include "lexer.h"
 #include <stdbool.h>
 AST *parse(char *source);
-AST *parse_file(const char *path);
 
 typedef struct Parser {
   token previous;
