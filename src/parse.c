@@ -70,4 +70,3 @@ AST *parse(char *source) {
   rec_parse(ast);
   return ast;
 }
-

@@ -25,6 +25,8 @@ struct AST {
     AST_IDENTIFIER,
     AST_SYMBOL_DECLARATION,
     AST_FN_PROTOTYPE,
+    AST_CALL,
+    AST_TUPLE,
   } tag;
 
   union {
@@ -87,9 +89,6 @@ struct AST {
       AST **statements;
     } AST_STATEMENT_LIST;
 
-    struct AST_CALL_EXPRESSION {
-    } AST_CALL_EXPRESSION;
-
     struct AST_FN_DECLARATION {
       AST *prototype;
       AST *body;
@@ -114,6 +113,16 @@ struct AST {
       AST *expression;
     } AST_SYMBOL_DECLARATION;
 
+    struct AST_CALL {
+      char *identifier;
+      AST *parameters;
+    } AST_CALL;
+
+    struct AST_TUPLE {
+      int length;
+      AST **members;
+    } AST_TUPLE;
+
   } data;
 };
 
@@ -125,6 +134,5 @@ void free_ast(AST *ast);
 AST *ast_new(AST ast);
 #define AST_NEW(tag, ...)                                                      \
   ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
-
 
 #endif /* end of include guard: _LANG_AST_H */

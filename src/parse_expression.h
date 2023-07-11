@@ -19,10 +19,11 @@ typedef enum {
 } Precedence;
 
 typedef AST *(*ParseFn)(bool can_assign);
+typedef AST *(*ParseFnInfix)(bool can_assign, AST *prev_expr);
 
 typedef struct {
   ParseFn prefix;
-  ParseFn infix;
+  ParseFnInfix infix;
   Precedence precedence;
 } ParseRule;
 

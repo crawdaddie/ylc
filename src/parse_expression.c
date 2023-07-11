@@ -2,8 +2,10 @@
 #include "lexer.h"
 #include "parse.h"
 #include "parse_function.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static AST *parse_precedence(Precedence precedence);
 static ParseRule *get_rule(enum token_type type);
@@ -21,7 +23,7 @@ static AST *parse_unary(bool can_assign) {
   }
 }
 
-static AST *parse_binary(bool can_assign) {
+static AST *parse_binary(bool can_assign, AST *prev_expr) {
   enum token_type op_type = parser.previous.type;
   ParseRule *rule = get_rule(op_type);
   AST *right = parse_precedence(
@@ -46,6 +48,7 @@ static AST *parse_binary(bool can_assign) {
     binop->tag = AST_BINOP;
     binop->data.AST_BINOP.op = op_type;
     binop->data.AST_BINOP.right = right;
+    binop->data.AST_BINOP.left = prev_expr;
     return binop;
   }
   default:
@@ -68,8 +71,70 @@ static AST *parse_literal(bool can_assign) {
   return AST_NEW(BOOL, token.type == TOKEN_TRUE);
 }
 
+AST *ast_tuple(int length, ...) {
+
+  AST *tuple = AST_NEW(TUPLE, length);
+  if (length == 0) {
+
+    AST **list = malloc(sizeof(AST *));
+    tuple->data.AST_TUPLE.members = list;
+    return tuple;
+  }
+  // Define a va_list to hold the variable arguments
+  va_list args;
+
+  // Initialize the va_list with the variable arguments
+  va_start(args, length);
+
+  AST **list = malloc(sizeof(AST *) * length);
+  for (int i = 0; i < length; i++) {
+    AST *arg = va_arg(args, AST *);
+    list[i] = arg;
+  }
+  tuple->data.AST_TUPLE.members = list;
+
+  va_end(args);
+
+  return tuple;
+}
+static void ast_tuple_push(struct AST_TUPLE *tuple, AST *item) {
+  if (item) {
+    tuple->length++;
+    tuple->members = realloc(tuple->members, sizeof(AST *) * tuple->length);
+    tuple->members[tuple->length - 1] = item;
+  }
+}
+static AST *parse_tuple() {
+  AST *tuple = ast_tuple(0);
+  while (!match(TOKEN_RP)) {
+    AST *member = parse_expression();
+    ast_tuple_push(&tuple->data.AST_TUPLE, member);
+    if (check(TOKEN_COMMA)) {
+      advance();
+    }
+  }
+  return tuple;
+}
+
+static AST *parse_call(bool can_assign, AST *prev_expr) {
+  AST *parameters = parse_tuple();
+  return AST_NEW(CALL, strdup(prev_expr->data.AST_IDENTIFIER.identifier),
+                 parameters);
+}
+static AST *identifier(bool can_assign) {
+  token token = parser.previous;
+  return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
+}
+
+static AST *parse_grouping(bool can_assign) {
+  AST *tuple = parse_tuple();
+  AST *expr = tuple->data.AST_TUPLE.members[0];
+  free_ast(tuple);
+  return expr;
+}
+
 ParseRule rules[] = {
-    // [TOKEN_LP] = {grouping, call, PREC_CALL},
+    [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
     /* [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE}, */
     /* [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
@@ -112,6 +177,7 @@ ParseRule rules[] = {
     /* [TOKEN_TRUE] = {literal, NULL, PREC_NONE}, */
     /* [TOKEN_VAR] = {NULL, NULL, PREC_NONE}, */
     /* [TOKEN_WHILE] = {NULL, NULL, PREC_NONE}, */
+    [TOKEN_IDENTIFIER] = {identifier, NULL, PREC_NONE},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
 };
@@ -143,9 +209,8 @@ static AST *parse_precedence(Precedence precedence) {
   while (precedence <= get_rule(parser.current.type)->precedence) {
     advance();
 
-    ParseFn infix_rule = get_rule(parser.previous.type)->infix;
-    AST *tmp = infix_rule(can_assign);
-    tmp->data.AST_BINOP.left = expr;
+    ParseFnInfix infix_rule = get_rule(parser.previous.type)->infix;
+    AST *tmp = infix_rule(can_assign, expr);
     expr = tmp;
   }
   if (can_assign && match(TOKEN_ASSIGNMENT)) {
