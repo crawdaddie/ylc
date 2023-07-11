@@ -1,13 +1,4 @@
 #include "lang_runner.h"
-#include <stdio.h>
-#include <stdlib.h>
-
-#include <llvm-c/Core.h>
-#include <llvm-c/ExecutionEngine.h>
-#include <llvm-c/Target.h>
-#include <llvm-c/Transforms/Scalar.h>
-#include <llvm-c/Transforms/Utils.h>
-
 #include "llvm_backend.h"
 
 int main(int argc, char **argv) {
