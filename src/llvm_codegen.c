@@ -27,6 +27,26 @@ LLVMValueRef lookup_symbol(char *name) {
     return NULL;
   }
 }
+static LLVMValueRef reassign_symbol(Symbol *symbol, AST *expr, Context *ctx) {
+  LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
+
+  LLVMValueRef value = codegen(expr, ctx);
+  if (!value) {
+    return NULL;
+  }
+
+  LLVMTypeRef value_type = LLVMTypeOf(value);
+
+  if (sym->type != value_type) {
+    fprintf(stderr, "Error assigning value of type %s to variable of type %s",
+            LLVMPrintTypeToString(value_type),
+            LLVMPrintTypeToString(sym->type));
+    return NULL;
+  }
+
+  LLVMSetInitializer(global, value);
+  return global;
+}
 
 static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   // Generate body.
@@ -135,26 +155,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     HASH_FIND_STR(SymbolTable, identifier, sym);
     if (sym) {
-      global = LLVMGetNamedGlobal(ctx->module, identifier);
-
-      AST *expr = ast->data.AST_ASSIGNMENT.expression;
-      LLVMValueRef value = codegen(expr, ctx);
-      if (!value) {
-        return NULL;
-      }
-
-      LLVMTypeRef value_type = LLVMTypeOf(value);
-
-      if (sym->type != value_type) {
-        fprintf(stderr,
-                "Error assigning value of type %s to variable of type %s",
-                LLVMPrintTypeToString(value_type),
-                LLVMPrintTypeToString(sym->type));
-        return NULL;
-      }
-
-      LLVMSetInitializer(global, value);
-      return global;
+      return reassign_symbol(sym, ast->data.AST_ASSIGNMENT.expression, ctx);
     }
 
     AST *expr = ast->data.AST_ASSIGNMENT.expression;

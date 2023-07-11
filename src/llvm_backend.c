@@ -3,8 +3,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "llvm_codegen.h"
 #include "llvm_backend.h"
+#include "llvm_codegen.h"
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
@@ -23,7 +23,6 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
   fprintf(stderr, "Evaluted to %d\n", FP());
   return 0;
 }
-
 
 int init_ctx(Context *ctx) {
   LLVMContextRef context = LLVMGetGlobalContext();
@@ -85,7 +84,6 @@ int LLVMRuntime(int repl, char *path) {
   Context ctx;
   init_ctx(&ctx);
 
-
   // optimizations
   // LLVMPassManagerRef pass_manager =
   //     LLVMCreateFunctionPassManagerForModule(ctx.module);
@@ -128,7 +126,6 @@ int LLVMRuntime(int repl, char *path) {
       reinit_ctx(&ctx);
     }
   }
-
 
   // LLVMDisposePassManager(pass_anager);
   LLVMDisposeBuilder(ctx.builder);
