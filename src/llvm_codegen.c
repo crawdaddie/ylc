@@ -139,7 +139,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
       AST *expr = ast->data.AST_ASSIGNMENT.expression;
       LLVMValueRef value = codegen(expr, ctx);
-      if (!value) { return NULL; }
+      if (!value) {
+        return NULL;
+      }
 
       LLVMTypeRef value_type = LLVMTypeOf(value);
 
@@ -157,7 +159,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     AST *expr = ast->data.AST_ASSIGNMENT.expression;
     LLVMValueRef value = codegen(expr, ctx);
-    if (!value) { return NULL; }
+    if (!value) {
+      return NULL;
+    }
 
     sym = malloc(sizeof(Symbol));
     sym->name = strdup(identifier);
@@ -173,11 +177,20 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_FN_DECLARATION: {
-    LLVMValueRef prototype = codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
-    LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
+    LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
+    // find return type of body
+
+    LLVMValueRef prototype =
+        codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
+
     if (!(prototype && body)) {
       return NULL;
     }
+  }
+  case AST_IDENTIFIER: {
+    // Lookup identifier in current function or global scope
+    // and return value
+    return NULL;
   }
   }
   return NULL;
