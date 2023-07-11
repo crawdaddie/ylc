@@ -49,28 +49,47 @@ void print_ast(AST ast, int indent) {
     for (int i = 0; i < ast.data.AST_STATEMENT_LIST.length; i++) {
       print_ast(**(ast.data.AST_STATEMENT_LIST.statements + i), indent + 1);
       printf("\n");
-
-
     }
     break;
   }
 
-  case AST_FN_PROTOTYPE: {
+  case AST_IDENTIFIER: {
     left_pad(indent);
-    printf("args: \n");
-    for (int i = 0; i < ast.data.AST_FN_PROTOTYPE.length; i++) {
-      print_ast(**(ast.data.AST_FN_PROTOTYPE.identifiers + i), indent + 1);
-    }
+    printf("id: %s ", ast.data.AST_IDENTIFIER.identifier);
     break;
   }
-    case AST_IDENTIFIER: {
-      left_pad(indent);
-      printf("id: %s ", ast.data.AST_IDENTIFIER.identifier);
-    }
 
   case AST_SYMBOL_DECLARATION: {
     left_pad(indent);
     printf("symbol decl: %s\n", ast.data.AST_SYMBOL_DECLARATION.identifier);
+    break;
+  }
+
+  case AST_FN_PROTOTYPE: {
+    if (ast.data.AST_FN_PROTOTYPE.length == 0) {
+      break;
+    }
+    left_pad(indent);
+    for (int i = 0; i < ast.data.AST_FN_PROTOTYPE.length; i++) {
+      printf("arg: ");
+      print_ast(*ast.data.AST_FN_PROTOTYPE.identifiers[i], 0);
+      printf(", ");
+    }
+    break;
+  }
+  case AST_FN_DECLARATION: {
+    left_pad(indent);
+    printf("fn: \n");
+    left_pad(indent + 1);
+    printf("fn proto:\n");
+    print_ast(*ast.data.AST_FN_DECLARATION.prototype, indent + 2);
+
+    printf("\n");
+    left_pad(indent + 1l);
+    if (ast.data.AST_FN_DECLARATION.body) {
+      printf("fn body:\n");
+      print_ast(*ast.data.AST_FN_DECLARATION.body, indent + 2);
+    }
     break;
   }
 
@@ -114,7 +133,6 @@ void free_ast(AST *ast) {
   }
 
   case AST_STATEMENT_LIST: {
-
     for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
       free_ast(ast->data.AST_STATEMENT_LIST.statements[i]);
     }
@@ -155,4 +173,3 @@ AST *ast_new(AST ast) {
     *ptr = ast;
   return ptr;
 }
-

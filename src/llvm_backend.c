@@ -103,8 +103,8 @@ int LLVMRuntime(int repl, char *path) {
     free(input);
 
     dump_ast(ast);
-
     LLVMValueRef value = codegen(ast, &ctx);
+
     dump_module(ctx.module);
     run_value(ctx.engine, value);
 

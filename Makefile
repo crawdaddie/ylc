@@ -32,7 +32,7 @@ TEST_SRC += tests/parse_test.c
 TEST_OBJ = $(TEST_SRC:.c=.o)
 
 build/test_parser: $(TEST_OBJ)
-	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC)
+	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC) $(INCLUDES)
 	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ 
 	./build/test_parser
 

@@ -2,10 +2,10 @@
 #include "lexer.h"
 #include "parse.h"
 #include "parse_statement.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 AST *ast_fn_prototype(int length, ...) {
 
@@ -15,7 +15,6 @@ AST *ast_fn_prototype(int length, ...) {
     AST **list = malloc(sizeof(AST *));
     proto->data.AST_FN_PROTOTYPE.identifiers = list;
     return proto;
-
   }
   // Define a va_list to hold the variable arguments
   va_list args;
@@ -51,9 +50,6 @@ AST *parse_fn_arg() {
 
 AST *parse_fn_body() {
   if (!match(TOKEN_LEFT_BRACE)) {
-    printf("expected Function body ({) - found ");
-    print_current();
-    printf("\n");
     return NULL;
   }
 
@@ -63,10 +59,18 @@ AST *parse_fn_body() {
     if (check(TOKEN_EOF)) {
       return NULL;
     }
-    if (check(TOKEN_NL)) {advance(); continue;}
+    if (check(TOKEN_NL)) {
+      advance();
+      continue;
+    }
     statements_push(&statements->data.AST_STATEMENT_LIST);
   }
   advance();
+
+  if (statements->data.AST_STATEMENT_LIST.length == 0) {
+    free_ast(statements);
+    return NULL;
+  }
 
   return statements;
 }
@@ -78,7 +82,6 @@ AST *parse_fn_prototype() {
   };
 
   while (!match(TOKEN_RP)) {
-    print_current();
     arg_list_push(&proto->data.AST_FN_PROTOTYPE);
     if (check(TOKEN_COMMA)) {
       advance();

@@ -2,10 +2,10 @@
 #include "lexer.h"
 #include "parse.h"
 #include "parse_expression.h"
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdarg.h>
 
 AST *ast_statement_list(int length, ...) {
 

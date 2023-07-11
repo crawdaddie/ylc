@@ -139,6 +139,8 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
       AST *expr = ast->data.AST_ASSIGNMENT.expression;
       LLVMValueRef value = codegen(expr, ctx);
+      if (!value) { return NULL; }
+
       LLVMTypeRef value_type = LLVMTypeOf(value);
 
       if (sym->type != value_type) {
@@ -155,6 +157,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     AST *expr = ast->data.AST_ASSIGNMENT.expression;
     LLVMValueRef value = codegen(expr, ctx);
+    if (!value) { return NULL; }
 
     sym = malloc(sizeof(Symbol));
     sym->name = strdup(identifier);
@@ -167,6 +170,14 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
     return global;
+  }
+
+  case AST_FN_DECLARATION: {
+    LLVMValueRef prototype = codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
+    LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
+    if (!(prototype && body)) {
+      return NULL;
+    }
   }
   }
   return NULL;

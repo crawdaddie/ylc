@@ -1,5 +1,6 @@
 #include "utils.h"
 #include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -66,11 +67,57 @@ int compare_ast(AST *a, AST *b) {
     return 0;
   }
 
+  case AST_FN_PROTOTYPE: {
+    if (a->data.AST_FN_PROTOTYPE.length != b->data.AST_FN_PROTOTYPE.length) {
+      return 1;
+    }
+
+    for (int i = 0; i < a->data.AST_FN_PROTOTYPE.length; i++) {
+      if (compare_ast(a->data.AST_FN_PROTOTYPE.identifiers[i],
+                      b->data.AST_FN_PROTOTYPE.identifiers[i])) {
+
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  case AST_IDENTIFIER: {
+    if (strcmp(a->data.AST_IDENTIFIER.identifier,
+               b->data.AST_IDENTIFIER.identifier) != 0) {
+      return 1;
+    }
+    return 0;
+  }
+
   case AST_SYMBOL_DECLARATION: {
     if (strcmp(a->data.AST_SYMBOL_DECLARATION.identifier,
                b->data.AST_SYMBOL_DECLARATION.identifier) != 0) {
       return 1;
     }
+    return 0;
+  }
+  case AST_FN_DECLARATION: {
+    if (compare_ast(a->data.AST_FN_DECLARATION.prototype,
+                    b->data.AST_FN_DECLARATION.prototype) != 0) {
+      return 1;
+    }
+
+    if (a->data.AST_FN_DECLARATION.body && !b->data.AST_FN_DECLARATION.body) {
+      return 1;
+    }
+
+    if (!a->data.AST_FN_DECLARATION.body && b->data.AST_FN_DECLARATION.body) {
+      return 1;
+    }
+
+    if (a->data.AST_FN_DECLARATION.body &&
+        compare_ast(a->data.AST_FN_DECLARATION.body,
+                    b->data.AST_FN_DECLARATION.body) != 0) {
+
+      return 1;
+    }
+
     return 0;
   }
 
