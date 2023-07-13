@@ -13,7 +13,7 @@ AST *ast_fn_prototype(int length, ...) {
   if (length == 0) {
 
     AST **list = malloc(sizeof(AST *));
-    proto->data.AST_FN_PROTOTYPE.identifiers = list;
+    proto->data.AST_FN_PROTOTYPE.parameters = list;
     return proto;
   }
   // Define a va_list to hold the variable arguments
@@ -27,7 +27,7 @@ AST *ast_fn_prototype(int length, ...) {
     AST *arg = va_arg(args, AST *);
     list[i] = arg;
   }
-  proto->data.AST_FN_PROTOTYPE.identifiers = list;
+  proto->data.AST_FN_PROTOTYPE.parameters = list;
 
   va_end(args);
 
@@ -37,15 +37,25 @@ void arg_list_push(struct AST_FN_PROTOTYPE *proto) {
   AST *arg = parse_fn_arg();
   if (arg) {
     proto->length++;
-    proto->identifiers =
-        realloc(proto->identifiers, sizeof(AST *) * proto->length);
-    proto->identifiers[proto->length - 1] = arg;
+    proto->parameters =
+        realloc(proto->parameters, sizeof(AST *) * proto->length);
+    proto->parameters[proto->length - 1] = arg;
   }
 }
 AST *parse_fn_arg() {
-  AST *id = AST_NEW(IDENTIFIER, strdup(parser.current.as.vstr));
-  advance();
-  return id;
+  if (!match(TOKEN_IDENTIFIER)) {
+    fprintf(stderr, "Expected param type\n");
+
+    return NULL;
+  }
+  char *type_str = strdup(parser.previous.as.vstr);
+  if (!match(TOKEN_IDENTIFIER)) {
+    fprintf(stderr, "Expected param name\n");
+  }
+
+  char *id_str = strdup(parser.previous.as.vstr);
+  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_str);
+  return param;
 }
 
 AST *parse_fn_body() {
@@ -78,6 +88,7 @@ AST *parse_fn_body() {
 AST *parse_fn_prototype() {
   AST *proto = ast_fn_prototype(0);
   if (!match(TOKEN_LP)) {
+    fprintf(stderr, "Error: expected ( after fn keyword\n");
     return NULL;
   };
 
@@ -88,6 +99,11 @@ AST *parse_fn_prototype() {
     }
   }
 
+  if (!match(TOKEN_IDENTIFIER)) {
+    fprintf(stderr, "Error: expected return type for function\n");
+    return NULL;
+  }
+  proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
   return proto;
 }
 

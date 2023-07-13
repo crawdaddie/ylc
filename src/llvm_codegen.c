@@ -1,5 +1,7 @@
 #include "llvm_codegen.h"
 #include "llvm_codegen_arithmetic.h"
+#include "llvm_codegen_function.h"
+#include "llvm_codegen_symbol.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Types.h>
@@ -14,62 +16,20 @@ static bool value_is_numeric(LLVMValueRef value) {
          type_kind == LLVMDoubleTypeKind;
 }
 
-Symbol *SymbolTable = NULL;
-
-LLVMValueRef lookup_symbol(char *name) {
-  // Lookup variable reference.
-  Symbol *val = NULL;
-  HASH_FIND_STR(SymbolTable, name, val);
-
-  if (val != NULL) {
-    return val->value;
-  } else {
-    return NULL;
-  }
-}
-static LLVMValueRef reassign_symbol(Symbol *symbol, AST *expr, Context *ctx) {
-  LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-
-  LLVMValueRef value = codegen(expr, ctx);
-  if (!value) {
-    return NULL;
-  }
-
-  LLVMTypeRef value_type = LLVMTypeOf(value);
-
-  if (sym->type != value_type) {
-    fprintf(stderr, "Error assigning value of type %s to variable of type %s",
-            LLVMPrintTypeToString(value_type),
-            LLVMPrintTypeToString(sym->type));
-    return NULL;
-  }
-
-  LLVMSetInitializer(global, value);
-  return global;
-}
-
 static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
-  // Generate body.
-  LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
 
   // Create function type.
-  //
-  LLVMTypeRef funcType;
-  if (body == NULL) {
-    // funcType =
-    //     LLVMFunctionType(LLVMVoidTypeInContext(ctx->context), NULL, 0, 0);
-    return NULL;
-  } else {
-    funcType = LLVMFunctionType(LLVMTypeOf(body), NULL, 0, 0);
-  }
+  LLVMTypeRef funcType =
+      LLVMFunctionType(LLVMVoidTypeInContext(ctx->context), NULL, 0, 0);
 
   // Create function.
   LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
+  // Generate body.
+  enter_function(ctx, func);
 
-  // Create basic block.
-  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
-  LLVMPositionBuilderAtEnd(ctx->builder, block);
+  LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
+  exit_function(ctx, NULL, NULL);
 
   if (body == NULL) {
     LLVMDeleteFunction(func);
@@ -77,7 +37,8 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   }
 
   // Insert body as return vale.
-  LLVMBuildRet(ctx->builder, body);
+  // LLVMBuildRet(ctx->builder, LLVMVoidLLVMVoid);
+  LLVMBuildRetVoid(ctx->builder);
 
   // Verify function.
   if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
@@ -138,60 +99,21 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_SYMBOL_DECLARATION: {
-    char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
-
-    Symbol *sym = malloc(sizeof(Symbol));
-    sym->name = strdup(name);
-    sym->value = NULL;
-    HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
-    return NULL;
+    return codegen_symbol_declaration(ast, ctx);
   }
 
   case AST_ASSIGNMENT: {
-    char *identifier = ast->data.AST_ASSIGNMENT.identifier;
-
-    Symbol *sym;
-    LLVMValueRef global;
-
-    HASH_FIND_STR(SymbolTable, identifier, sym);
-    if (sym) {
-      return reassign_symbol(sym, ast->data.AST_ASSIGNMENT.expression, ctx);
-    }
-
-    AST *expr = ast->data.AST_ASSIGNMENT.expression;
-    LLVMValueRef value = codegen(expr, ctx);
-    if (!value) {
-      return NULL;
-    }
-
-    sym = malloc(sizeof(Symbol));
-    sym->name = strdup(identifier);
-    LLVMTypeRef type = LLVMTypeOf(value);
-
-    global = LLVMAddGlobal(ctx->module, type, identifier);
-    LLVMSetInitializer(global, value);
-    sym->value = global;
-    sym->type = type;
-
-    HASH_ADD_KEYPTR(hh, SymbolTable, sym->name, strlen(sym->name), sym);
-    return global;
+    return codegen_symbol_assignment(ast, ctx);
   }
 
   case AST_FN_DECLARATION: {
-    LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
-    // find return type of body
-
-    LLVMValueRef prototype =
-        codegen(ast->data.AST_FN_DECLARATION.prototype, ctx);
-
-    if (!(prototype && body)) {
-      return NULL;
-    }
+    return codegen_function(ast, ctx);
+  }
+  case AST_CALL: {
+    return codegen_call(ast, ctx);
   }
   case AST_IDENTIFIER: {
-    // Lookup identifier in current function or global scope
-    // and return value
-    return NULL;
+    return codegen_identifier(ast, ctx);
   }
   }
   return NULL;

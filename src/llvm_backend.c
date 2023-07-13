@@ -1,5 +1,6 @@
 #include "input.h"
 #include "parse.h"
+#include "symbol_table.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -72,7 +73,25 @@ int reinit_ctx(Context *ctx) {
   ctx->module = module;
   // ctx->builder = builder;
   ctx->engine = engine;
+
+  init_symbol_table(ctx->symbol_table);
   return 0;
+}
+
+void enter_function(Context *ctx, LLVMValueRef function) {
+  push_frame(ctx->symbol_table);
+  ctx->currentFunction = function;
+  LLVMBasicBlockRef block = LLVMAppendBasicBlock(function, "entry");
+  LLVMPositionBuilderAtEnd(ctx->builder, block);
+  ctx->currentBlock = block;
+}
+
+void exit_function(Context *ctx, LLVMValueRef parentFunction,
+                   LLVMBasicBlockRef prevBlock) {
+  pop_frame(ctx->symbol_table);
+  ctx->currentFunction = parentFunction;
+  ctx->currentBlock = prevBlock;
+  LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
 }
 
 int LLVMRuntime(int repl, char *path) {
@@ -83,6 +102,9 @@ int LLVMRuntime(int repl, char *path) {
 
   Context ctx;
   init_ctx(&ctx);
+  SymbolTable symbol_table;
+  init_symbol_table(&symbol_table);
+  ctx.symbol_table = &symbol_table;
 
   // optimizations
   // LLVMPassManagerRef pass_manager =
@@ -101,6 +123,7 @@ int LLVMRuntime(int repl, char *path) {
     free(input);
 
     dump_ast(ast);
+
     LLVMValueRef value = codegen(ast, &ctx);
 
     dump_module(ctx.module);

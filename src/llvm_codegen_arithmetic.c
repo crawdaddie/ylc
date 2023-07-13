@@ -45,34 +45,44 @@ static LLVMOpcode op_map(token_type op, int is_float) {
   return OperatorMapSInt[op];
 }
 
+static int counter = 0;
+static char* inst_name(const char* cString) {
+  counter++;
+  char* result = (char*)malloc(100 * sizeof(char)); // Assuming a large enough buffer size
+  sprintf(result, "%s%d", cString, counter);
+  return result;
+}
 LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,
                              LLVMValueRef right, Context *ctx) {
+  counter++;
 
   LLVMTypeRef ltype = LLVMTypeOf(left);
   LLVMTypeRef rtype = LLVMTypeOf(right);
   LLVMTypeRef itype = int_type(ctx);
 
   if (ltype == itype && rtype == itype) {
-    return LLVMBuildBinOp(ctx->builder, OperatorMapSInt[op], left, right, "");
+    return LLVMBuildBinOp(ctx->builder, OperatorMapSInt[op], left, right,
+                          inst_name("inst"));
   }
 
   LLVMTypeRef dbltype = double_type(ctx);
   if (ltype == itype && rtype == dbltype) {
     return LLVMBuildBinOp(
         ctx->builder, OperatorMapFloat[op],
-        LLVMBuildSIToFP(ctx->builder, left, dbltype, "cast_float"), right,
-        "tmp_add");
+        LLVMBuildSIToFP(ctx->builder, left, dbltype, inst_name("inst")), right,
+        inst_name("inst"));
   }
 
   if (ltype == dbltype && rtype == itype) {
     return LLVMBuildBinOp(
         ctx->builder, OperatorMapFloat[op], left,
-        LLVMBuildSIToFP(ctx->builder, right, dbltype, "cast_float"), "tmp_add");
+        LLVMBuildSIToFP(ctx->builder, right, dbltype, inst_name("inst")),
+        inst_name("inst"));
   }
 
   if (ltype == dbltype && rtype == dbltype) {
     return LLVMBuildBinOp(ctx->builder, OperatorMapFloat[op], left, right,
-                          "tmp_add");
+                          inst_name("inst"));
   }
   return NULL;
 }
@@ -86,14 +96,15 @@ LLVMValueRef codegen_sub(LLVMValueRef left, LLVMValueRef right, Context *ctx) {
 };
 
 LLVMValueRef codegen_neg_unop(LLVMValueRef operand, Context *ctx) {
+  counter++;
 
   LLVMTypeRef datatype = LLVMTypeOf(operand);
   if (datatype == LLVMInt32TypeInContext(ctx->context)) {
-    return LLVMBuildNeg(ctx->builder, operand, "tmp_neg");
+    return LLVMBuildNeg(ctx->builder, operand,inst_name("inst"));
   }
 
   if (datatype == LLVMDoubleType()) {
-    return LLVMBuildFNeg(ctx->builder, operand, "tmp_neg");
+    return LLVMBuildFNeg(ctx->builder, operand, inst_name("inst"));
   }
   return NULL;
 };

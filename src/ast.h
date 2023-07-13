@@ -96,7 +96,9 @@ struct AST {
 
     struct AST_FN_PROTOTYPE {
       int length;
-      AST **identifiers;
+      AST **parameters;
+      char *name;
+      char *type;
     } AST_FN_PROTOTYPE;
 
     struct AST_ASSIGNMENT {
@@ -110,11 +112,12 @@ struct AST {
 
     struct AST_SYMBOL_DECLARATION {
       char *identifier;
+      char *type;
       AST *expression;
     } AST_SYMBOL_DECLARATION;
 
     struct AST_CALL {
-      char *identifier;
+      AST *identifier;
       AST *parameters;
     } AST_CALL;
 

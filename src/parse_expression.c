@@ -97,18 +97,23 @@ AST *ast_tuple(int length, ...) {
 
   return tuple;
 }
-static void ast_tuple_push(struct AST_TUPLE *tuple, AST *item) {
+
+typedef struct AST_TUPLE tpl;
+void ast_tuple_push(struct AST *tuple, AST *item) {
+  tpl *cast_tuple = (tpl *)tuple;
   if (item) {
-    tuple->length++;
-    tuple->members = realloc(tuple->members, sizeof(AST *) * tuple->length);
-    tuple->members[tuple->length - 1] = item;
+    cast_tuple->length++;
+    cast_tuple->members =
+        realloc(cast_tuple->members, sizeof(AST *) * cast_tuple->length);
+    cast_tuple->members[cast_tuple->length - 1] = item;
   }
 }
+
 static AST *parse_tuple() {
   AST *tuple = ast_tuple(0);
   while (!match(TOKEN_RP)) {
     AST *member = parse_expression();
-    ast_tuple_push(&tuple->data.AST_TUPLE, member);
+    ast_tuple_push((AST *)&tuple->data.AST_TUPLE, member);
     if (check(TOKEN_COMMA)) {
       advance();
     }
@@ -118,8 +123,7 @@ static AST *parse_tuple() {
 
 static AST *parse_call(bool can_assign, AST *prev_expr) {
   AST *parameters = parse_tuple();
-  return AST_NEW(CALL, strdup(prev_expr->data.AST_IDENTIFIER.identifier),
-                 parameters);
+  return AST_NEW(CALL, prev_expr, parameters);
 }
 static AST *identifier(bool can_assign) {
   token token = parser.previous;
@@ -169,8 +173,8 @@ ParseRule rules[] = {
     [TOKEN_FN] = {parse_function, NULL, PREC_NONE},
     /* [TOKEN_IF] = {NULL, NULL, PREC_NONE}, */
     // [TOKEN_NIL] = {parse_literal, NULL, PREC_NONE},
-    /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */
-    /* [TOKEN_PRINT] = {NULL, NULL, PREC_NONE}, */
+    /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */ /* [TOKEN_PRINT] = {NULL, NULL,
+                                                PREC_NONE}, */
     /* [TOKEN_RETURN] = {NULL, NULL, PREC_NONE}, */
     /* [TOKEN_SUPER] = {super_, NULL, PREC_NONE}, */
     /* [TOKEN_THIS] = {this_, NULL, PREC_NONE}, */

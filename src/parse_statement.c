@@ -45,7 +45,7 @@ static AST *let_statement() {
     }
     token id_token = parser.previous;
     char *id_str = id_token.as.vstr;
-    return AST_NEW(SYMBOL_DECLARATION, strdup(id_str));
+    return AST_NEW(SYMBOL_DECLARATION, strdup(id_str), NULL);
   } else {
     printf("error missing identifier");
     return NULL;
@@ -72,10 +72,10 @@ AST *parse_statement() {
     case TOKEN_LET: {
       return let_statement();
     }
-    case TOKEN_IDENTIFIER: {
-      advance();
-      return parse_statement();
-    }
+    // case TOKEN_IDENTIFIER: {
+    //   advance();
+    //   return parse_statement();
+    // }
     case TOKEN_ASSIGNMENT: {
       return assignment_statement();
     }
@@ -93,8 +93,9 @@ AST *parse_statement() {
     case TOKEN_RETURN: {
       return return_statement();
     }
-    default:
+    default: {
       return parse_expression();
+    }
     }
   }
   return NULL;

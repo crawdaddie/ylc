@@ -8,11 +8,11 @@
 LLVMValueRef codegen(AST *ast, Context *ctx);
 
 // Used to hold references to arguments by name.
-typedef struct Symbol {
+typedef struct Symbol_ {
     const char *name;             
     LLVMValueRef value;
     LLVMTypeRef type;
     UT_hash_handle hh;
-} Symbol;
+} Symbol_;
 
 #endif /* ifndef _LANG_CODEGEN_H */

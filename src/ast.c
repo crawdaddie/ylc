@@ -49,12 +49,17 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_IDENTIFIER: {
-    printf("id: %s ", ast.data.AST_IDENTIFIER.identifier);
+    printf(" %s ", ast.data.AST_IDENTIFIER.identifier);
     break;
   }
 
   case AST_SYMBOL_DECLARATION: {
-    printf("symbol decl: %s\n", ast.data.AST_SYMBOL_DECLARATION.identifier);
+    if (ast.data.AST_SYMBOL_DECLARATION.type != NULL) {
+      printf("%s %s", ast.data.AST_SYMBOL_DECLARATION.type,
+             ast.data.AST_SYMBOL_DECLARATION.identifier);
+    } else {
+      printf("%s", ast.data.AST_SYMBOL_DECLARATION.identifier);
+    }
     break;
   }
 
@@ -64,9 +69,12 @@ void print_ast(AST ast, int indent) {
     }
     for (int i = 0; i < ast.data.AST_FN_PROTOTYPE.length; i++) {
       printf("arg: ");
-      print_ast(*ast.data.AST_FN_PROTOTYPE.identifiers[i], 0);
+      print_ast(*ast.data.AST_FN_PROTOTYPE.parameters[i], 0);
       printf(", ");
     }
+    printf("\n");
+    left_pad(indent);
+    printf("returns %s", ast.data.AST_FN_PROTOTYPE.type);
     break;
   }
   case AST_FN_DECLARATION: {
@@ -91,7 +99,8 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_CALL: {
-    printf("(%s ", ast.data.AST_CALL.identifier);
+    printf("(%s ",
+           ast.data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
     print_ast(*ast.data.AST_CALL.parameters, 0);
     printf(")\n");
     break;
@@ -154,7 +163,7 @@ void free_ast(AST *ast) {
   case AST_FN_PROTOTYPE: {
 
     for (int i = 0; i < ast->data.AST_FN_PROTOTYPE.length; i++) {
-      free_ast(ast->data.AST_FN_PROTOTYPE.identifiers[i]);
+      free_ast(ast->data.AST_FN_PROTOTYPE.parameters[i]);
     }
     free(ast);
     break;

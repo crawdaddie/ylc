@@ -1,7 +1,6 @@
-let a = (1 + 2) * 3
-let a1 = 1 + 2 * 3
-
-let b = fn (a, b, c) {
+let b = fn (int a0, int b0, int c0) int {
+  a0 + b0 + c0
 }
 
 let c = b(1, 2, 3)
+

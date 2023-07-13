@@ -2,11 +2,11 @@ src = $(wildcard src/*.c)
 
 obj = $(src:.c=.o)
 
-CC=/opt/homebrew/opt/llvm/bin/clang
-LD=/opt/homebrew/opt/llvm/bin/clang
+CC=clang
+LD=clang
 
-LLVM_CC_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --cflags`
-LLVM_LINK_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+LLVM_CC_FLAGS=`llvm-config --cflags`
+LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 
 build/lang: $(obj)
 	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
@@ -39,3 +39,8 @@ build/test_parser: $(TEST_OBJ)
 .PHONY: debug-lang
 debug-lang:
 	make && lldb build/lang
+
+.PHONY: lang
+lang:
+	make && ./build/lang
+

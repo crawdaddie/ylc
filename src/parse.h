@@ -18,4 +18,7 @@ bool match(enum token_type type);
 
 void print_current();
 void print_previous();
+
+typedef struct AST_TUPLE tpl;
+void ast_tuple_push(struct AST *tuple, AST *item);
 #endif
