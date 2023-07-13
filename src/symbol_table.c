@@ -90,7 +90,6 @@ int table_lookup(const SymbolTable *table, const char *key,
 
   // Traverse the stack frames from top to bottom to find the key
   for (int i = table->current_frame_index; i >= 0; i--) {
-    // printf("stack %d \n", i);
     StackFrame *frame = &table->stack[i];
     Symbol *entry = frame->entries[index];
 
@@ -98,7 +97,6 @@ int table_lookup(const SymbolTable *table, const char *key,
     while (entry != NULL) {
       if (strcmp(entry->key, key) == 0) {
         *value = entry->value;
-        // value->is_global = i == 0;
         return 0;
       }
       entry = entry->next;
