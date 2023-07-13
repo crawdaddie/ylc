@@ -24,7 +24,6 @@ int init_ctx(Context *ctx);
 int reinit_ctx(Context *ctx);
 
 void enter_function(Context *ctx, LLVMValueRef function);
-void exit_function(Context *ctx, LLVMValueRef parentFunction,
-                   LLVMBasicBlockRef prevBlock);
+void exit_function(Context *ctx, LLVMValueRef parentFunction);
 
 #endif /* ifndef _LANG_LLVM_BACKEND_H */

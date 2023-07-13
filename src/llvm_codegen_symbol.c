@@ -51,6 +51,7 @@ LLVMValueRef codegen_symbol_declaration(AST *ast, Context *ctx) {
 LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
 
   char *identifier = ast->data.AST_ASSIGNMENT.identifier;
+  printf("sym ass %s\n", identifier);
   AST *expr = ast->data.AST_ASSIGNMENT.expression;
 
   SymbolValue sym;

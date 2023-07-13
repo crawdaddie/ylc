@@ -81,17 +81,11 @@ int reinit_ctx(Context *ctx) {
 void enter_function(Context *ctx, LLVMValueRef function) {
   push_frame(ctx->symbol_table);
   ctx->currentFunction = function;
-  LLVMBasicBlockRef block = LLVMAppendBasicBlock(function, "entry");
-  LLVMPositionBuilderAtEnd(ctx->builder, block);
-  ctx->currentBlock = block;
 }
 
-void exit_function(Context *ctx, LLVMValueRef parentFunction,
-                   LLVMBasicBlockRef prevBlock) {
+void exit_function(Context *ctx, LLVMValueRef parentFunction) {
   pop_frame(ctx->symbol_table);
   ctx->currentFunction = parentFunction;
-  ctx->currentBlock = prevBlock;
-  LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
 }
 
 int LLVMRuntime(int repl, char *path) {

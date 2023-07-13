@@ -79,17 +79,22 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
   LLVMValueRef func = LLVMAddFunction(ctx->module, "tmp", function_type);
 
+  // Create basic block.
+  LLVMBasicBlockRef prevBlock = LLVMGetInsertBlock(ctx->builder);
+
+  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
+  LLVMPositionBuilderAtEnd(ctx->builder, block);
 
   LLVMValueRef prevFunc = ctx->currentFunction;
-  LLVMBasicBlockRef prevBlock = ctx->currentBlock;
-
   enter_function(ctx, func);
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 
 
-  exit_function(ctx, prevFunc, prevBlock);
+  exit_function(ctx, prevFunc);
+
+  LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
 
   if (!(prototype && body)) {
     return NULL;
@@ -106,15 +111,12 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
-  // LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
-  // if (func == NULL) {
-  //   fprintf(stderr, "Error: function %s not found in this scope\n", ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
-  //   return NULL;
-  // }
+  LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
+  if (func == NULL) {
+    fprintf(stderr, "Error: function %s not found in this scope\n", ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
+    return NULL;
+  }
 
-  LLVMValueRef func = LLVMGetNamedFunction(ctx->module, "tmp");
-  printf("found func\n");
-  LLVMDumpValue(func);
 
   // Evaluate arguments.
   AST *parameters = ast->data.AST_CALL.parameters;
@@ -128,6 +130,8 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   }
 
   // Create call instruction.
+
+  printf("block create call %p\n", LLVMGetInsertBlock(ctx->builder));
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args, arg_count,
                         "calltmp");
   // free(args);

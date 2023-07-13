@@ -45,16 +45,8 @@ static LLVMOpcode op_map(token_type op, int is_float) {
   return OperatorMapSInt[op];
 }
 
-static int counter = 0;
-static char* inst_name(const char* cString) {
-  counter++;
-  char* result = (char*)malloc(100 * sizeof(char)); // Assuming a large enough buffer size
-  sprintf(result, "%s%d", cString, counter);
-  return result;
-}
 LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,
                              LLVMValueRef right, Context *ctx) {
-  counter++;
 
   LLVMTypeRef ltype = LLVMTypeOf(left);
   LLVMTypeRef rtype = LLVMTypeOf(right);
@@ -96,7 +88,6 @@ LLVMValueRef codegen_sub(LLVMValueRef left, LLVMValueRef right, Context *ctx) {
 };
 
 LLVMValueRef codegen_neg_unop(LLVMValueRef operand, Context *ctx) {
-  counter++;
 
   LLVMTypeRef datatype = LLVMTypeOf(operand);
   if (datatype == LLVMInt32TypeInContext(ctx->context)) {

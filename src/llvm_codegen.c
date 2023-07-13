@@ -28,8 +28,16 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   // Generate body.
   enter_function(ctx, func);
 
+  // Create + append basic block.
+  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
+  LLVMPositionBuilderAtEnd(ctx->builder, block);
+
   LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
-  exit_function(ctx, NULL, NULL);
+
+  LLVMBasicBlockRef block2 = LLVMAppendBasicBlock(func, inst_name("entry"));
+  LLVMPositionBuilderAtEnd(ctx->builder, block2);
+  exit_function(ctx, NULL);
+  // LLVMPositionBuilderAtEnd(ctx->builder, block);
 
   if (body == NULL) {
     LLVMDeleteFunction(func);
@@ -42,7 +50,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 
   // Verify function.
   if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
-    fprintf(stderr, "Invalid function");
+    fprintf(stderr, "Invalid main function");
     LLVMDeleteFunction(func);
     return NULL;
   }
@@ -117,4 +125,13 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   }
   return NULL;
+}
+
+static int counter = 0;
+char *inst_name(const char *cString) {
+  counter++;
+  char *result =
+      (char *)malloc(100 * sizeof(char)); // Assuming a large enough buffer size
+  sprintf(result, "%s%d", cString, counter);
+  return result;
 }
