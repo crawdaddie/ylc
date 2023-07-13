@@ -16,15 +16,16 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     if (sym.data.TYPE_VARIABLE.is_global) {
       LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
       return LLVMGetInitializer(global);
-      // return LLVMBuildLoad2
-      // return LLVMLoadInst
-      // return LLVMBuildLoad2(ctx->builder, sym.data.TYPE_VARIABLE.llvm_type,
-      //                       global, "load_value");
     }
 
     // found symbol
     LLVMValueRef value = sym.data.TYPE_VARIABLE.llvm_value;
     return value;
+  }
+
+  case TYPE_GLOBAL_VARIABLE: {
+    LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
+    return LLVMGetInitializer(global);
   }
 
   case TYPE_FN_PARAM: {
@@ -68,13 +69,15 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
     if (ctx->symbol_table->current_frame_index == 0) {
 
       // global
-      sym.type = TYPE_VARIABLE;
-      sym.data.TYPE_VARIABLE.is_global = true;
-      sym.data.TYPE_VARIABLE.llvm_value =
+      sym.type = TYPE_GLOBAL_VARIABLE;
+      sym.data.TYPE_GLOBAL_VARIABLE.llvm_value =
           LLVMAddGlobal(ctx->module, type, identifier);
-      sym.data.TYPE_VARIABLE.llvm_type = type;
+      sym.data.TYPE_GLOBAL_VARIABLE.llvm_type = type;
 
-      LLVMSetInitializer(sym.data.TYPE_VARIABLE.llvm_value, value);
+      LLVMSetInitializer(sym.data.TYPE_GLOBAL_VARIABLE.llvm_value, value);
+
+      table_insert(ctx->symbol_table, strdup(identifier), sym);
+      return sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     } else {
       return NULL;
     }
@@ -84,6 +87,27 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   }
 
   switch (sym.type) {
+
+  case TYPE_GLOBAL_VARIABLE: {
+    LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
+    LLVMValueRef value = codegen(expr, ctx);
+
+    if (!value) {
+      return NULL;
+    }
+
+    LLVMTypeRef value_type = LLVMTypeOf(value);
+
+    if (sym.data.TYPE_GLOBAL_VARIABLE.llvm_type != value_type) {
+      fprintf(stderr, "Error assigning value of type %s to variable of type %s",
+              LLVMPrintTypeToString(value_type),
+              LLVMPrintTypeToString(sym.data.TYPE_VARIABLE.llvm_type));
+      return NULL;
+    }
+
+    LLVMSetInitializer(global, value);
+    return global;
+  }
   case TYPE_VARIABLE: {
     if (sym.data.TYPE_VARIABLE.is_global) {
       LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);

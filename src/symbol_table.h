@@ -44,6 +44,7 @@ typedef struct SymbolValue {
     // TYPE_STRUCT,
     TYPE_FN_PARAM,
     TYPE_VARIABLE,
+    TYPE_GLOBAL_VARIABLE,
     TYPE_INT,
     TYPE_NUMBER,
     TYPE_BOOL,
@@ -59,6 +60,11 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_VARIABLE;
+
+    struct TYPE_GLOBAL_VARIABLE {
+      LLVMValueRef llvm_value;
+      LLVMTypeRef llvm_type;
+    } TYPE_GLOBAL_VARIABLE;
 
     struct TYPE_FN_PARAM {
       int arg_idx;

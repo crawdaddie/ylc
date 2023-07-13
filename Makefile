@@ -40,10 +40,9 @@ build/test_parser: $(TEST_OBJ)
 debug-lang:
 	make && lldb build/lang
 
-.PHONY: lang
-lang:
+.PHONY: repl
+repl:
 	make && ./build/lang
-
 
 .PHONY: test
 test:
