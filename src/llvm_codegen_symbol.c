@@ -6,25 +6,24 @@
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   char *identifier = ast->data.AST_IDENTIFIER.identifier;
   SymbolValue sym;
+
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
+    printf("not found\n");
     fprintf(stderr, "Error symbol %s not found\n", identifier);
     return NULL;
   }
 
   switch (sym.type) {
   case TYPE_VARIABLE: {
-    if (sym.data.TYPE_VARIABLE.is_global) {
-      LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-      return LLVMGetInitializer(global);
-    }
-
     // found symbol
     LLVMValueRef value = sym.data.TYPE_VARIABLE.llvm_value;
-    return value;
+    return LLVMBuildLoad2(ctx->builder, sym.data.TYPE_VARIABLE.llvm_type, value,
+                          identifier);
   }
 
   case TYPE_GLOBAL_VARIABLE: {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
+    // LLVMValueRef global = sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     return LLVMGetInitializer(global);
   }
 
@@ -52,13 +51,12 @@ LLVMValueRef codegen_symbol_declaration(AST *ast, Context *ctx) {
 LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
 
   char *identifier = ast->data.AST_ASSIGNMENT.identifier;
-  printf("sym ass %s\n", identifier);
   AST *expr = ast->data.AST_ASSIGNMENT.expression;
 
   SymbolValue sym;
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
-
     // symbol not found
+
     LLVMValueRef value = codegen(expr, ctx);
     if (value == NULL) {
       return NULL;
@@ -79,7 +77,15 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
       table_insert(ctx->symbol_table, strdup(identifier), sym);
       return sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     } else {
-      return NULL;
+      sym.type = TYPE_VARIABLE;
+      LLVMValueRef alloca = LLVMBuildAlloca(ctx->builder, type, identifier);
+      LLVMBuildStore(ctx->builder, value, alloca);
+
+      sym.data.TYPE_VARIABLE.llvm_value = alloca;
+      sym.data.TYPE_VARIABLE.llvm_type = type;
+
+      table_insert(ctx->symbol_table, strdup(identifier), sym);
+      return sym.data.TYPE_VARIABLE.llvm_value;
     }
 
     table_insert(ctx->symbol_table, strdup(identifier), sym);
@@ -109,27 +115,8 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
     return global;
   }
   case TYPE_VARIABLE: {
-    if (sym.data.TYPE_VARIABLE.is_global) {
-      LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-      LLVMValueRef value = codegen(expr, ctx);
-
-      if (!value) {
-        return NULL;
-      }
-
-      LLVMTypeRef value_type = LLVMTypeOf(value);
-
-      if (sym.data.TYPE_VARIABLE.llvm_type != value_type) {
-        fprintf(stderr,
-                "Error assigning value of type %s to variable of type %s",
-                LLVMPrintTypeToString(value_type),
-                LLVMPrintTypeToString(sym.data.TYPE_VARIABLE.llvm_type));
-        return NULL;
-      }
-
-      LLVMSetInitializer(global, value);
-      return global;
-    }
+    // assign to variable local to current scope
+    return NULL;
   }
   case TYPE_FN_PARAM: {
     // don't reassign fn params for now, TODO:

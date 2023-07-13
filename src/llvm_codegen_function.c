@@ -84,7 +84,6 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
-  printf("func block %p\n", block);
 
   LLVMValueRef prevFunc = ctx->currentFunction;
   enter_function(ctx, func);
@@ -131,12 +130,8 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   // Create call instruction.
 
-  printf("block create call %p\n", LLVMGetInsertBlock(ctx->builder));
-
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
                                     func, args, arg_count, inst_name("call"));
-  LLVMDumpValue(val);
-  printf("\n");
   free(args);
   return val;
 }

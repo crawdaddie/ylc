@@ -56,7 +56,6 @@ typedef struct SymbolValue {
 
   union {
     struct TYPE_VARIABLE {
-      bool is_global;
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_VARIABLE;
@@ -119,8 +118,6 @@ void pop_frame(SymbolTable *table);
 
 // Function to insert a new entry into the symbol table
 void table_insert(SymbolTable *table, const char *key, SymbolValue value);
-
-void insert_type(Symbol **types, const char *key, SymbolValue value);
 
 // Function to lookup a value for a given key in the symbol table
 int table_lookup(const SymbolTable *table, const char *key, SymbolValue *value);

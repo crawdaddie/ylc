@@ -1,5 +1,6 @@
 let b = fn (int a0, int b0, int c0) int {
-  a0 + b0 + c0 + 1
+  let k = 1
+  a0 + b0 + c0 + k
 }
 
 b(1, 2, 3)
