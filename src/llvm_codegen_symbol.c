@@ -116,7 +116,26 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   }
   case TYPE_VARIABLE: {
     // assign to variable local to current scope
-    return NULL;
+    LLVMValueRef value = codegen(expr, ctx);
+
+    if (!value) {
+      return NULL;
+    }
+    LLVMValueRef alloca = sym.data.TYPE_VARIABLE.llvm_value;
+    LLVMTypeRef type = sym.data.TYPE_VARIABLE.llvm_type;
+    LLVMTypeRef value_type = LLVMTypeOf(value);
+    if (type != value_type) {
+
+      fprintf(stderr, "Error assigning value of type %s to variable of type %s",
+              LLVMPrintTypeToString(value_type),
+              LLVMPrintTypeToString(sym.data.TYPE_VARIABLE.llvm_type));
+      return NULL;
+    }
+    LLVMBuildStore(ctx->builder, value, alloca);
+      printf("store ");
+      LLVMDumpValue(value);
+      printf("to %s\n", identifier);
+    return alloca;
   }
   case TYPE_FN_PARAM: {
     // don't reassign fn params for now, TODO:

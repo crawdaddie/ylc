@@ -107,6 +107,12 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   }
   return func;
 }
+static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
+                                   LLVMValueRef func, Context *ctx) {
+  printf("fewer arguments supplied - return a curried version\n");
+
+  return NULL;
+}
 
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
@@ -121,6 +127,9 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   AST *parameters = ast->data.AST_CALL.parameters;
   struct AST_TUPLE parameters_tuple = parameters->data.AST_TUPLE;
   unsigned int arg_count = parameters_tuple.length;
+  if (arg_count < LLVMCountParams(func)) {
+    return curry_function(parameters_tuple, func, ctx);
+  }
 
   LLVMValueRef *args = malloc(sizeof(LLVMValueRef) * arg_count);
   unsigned int i;

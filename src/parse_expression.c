@@ -127,6 +127,11 @@ static AST *parse_call(bool can_assign, AST *prev_expr) {
 }
 static AST *identifier(bool can_assign) {
   token token = parser.previous;
+
+  if (match(TOKEN_ASSIGNMENT)) {
+    AST *assignment_expression = parse_expression();
+    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), assignment_expression);
+  }
   return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
 }
 
@@ -205,6 +210,7 @@ static AST *parse_precedence(Precedence precedence) {
     printf("\n");
     return NULL;
   }
+
   bool can_assign =
       precedence <=
       PREC_ASSIGNMENT; // guard against expressions like a * b = c + d
@@ -217,6 +223,7 @@ static AST *parse_precedence(Precedence precedence) {
     AST *tmp = infix_rule(can_assign, expr);
     expr = tmp;
   }
+
   if (can_assign && match(TOKEN_ASSIGNMENT)) {
     printf("error Invalid assignment target");
     return NULL;

@@ -5,8 +5,8 @@ obj = $(src:.c=.o)
 CC=clang
 LD=clang
 
-LLVM_CC_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --cflags`
-LLVM_LINK_FLAGS=`/opt/homebrew/opt/llvm/bin/llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+LLVM_CC_FLAGS=`llvm-config --cflags`
+LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 
 build/lang: $(obj)
 	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
