@@ -1,6 +1,6 @@
-#include "llvm_codegen_symbol.h"
 #include "llvm_codegen_function.h"
 #include "llvm_codegen.h"
+#include "llvm_codegen_symbol.h"
 #include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -84,13 +84,13 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
+  printf("func block %p\n", block);
 
   LLVMValueRef prevFunc = ctx->currentFunction;
   enter_function(ctx, func);
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
-
 
   exit_function(ctx, prevFunc);
 
@@ -113,10 +113,10 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
   if (func == NULL) {
-    fprintf(stderr, "Error: function %s not found in this scope\n", ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
+    fprintf(stderr, "Error: function %s not found in this scope\n",
+            ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
     return NULL;
   }
-
 
   // Evaluate arguments.
   AST *parameters = ast->data.AST_CALL.parameters;
@@ -132,9 +132,11 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   // Create call instruction.
 
   printf("block create call %p\n", LLVMGetInsertBlock(ctx->builder));
-  LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args, arg_count,
-                        "calltmp");
-  // free(args);
-  return val;
 
+  LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
+                                    func, args, arg_count, inst_name("call"));
+  LLVMDumpValue(val);
+  printf("\n");
+  free(args);
+  return val;
 }

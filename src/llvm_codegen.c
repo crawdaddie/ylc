@@ -28,17 +28,12 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   // Generate body.
   enter_function(ctx, func);
 
-  // Create + append basic block.
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
 
   LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
 
-  LLVMBasicBlockRef block2 = LLVMAppendBasicBlock(func, inst_name("entry"));
-  LLVMPositionBuilderAtEnd(ctx->builder, block2);
   exit_function(ctx, NULL);
-  // LLVMPositionBuilderAtEnd(ctx->builder, block);
-
   if (body == NULL) {
     LLVMDeleteFunction(func);
     return NULL;
@@ -46,9 +41,11 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 
   // Insert body as return vale.
   // LLVMBuildRet(ctx->builder, LLVMVoidLLVMVoid);
+  LLVMPositionBuilderAtEnd(ctx->builder, block);
   LLVMBuildRetVoid(ctx->builder);
 
   // Verify function.
+  // printf("verify func\n");
   if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
     fprintf(stderr, "Invalid main function");
     LLVMDeleteFunction(func);
