@@ -1,5 +1,5 @@
-#include "llvm_codegen_symbol.h"
-#include "llvm_codegen.h"
+#include "codegen_symbol.h"
+#include "codegen.h"
 #include <stdio.h>
 #include <stdlib.h>
 

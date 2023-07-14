@@ -1,6 +1,6 @@
-#include "llvm_codegen_function.h"
-#include "llvm_codegen.h"
-#include "llvm_codegen_symbol.h"
+#include "codegen_function.h"
+#include "codegen.h"
+#include "codegen_symbol.h"
 #include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -1,4 +1,4 @@
-#include "llvm_codegen_arithmetic.h"
+#include "codegen_arithmetic.h"
 #include "lexer.h"
 #include <stdio.h>
 static LLVMTypeRef int_type(Context *ctx) {
@@ -91,7 +91,7 @@ LLVMValueRef codegen_neg_unop(LLVMValueRef operand, Context *ctx) {
 
   LLVMTypeRef datatype = LLVMTypeOf(operand);
   if (datatype == LLVMInt32TypeInContext(ctx->context)) {
-    return LLVMBuildNeg(ctx->builder, operand,inst_name("inst"));
+    return LLVMBuildNeg(ctx->builder, operand, inst_name("inst"));
   }
 
   if (datatype == LLVMDoubleType()) {

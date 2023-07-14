@@ -1,8 +1,8 @@
-#include "llvm_codegen.h"
-#include "llvm_codegen_arithmetic.h"
-#include "llvm_codegen_control_flow.h"
-#include "llvm_codegen_function.h"
-#include "llvm_codegen_symbol.h"
+#include "codegen.h"
+#include "codegen_arithmetic.h"
+#include "codegen_control_flow.h"
+#include "codegen_function.h"
+#include "codegen_symbol.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Types.h>

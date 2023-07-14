@@ -1,6 +1,6 @@
 #ifndef _LANG_CODEGEN_ADD_H
 #define _LANG_CODEGEN_ADD_H
-#include "llvm_codegen.h"
+#include "codegen.h"
 LLVMValueRef codegen_add(LLVMValueRef left, LLVMValueRef right, Context *ctx);
 LLVMValueRef codegen_sub(LLVMValueRef left, LLVMValueRef right, Context *ctx);
 LLVMValueRef codegen_neg_unop(LLVMValueRef operand, Context *ctx);
