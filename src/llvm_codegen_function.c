@@ -60,11 +60,19 @@ static void store_parameters(AST *prot, Context *ctx) {
   }
 }
 
+static void store_self(char *name, LLVMValueRef function, LLVMTypeRef func_type, Context *ctx) {
+  table_insert(ctx->symbol_table, name, (SymbolValue){TYPE_RECURSIVE_REF, {.TYPE_RECURSIVE_REF = {
+    .llvm_value = function,
+    .llvm_type = func_type
+  }}});
+}
+
 LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   if (!(ast->data.AST_FN_DECLARATION.body)) {
     return NULL;
   }
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
+  bool recursive = ast->data.AST_FN_DECLARATION.name != NULL;
 
   int arg_count = prototype_ast->data.AST_FN_PROTOTYPE.length;
 
@@ -88,6 +96,9 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   LLVMValueRef prevFunc = ctx->currentFunction;
   enter_function(ctx, func);
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
+  if (recursive) {
+    store_self(ast->data.AST_FN_DECLARATION.name, func, function_type, ctx);
+  }
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 
@@ -109,7 +120,7 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 }
 static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
                                    LLVMValueRef func, Context *ctx) {
-  printf("fewer arguments supplied - return a curried version\n");
+  fprintf(stderr, "NOT YET IMPLEMENTED ERROR: fewer arguments supplied - return a curried version\n");
 
   return NULL;
 }
@@ -127,6 +138,7 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   AST *parameters = ast->data.AST_CALL.parameters;
   struct AST_TUPLE parameters_tuple = parameters->data.AST_TUPLE;
   unsigned int arg_count = parameters_tuple.length;
+
   if (arg_count < LLVMCountParams(func)) {
     return curry_function(parameters_tuple, func, ctx);
   }

@@ -121,6 +121,14 @@ static AST *parse_tuple() {
   return tuple;
 }
 
+static AST *parse_recursive_declaration(bool can_assign) {
+  printf("recursive fn\n");
+
+  print_current();
+  print_previous();
+  return NULL;
+}
+
 static AST *parse_call(bool can_assign, AST *prev_expr) {
   AST *parameters = parse_tuple();
   return AST_NEW(CALL, prev_expr, parameters);
@@ -176,6 +184,7 @@ ParseRule rules[] = {
     [TOKEN_FALSE] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_FOR] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_FN] = {parse_function, NULL, PREC_NONE},
+    // [TOKEN_REC] = {parse_recursive_declaration, NULL, PREC_NONE},
     /* [TOKEN_IF] = {NULL, NULL, PREC_NONE}, */
     // [TOKEN_NIL] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */ /* [TOKEN_PRINT] = {NULL, NULL,

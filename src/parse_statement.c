@@ -2,6 +2,7 @@
 #include "lexer.h"
 #include "parse.h"
 #include "parse_expression.h"
+#include "parse_function.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -33,15 +34,28 @@ AST *ast_statement_list(int length, ...) {
 
   return stmt_list;
 }
-static AST *if_statement() { return NULL; }
+static AST *if_statement() {
+  advance();
+  if (!match(TOKEN_LP)) {
+    fprintf(stderr, "Error, expected expression after if\n");
+    return NULL;
+  }
+  AST *condition = parse_expression();
+  if (!match(TOKEN_RP)) {
+    return NULL;
+  }
+  AST *if_body = parse_fn_body();
+  AST *else_body = parse_fn_body();
+  return AST_NEW(IF_ELSE, condition, if_body, else_body);
+}
 static AST *return_statement() { return NULL; }
-static AST *assignment_statement();
+static AST *assignment_statement(bool recursive);
 static AST *let_statement() {
   advance();
   if (match(TOKEN_IDENTIFIER)) {
     if (check(TOKEN_ASSIGNMENT)) {
       // let <id> = <expr> - declaration immediately followed by assignment
-      return assignment_statement();
+      return assignment_statement(false);
     }
     token id_token = parser.previous;
     char *id_str = id_token.as.vstr;
@@ -51,9 +65,10 @@ static AST *let_statement() {
     return NULL;
   }
 }
-static AST *assignment_statement() {
+static AST *assignment_statement(bool recursive) {
   token id_token = parser.previous;
   char *id_str = id_token.as.vstr;
+  // printf("recursive decl %d %s\n", recursive, id_str);
 
   advance();
   return AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
@@ -77,7 +92,7 @@ AST *parse_statement() {
     //   return parse_statement();
     // }
     case TOKEN_ASSIGNMENT: {
-      return assignment_statement();
+      return assignment_statement(false);
     }
     // case TOKEN_WHILE: {
     // }

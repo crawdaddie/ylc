@@ -108,8 +108,13 @@ AST *parse_fn_prototype() {
 }
 
 AST *parse_function(bool can_assign) {
+  char *fn_name = NULL;
+
+  if (match(TOKEN_IDENTIFIER)) {
+    fn_name = strdup(parser.previous.as.vstr);
+  }
   AST *prototype = parse_fn_prototype();
   AST *body = parse_fn_body();
-  AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body);
+  AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body, fn_name);
   return function_ast;
 }

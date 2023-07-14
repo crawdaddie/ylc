@@ -45,6 +45,7 @@ typedef struct SymbolValue {
     TYPE_FN_PARAM,
     TYPE_VARIABLE,
     TYPE_GLOBAL_VARIABLE,
+    TYPE_RECURSIVE_REF,
     TYPE_INT,
     TYPE_NUMBER,
     TYPE_BOOL,
@@ -64,6 +65,10 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_GLOBAL_VARIABLE;
+    struct TYPE_RECURSIVE_REF {
+      LLVMValueRef llvm_value;
+      LLVMTypeRef llvm_type;
+    } TYPE_RECURSIVE_REF;
 
     struct TYPE_FN_PARAM {
       int arg_idx;
@@ -131,45 +136,4 @@ bool in_global_scope(SymbolTable *table);
 void init_types(Symbol **types, LLVMContextRef context);
 void init_symbol_table(SymbolTable *table);
 
-// int main() {
-//   SymbolTable symbolTable;
-//   symbolTable.currentFrameIndex = -1;
-//
-//   // Enter a new scope
-//   pushFrame(&symbolTable);
-//
-//   // Insert some entries into the symbol table
-//   insert(&symbolTable, "x", 10);
-//   insert(&symbolTable, "y", 20);
-//
-//   // Lookup values for some keys
-//   printf("Value of x: %d\n", lookup(&symbolTable, "x"));
-//   printf("Value of y: %d\n", lookup(&symbolTable, "y"));
-//
-//   // Enter a new scope
-//   pushFrame(&symbolTable);
-//
-//   // Insert a new entry in the inner scope
-//   insert(&symbolTable, "x", 30);
-//
-//   // Lookup values for some keys in the inner scope
-//   printf("Value of x in inner scope: %d\n", lookup(&symbolTable, "x"));
-//   printf("Value of y in inner scope: %d\n", lookup(&symbolTable, "y"));
-//
-//   // Exit the inner scope
-//   popFrame(&symbolTable);
-//
-//   // Lookup values for some keys in the outer scope
-//   printf("Value of x in outer scope: %d\n", lookup(&symbolTable, "x"));
-//   printf("Value of y in outer scope: %d\n", lookup(&symbolTable, "y"));
-//
-//   // Exit the outer scope
-//   popFrame(&symbolTable);
-//
-//   // Lookup values for some keys after exiting all scopes
-//   printf("Value of x after exiting scopes: %d\n", lookup(&symbolTable, "x"));
-//   printf("Value of y after exiting scopes: %d\n", lookup(&symbolTable, "y"));
-//
-//   return 0;
-// }
 #endif

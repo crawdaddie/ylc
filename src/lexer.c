@@ -16,6 +16,11 @@ void print_token(token token) {
     break;
   }
 
+    // case TOKEN_REC: {
+    //   printf("recursive");
+    //   break;
+    // }
+
   case TOKEN_LP: {
 
     printf("(");

@@ -120,6 +120,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_IDENTIFIER: {
     return codegen_identifier(ast, ctx);
   }
+
+  case AST_IF_ELSE: {
+    return NULL;
+  }
   }
   return NULL;
 }

@@ -78,7 +78,13 @@ void print_ast(AST ast, int indent) {
     break;
   }
   case AST_FN_DECLARATION: {
-    printf("fn: \n");
+    char *name = ast.data.AST_FN_DECLARATION.name;
+    if (name == NULL) {
+      printf("fn: \n");
+    } else {
+      printf("fn: (%s)\n", name);
+    }
+
     left_pad(indent + 1);
     printf("fn proto:\n");
     print_ast(*ast.data.AST_FN_DECLARATION.prototype, indent + 2);
@@ -117,6 +123,19 @@ void print_ast(AST ast, int indent) {
       printf(",");
     }
     printf(")");
+    break;
+  }
+  case AST_IF_ELSE: {
+    printf("if:");
+    print_ast(*ast.data.AST_IF_ELSE.condition, 0);
+    printf("\n");
+    print_ast(*ast.data.AST_IF_ELSE.if_body, indent + 1);
+    if (ast.data.AST_IF_ELSE.else_body) {
+      left_pad(indent);
+      printf("else:");
+      printf("\n");
+      print_ast(*ast.data.AST_IF_ELSE.else_body, indent + 1);
+    }
     break;
   }
   }

@@ -27,6 +27,7 @@ struct AST {
     AST_FN_PROTOTYPE,
     AST_CALL,
     AST_TUPLE,
+    AST_IF_ELSE,
   } tag;
 
   union {
@@ -92,6 +93,7 @@ struct AST {
     struct AST_FN_DECLARATION {
       AST *prototype;
       AST *body;
+      char *name;
     } AST_FN_DECLARATION;
 
     struct AST_FN_PROTOTYPE {
@@ -125,6 +127,12 @@ struct AST {
       int length;
       AST **members;
     } AST_TUPLE;
+
+    struct AST_IF_ELSE {
+      AST *condition;
+      AST *if_body;
+      AST *else_body;
+    } AST_IF_ELSE;
 
   } data;
 };

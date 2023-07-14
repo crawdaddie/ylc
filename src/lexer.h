@@ -42,6 +42,7 @@ typedef enum token_type {
   TOKEN_IF,
   TOKEN_ELSE,
   TOKEN_WHILE,
+  // TOKEN_REC,
   TOKEN_NIL, // end keywords
   TOKEN_COMMENT,
 
@@ -65,7 +66,9 @@ static keyword keywords[TOKEN_NIL - TOKEN_FN + 1] = {
     {TOKEN_IF, "if"},
     {TOKEN_ELSE, "else"},
     {TOKEN_WHILE, "while"},
-    {TOKEN_NIL, "nil"}};
+    // {TOKEN_REC, "rec"},
+    {TOKEN_NIL, "nil"},
+};
 
 typedef union literal {
   char *vstr;

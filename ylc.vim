@@ -59,7 +59,7 @@ syn keyword   simpleFunction      fn
 syn match     simpleBraces	  "[{}\[\]]"
 syn match     simpleParens	  "[()]"
 
-if main_syntax == "simple"
+if main_syntax == "ylc"
   syn sync fromstart
   syn sync maxlines=100
 
