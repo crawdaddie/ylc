@@ -5,6 +5,7 @@
 
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   char *identifier = ast->data.AST_IDENTIFIER.identifier;
+  printf("identifier %s", identifier);
   SymbolValue sym;
 
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
@@ -30,10 +31,9 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     return LLVMGetParam(ctx->currentFunction, sym.data.TYPE_FN_PARAM.arg_idx);
   }
   case TYPE_RECURSIVE_REF: {
-    // found symbol
-    LLVMValueRef value = sym.data.TYPE_RECURSIVE_REF.llvm_value;
-    return LLVMBuildLoad2(ctx->builder, sym.data.TYPE_RECURSIVE_REF.llvm_type,
-                          value, identifier);
+    LLVMValueRef func =
+        LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
+    return func;
   }
   }
 }

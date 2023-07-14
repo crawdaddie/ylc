@@ -129,7 +129,7 @@ struct AST {
 
     struct AST_IF_ELSE {
       AST *condition;
-      AST *if_body;
+      AST *then_body;
       AST *else_body;
     } AST_IF_ELSE;
 

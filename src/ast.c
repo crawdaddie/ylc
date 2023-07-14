@@ -129,7 +129,7 @@ void print_ast(AST ast, int indent) {
     printf("if:");
     print_ast(*ast.data.AST_IF_ELSE.condition, 0);
     printf("\n");
-    print_ast(*ast.data.AST_IF_ELSE.if_body, indent + 1);
+    print_ast(*ast.data.AST_IF_ELSE.then_body, indent + 1);
     if (ast.data.AST_IF_ELSE.else_body) {
       left_pad(indent);
       printf("else:");

@@ -46,4 +46,4 @@ repl:
 
 .PHONY: test
 test:
-	make && ./build/lang test.ylc
+	make && ./build/lang examples/test.ylc
