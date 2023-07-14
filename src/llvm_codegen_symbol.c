@@ -5,7 +5,6 @@
 
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   char *identifier = ast->data.AST_IDENTIFIER.identifier;
-  printf("identifier %s", identifier);
   SymbolValue sym;
 
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {

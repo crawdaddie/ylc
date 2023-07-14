@@ -42,7 +42,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 
   // Insert body as return vale.
   // LLVMBuildRet(ctx->builder, LLVMVoidLLVMVoid);
-  LLVMPositionBuilderAtEnd(ctx->builder, block);
+  LLVMPositionBuilderAtEnd(ctx->builder, LLVMGetInsertBlock(ctx->builder));
   LLVMBuildRetVoid(ctx->builder);
 
   // Verify function.

@@ -34,20 +34,6 @@ AST *ast_statement_list(int length, ...) {
 
   return stmt_list;
 }
-static AST *if_statement() {
-  advance();
-  if (!match(TOKEN_LP)) {
-    fprintf(stderr, "Error, expected expression after if\n");
-    return NULL;
-  }
-  AST *condition = parse_expression();
-  if (!match(TOKEN_RP)) {
-    return NULL;
-  }
-  AST *if_body = parse_fn_body();
-  AST *else_body = parse_fn_body();
-  return AST_NEW(IF_ELSE, condition, if_body, else_body);
-}
 static AST *return_statement() { return NULL; }
 static AST *assignment_statement();
 static AST *let_statement() {
@@ -107,9 +93,9 @@ AST *parse_statement() {
     // }
     // case TOKEN_LEFT_BRACE: {
     // }
-    case TOKEN_IF: {
-      return if_statement();
-    }
+    // case TOKEN_IF: {
+    //   return if_statement();
+    // }
     case TOKEN_RETURN: {
       return return_statement();
     }

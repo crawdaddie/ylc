@@ -150,6 +150,20 @@ static AST *parse_grouping(bool can_assign) {
   return expr;
 }
 
+static AST *if_expression(bool can_assign) {
+  if (!match(TOKEN_LP)) {
+    fprintf(stderr, "Error, expected expression after if\n");
+    return NULL;
+  }
+  AST *condition = parse_expression();
+  if (!match(TOKEN_RP)) {
+    return NULL;
+  }
+  AST *then_body = parse_fn_body();
+  AST *else_body = parse_fn_body();
+  return AST_NEW(IF_ELSE, condition, then_body, else_body);
+}
+
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
@@ -185,7 +199,7 @@ ParseRule rules[] = {
     /* [TOKEN_FOR] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_FN] = {parse_function, NULL, PREC_NONE},
     // [TOKEN_REC] = {parse_recursive_declaration, NULL, PREC_NONE},
-    /* [TOKEN_IF] = {NULL, NULL, PREC_NONE}, */
+    [TOKEN_IF] = {if_expression, NULL, PREC_NONE},
     // [TOKEN_NIL] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */ /* [TOKEN_PRINT] = {NULL, NULL,
                                                 PREC_NONE}, */
