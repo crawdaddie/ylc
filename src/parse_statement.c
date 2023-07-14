@@ -49,13 +49,13 @@ static AST *if_statement() {
   return AST_NEW(IF_ELSE, condition, if_body, else_body);
 }
 static AST *return_statement() { return NULL; }
-static AST *assignment_statement(bool recursive);
+static AST *assignment_statement();
 static AST *let_statement() {
   advance();
   if (match(TOKEN_IDENTIFIER)) {
     if (check(TOKEN_ASSIGNMENT)) {
       // let <id> = <expr> - declaration immediately followed by assignment
-      return assignment_statement(false);
+      return assignment_statement();
     }
     token id_token = parser.previous;
     char *id_str = id_token.as.vstr;
@@ -65,12 +65,17 @@ static AST *let_statement() {
     return NULL;
   }
 }
-static AST *assignment_statement(bool recursive) {
+static AST *assignment_statement() {
   token id_token = parser.previous;
   char *id_str = id_token.as.vstr;
-  // printf("recursive decl %d %s\n", recursive, id_str);
 
   advance();
+  if (check(TOKEN_FN)) {
+    advance();
+    // printf("combined fn & var assignment\n");
+    return parse_named_function(strdup(id_str));
+  }
+
   return AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
 }
 /**
@@ -92,7 +97,7 @@ AST *parse_statement() {
     //   return parse_statement();
     // }
     case TOKEN_ASSIGNMENT: {
-      return assignment_statement(false);
+      return assignment_statement();
     }
     // case TOKEN_WHILE: {
     // }

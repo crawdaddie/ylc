@@ -1,5 +1,6 @@
 #include "llvm_codegen.h"
 #include "llvm_codegen_arithmetic.h"
+#include "llvm_codegen_control_flow.h"
 #include "llvm_codegen_function.h"
 #include "llvm_codegen_symbol.h"
 #include <llvm-c/Analysis.h>
@@ -122,7 +123,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_IF_ELSE: {
-    return NULL;
+    return codegen_if_else(ast, ctx);
   }
   }
   return NULL;

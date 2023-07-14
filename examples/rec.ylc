@@ -1,4 +1,4 @@
-let rec_func = fn rec_func(int a) int {
+let rec_func = fn (int a) int {
   # give function a local name that is bound to itself within its context
   rec_func(a + 1)
 }

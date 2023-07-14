@@ -82,7 +82,7 @@ void print_ast(AST ast, int indent) {
     if (name == NULL) {
       printf("fn: \n");
     } else {
-      printf("fn: (%s)\n", name);
+      printf("%s = fn: \n", name);
     }
 
     left_pad(indent + 1);
@@ -99,8 +99,8 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_ASSIGNMENT: {
-    printf("assign to symbol: [%s]\n", ast.data.AST_ASSIGNMENT.identifier);
-    print_ast(*ast.data.AST_ASSIGNMENT.expression, indent + 1);
+    printf("%s = ", ast.data.AST_ASSIGNMENT.identifier);
+    print_ast(*ast.data.AST_ASSIGNMENT.expression, 0);
     break;
   }
 

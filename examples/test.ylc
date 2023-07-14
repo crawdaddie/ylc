@@ -9,8 +9,4 @@ let b = fn (int a0, int b0, int c0) int {
   k = 2 # reassignment
   a0 + b0 + c0 + k
 }
-#
-#let curried = b(1, 2) # not implemented
-a = 2
-
 b(1,2,3)

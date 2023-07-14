@@ -99,7 +99,6 @@ struct AST {
     struct AST_FN_PROTOTYPE {
       int length;
       AST **parameters;
-      char *name;
       char *type;
     } AST_FN_PROTOTYPE;
 

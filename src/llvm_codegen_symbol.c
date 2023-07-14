@@ -32,8 +32,8 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   case TYPE_RECURSIVE_REF: {
     // found symbol
     LLVMValueRef value = sym.data.TYPE_RECURSIVE_REF.llvm_value;
-    return LLVMBuildLoad2(ctx->builder, sym.data.TYPE_RECURSIVE_REF.llvm_type, value,
-                          identifier);
+    return LLVMBuildLoad2(ctx->builder, sym.data.TYPE_RECURSIVE_REF.llvm_type,
+                          value, identifier);
   }
   }
 }
@@ -52,7 +52,8 @@ LLVMValueRef codegen_symbol_declaration(AST *ast, Context *ctx) {
   table_insert(ctx->symbol_table, identifier, sym);
   return NULL;
 }
-static LLVMValueRef declare_global(char *identifier, LLVMValueRef value, LLVMTypeRef type, Context *ctx) {
+static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
+                                   LLVMTypeRef type, Context *ctx) {
   SymbolValue sym;
 
   // global
@@ -66,8 +67,10 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value, LLVMTyp
   table_insert(ctx->symbol_table, strdup(identifier), sym);
   return sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
 }
-static LLVMValueRef assign_global(SymbolValue symbol, char *identifier, LLVMValueRef value, LLVMTypeRef type, Context *ctx) {
-
+static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
+                                  LLVMValueRef value, LLVMTypeRef type,
+                                  Context *ctx) {
+  printf("assign pre-existing global\n");
   LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
 
   if (symbol.data.TYPE_GLOBAL_VARIABLE.llvm_type != type) {
@@ -81,7 +84,8 @@ static LLVMValueRef assign_global(SymbolValue symbol, char *identifier, LLVMValu
   return global;
 }
 
-static LLVMValueRef declare_local(char *identifier, LLVMValueRef value, LLVMTypeRef type, Context *ctx) {
+static LLVMValueRef declare_local(char *identifier, LLVMValueRef value,
+                                  LLVMTypeRef type, Context *ctx) {
   SymbolValue sym;
   sym.type = TYPE_VARIABLE;
   LLVMValueRef alloca = LLVMBuildAlloca(ctx->builder, type, identifier);
@@ -94,7 +98,9 @@ static LLVMValueRef declare_local(char *identifier, LLVMValueRef value, LLVMType
   return sym.data.TYPE_VARIABLE.llvm_value;
 }
 
-static LLVMValueRef assign_local(SymbolValue symbol, char *identifier, LLVMValueRef value, LLVMTypeRef type, Context *ctx) {
+static LLVMValueRef assign_local(SymbolValue symbol, char *identifier,
+                                 LLVMValueRef value, LLVMTypeRef type,
+                                 Context *ctx) {
 
   LLVMValueRef alloca = symbol.data.TYPE_VARIABLE.llvm_value;
   LLVMTypeRef symbol_type = symbol.data.TYPE_VARIABLE.llvm_type;
@@ -110,17 +116,8 @@ static LLVMValueRef assign_local(SymbolValue symbol, char *identifier, LLVMValue
   return alloca;
 }
 
-LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
-
-  char *identifier = ast->data.AST_ASSIGNMENT.identifier;
-  AST *expr = ast->data.AST_ASSIGNMENT.expression;
-
-  LLVMValueRef value = codegen(expr, ctx);
-  if (value == NULL) {
-    return NULL;
-  }
-
-  LLVMTypeRef type = LLVMTypeOf(value);
+LLVMValueRef codegen_symbol(char *identifier, LLVMValueRef value,
+                            LLVMTypeRef type, Context *ctx) {
 
   SymbolValue sym;
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
@@ -135,7 +132,7 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   switch (sym.type) {
 
   case TYPE_GLOBAL_VARIABLE: {
-    return assign_global(sym, identifier, value, type, ctx); 
+    return assign_global(sym, identifier, value, type, ctx);
   }
   case TYPE_VARIABLE: {
     return assign_local(sym, identifier, value, type, ctx);
@@ -146,4 +143,20 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
     return NULL;
   }
   }
+}
+
+LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
+
+  char *identifier = ast->data.AST_ASSIGNMENT.identifier;
+  AST *expr = ast->data.AST_ASSIGNMENT.expression;
+
+  LLVMValueRef value = codegen(expr, ctx);
+
+  if (value == NULL) {
+    return NULL;
+  }
+
+  LLVMTypeRef type = LLVMTypeOf(value);
+
+  return codegen_symbol(identifier, value, type, ctx);
 }
