@@ -101,7 +101,7 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
       LLVMFunctionType(ret_type, prototype, arg_count, 0);
 
   *func = LLVMAddFunction(ctx->module, "tmp", function_type);
-  *func_type = LLVMTypeOf(func);
+  *func_type = LLVMTypeOf(*func);
 }
 
 static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
@@ -120,8 +120,10 @@ static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
 
   LLVMValueRef prevFunc = ctx->currentFunction;
   enter_function(ctx, func);
+  
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
   store_self(name, func, func_type, ctx);
+
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 
@@ -164,7 +166,6 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   LLVMValueRef prevFunc = ctx->currentFunction;
   enter_function(ctx, func);
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
-  store_self(ast->data.AST_FN_DECLARATION.name, func, func_type, ctx);
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 

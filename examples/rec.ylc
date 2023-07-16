@@ -1,6 +1,9 @@
-let rec_func = fn (int a) int {
-  # give function a local name that is bound to itself within its context
-  rec_func(a + 1)
+let rec_func = fn (int input) int {
+  if (input == 10) {
+    input
+  } else {
+    rec_func(input + 1)
+  }
 }
 
 rec_func(0)

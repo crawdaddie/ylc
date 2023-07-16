@@ -32,11 +32,10 @@ LLVMOpcode OperatorMapFloat[] = {
     [TOKEN_MODULO] = LLVMFRem,
 };
 
-LLVMOpcode OperatorMapSInt[] = {[TOKEN_PLUS] = LLVMAdd,
-                                [TOKEN_MINUS] = LLVMSub,
-                                [TOKEN_STAR] = LLVMMul,
-                                [TOKEN_SLASH] = LLVMSDiv,
-                                [TOKEN_MODULO] = LLVMSRem};
+LLVMOpcode OperatorMapSInt[] = {
+    [TOKEN_PLUS] = LLVMAdd,   [TOKEN_MINUS] = LLVMSub,   [TOKEN_STAR] = LLVMMul,
+    [TOKEN_SLASH] = LLVMSDiv, [TOKEN_MODULO] = LLVMSRem,
+};
 
 static LLVMOpcode op_map(token_type op, int is_float) {
   if (is_float) {
@@ -45,12 +44,21 @@ static LLVMOpcode op_map(token_type op, int is_float) {
   return OperatorMapSInt[op];
 }
 
+static LLVMValueRef codegen_equality(LLVMValueRef left, LLVMValueRef right,
+                                     Context *ctx) {
+  // return 1 for equal, 0 for false
+  return LLVMBuildICmp(ctx->builder, LLVMIntEQ, left, right, inst_name("icmp"));
+}
 LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,
                              LLVMValueRef right, Context *ctx) {
 
   LLVMTypeRef ltype = LLVMTypeOf(left);
   LLVMTypeRef rtype = LLVMTypeOf(right);
   LLVMTypeRef itype = int_type(ctx);
+
+  if (op == TOKEN_EQUALITY) {
+    return codegen_equality(left, right, ctx);
+  }
 
   if (ltype == itype && rtype == itype) {
     return LLVMBuildBinOp(ctx->builder, OperatorMapSInt[op], left, right,

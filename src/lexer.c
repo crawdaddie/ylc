@@ -16,10 +16,10 @@ void print_token(token token) {
     break;
   }
 
-    // case TOKEN_REC: {
-    //   printf("recursive");
-    //   break;
-    // }
+  case TOKEN_BAR: {
+    printf("|");
+    break;
+  }
 
   case TOKEN_LP: {
 
@@ -213,7 +213,7 @@ static token create_symbol_token(enum token_type type) {
 }
 
 token create_identifier(char *str) {
-  for (int i = 0; i < TOKEN_NIL - TOKEN_FN + 1; i++) {
+  for (int i = 0; i < NUM_KEYWORDS; i++) {
     keyword kw = keywords[i];
     if (strcmp(str, kw.match) == 0) {
       literal lit = {.vident = kw.match};
@@ -437,6 +437,17 @@ static int _STAR_MATCHER(const char *input, token *tail) {
   }
   return 0;
 }
+
+/*
+static int _BAR_MATCHER(const char *input, token *tail) {
+  if (*input == '|') {
+    *tail = create_symbol_token(TOKEN_BAR);
+    return 1;
+  }
+  return 0;
+}
+*/
+
 static int _COMMENT_MATCHER(const char *input) {
   if (*input == '#') {
     int len = seek_char(input, '\n');
@@ -444,6 +455,38 @@ static int _COMMENT_MATCHER(const char *input) {
   }
   return 0;
 }
+
+static int _BAR_MATCHER(const char *input, token *tail) {
+  if (*input == '|') {
+    *tail = create_symbol_token(TOKEN_BAR);
+    return 1;
+  }
+  return 0;
+}
+//
+// static int _BAR_MATCHER(const char *input, token *tail) {
+//   if (strncmp(input, "||", 2) == 0) {
+//     *tail = create_symbol_token(TOKEN_LOGICAL_OR);
+//     return 2;
+//   }
+//   if (*input == '|') {
+//     *tail = create_symbol_token(TOKEN_BAR);
+//     return 1;
+//   }
+//   return 0;
+// }
+
+// static int _AND_MATCHER(const char *input, token *tail) {
+//   if (strncmp(input, "&&", 2) == 0) {
+//     *tail = create_symbol_token(TOKEN_LOGICAL_AND);
+//     return 2;
+//   }
+//   if (*input == '&') {
+//     *tail = create_symbol_token(TOKEN_AMPERSAND);
+//     return 1;
+//   }
+//   return 0;
+// }
 
 static int seek_ws(const char *input) {
   int seek = 0;
@@ -509,13 +552,15 @@ static int _MATCH_IDENTIFIER(const char *input, token *tail) {
   return 0;
 }
 
-#define NUM_MATCHERS 18
+#define NUM_MATCHERS 19
 static token_matcher matchers[NUM_MATCHERS] = {
     _BRACKET_MATCHER,   _COMMA_MATCHER,        _DOT_MATCHER,    _EQL_MATCHER,
     _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER, _PIPE_MATCHER,
     _MINUS_MATCHER,     _BANG_MATCHER,         _MODULO_MATCHER, _PLUS_MATCHER,
     _SLASH_MATCHER,     _STAR_MATCHER,         _NL_MATCHER,     _STRING_MATCHER,
-    _NUMBER_MATCHER,    _MATCH_IDENTIFIER};
+    _NUMBER_MATCHER,    _MATCH_IDENTIFIER,     _BAR_MATCHER,
+    // _AND_MATCHER
+};
 
 static token error_token(char *msg) {
   return create_literal_token(TOKEN_ERROR, (literal){.vstr = msg});

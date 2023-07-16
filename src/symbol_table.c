@@ -44,6 +44,21 @@ void pop_frame(SymbolTable *table) {
     table->current_frame_index--;
   }
 }
+void print_table(SymbolTable *table) {
+
+  int frame_idx = table->current_frame_index;
+  if (frame_idx > 0) {
+    StackFrame *frame = &table->stack[frame_idx];
+    for (int i = 0; i < TABLE_SIZE; i++) {
+      Symbol *entry = frame->entries[i];
+      while (entry != NULL) {
+        Symbol *nextSymbol = entry->next;
+        entry = nextSymbol;
+      }
+    }
+    frame_idx--;
+  }
+}
 
 // Function to insert a type into the symbol table
 // void insert_type(Symbol **types, const char *key, SymbolValue value) {

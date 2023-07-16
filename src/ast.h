@@ -28,6 +28,7 @@ struct AST {
     AST_CALL,
     AST_TUPLE,
     AST_IF_ELSE,
+    AST_MATCH,
   } tag;
 
   union {
@@ -132,6 +133,12 @@ struct AST {
       AST *then_body;
       AST *else_body;
     } AST_IF_ELSE;
+
+    struct AST_MATCH {
+      AST *candidate;
+      int length;
+      AST **matches;
+    } AST_MATCH;
 
   } data;
 };

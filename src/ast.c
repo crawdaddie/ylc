@@ -138,6 +138,21 @@ void print_ast(AST ast, int indent) {
     }
     break;
   }
+
+  case AST_MATCH: {
+    if (ast.data.AST_MATCH.length == 0) {
+      break;
+    }
+    printf("match on :");
+    print_ast(*ast.data.AST_MATCH.candidate, 0);
+
+    printf("\n");
+    for (int i = 0; i < ast.data.AST_MATCH.length; i++) {
+      print_ast(*ast.data.AST_MATCH.matches[i], indent + 1);
+      printf("\n");
+    }
+    break;
+  }
   }
 }
 void free_ast(AST *ast) {

@@ -1,12 +1,10 @@
 let c = fn (int V) int {
-  V + 1
+  V + 2
 }
 
-let a = 1
 
 let b = fn (int a0, int b0, int c0) int {
-  let k = 1 # declare local var in function scope
-  k = 2 # reassignment
-  a0 + b0 + c0 + k
+  a0 + b0 + c0 + c(2) 
 }
+
 b(1,2,3)

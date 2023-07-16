@@ -42,6 +42,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 
   // Insert body as return vale.
   // LLVMBuildRet(ctx->builder, LLVMVoidLLVMVoid);
+
   LLVMPositionBuilderAtEnd(ctx->builder, LLVMGetInsertBlock(ctx->builder));
   LLVMBuildRetVoid(ctx->builder);
 
@@ -52,6 +53,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
     LLVMDeleteFunction(func);
     return NULL;
   }
+  LLVMDumpValue(func);
 
   return func;
 }
@@ -124,6 +126,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
   case AST_IF_ELSE: {
     return codegen_if_else(ast, ctx);
+  }
+  case AST_MATCH: {
+    return codegen_match(ast, ctx);
   }
   }
   return NULL;

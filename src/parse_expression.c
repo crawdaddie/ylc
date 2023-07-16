@@ -164,6 +164,67 @@ static AST *if_expression(bool can_assign) {
   return AST_NEW(IF_ELSE, condition, then_body, else_body);
 }
 
+AST *ast_match_list(int length, AST *candidate, ...) {
+
+  AST *tuple = AST_NEW(MATCH, candidate, length);
+  if (length == 0) {
+
+    AST **list = malloc(sizeof(AST *));
+    tuple->data.AST_MATCH.matches = list;
+    return tuple;
+  }
+  // Define a va_list to hold the variable arguments
+  va_list args;
+
+  // Initialize the va_list with the variable arguments
+  va_start(args, candidate);
+  AST **list = malloc(sizeof(AST *) * length);
+  for (int i = 0; i < length; i++) {
+    AST *arg = va_arg(args, AST *);
+    list[i] = arg;
+  }
+  tuple->data.AST_TUPLE.members = list;
+
+  va_end(args);
+
+  return tuple;
+}
+
+void ast_match_push(struct AST_MATCH *tuple, AST *item) {
+  if (item) {
+    tuple->length++;
+    tuple->matches = realloc(tuple->matches, sizeof(AST *) * tuple->length);
+    tuple->matches[tuple->length - 1] = item;
+  }
+}
+static AST *parse_match(bool can_assign) {
+  AST *candidate_expr = parse_expression();
+
+  if (check(TOKEN_NL)) {
+    advance();
+  }
+  AST *match_ast = ast_match_list(0, candidate_expr);
+  AST *match_expr;
+  while (match(TOKEN_BAR)) {
+    match_expr = parse_expression();
+    ast_match_push(&match_ast->data.AST_MATCH, match_expr);
+    if (check(TOKEN_NL)) {
+      advance();
+    }
+  }
+  if (match_ast->data.AST_MATCH.length == 0) {
+    fprintf(stderr, "Error: match expression must contain at least one path"); 
+    return NULL;
+  }
+
+  if (match_ast->data.AST_MATCH.length == 1) {
+    // just one branch - default branch, don't need to do any comparison
+    return match_expr;
+  }
+
+  return match_ast;
+}
+
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
@@ -173,6 +234,7 @@ ParseRule rules[] = {
     /* [TOKEN_DOT] = {NULL, dot, PREC_CALL}, */
     [TOKEN_MINUS] = {parse_unary, parse_binary, PREC_TERM},
     [TOKEN_PLUS] = {NULL, parse_binary, PREC_TERM},
+    [TOKEN_EQUALITY] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_MODULO] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_NL] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, parse_binary, PREC_FACTOR},
@@ -212,6 +274,8 @@ ParseRule rules[] = {
     [TOKEN_IDENTIFIER] = {identifier, NULL, PREC_NONE},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
+    [TOKEN_MATCH] = {parse_match, NULL, PREC_NONE},
+    // [TOKEN_PIPE] = {NULL, parse_binary, PREC_NONE}
 };
 
 static ParseRule *get_rule(enum token_type type) { return &(rules[type]); }

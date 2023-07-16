@@ -65,6 +65,7 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_GLOBAL_VARIABLE;
+
     struct TYPE_RECURSIVE_REF {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
@@ -136,4 +137,5 @@ bool in_global_scope(SymbolTable *table);
 void init_types(Symbol **types, LLVMContextRef context);
 void init_symbol_table(SymbolTable *table);
 
+void print_table(SymbolTable *table);
 #endif

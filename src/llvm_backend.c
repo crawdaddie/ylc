@@ -84,6 +84,8 @@ void enter_function(Context *ctx, LLVMValueRef function) {
 }
 
 void exit_function(Context *ctx, LLVMValueRef parentFunction) {
+
+  print_table(ctx->symbol_table);
   pop_frame(ctx->symbol_table);
   ctx->currentFunction = parentFunction;
 }
@@ -119,6 +121,7 @@ int LLVMRuntime(int repl, char *path) {
     dump_ast(ast);
 
     LLVMValueRef value = codegen(ast, &ctx);
+    LLVMDumpValue(value);
 
     dump_module(ctx.module);
     run_value(ctx.engine, value);
