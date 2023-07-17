@@ -108,7 +108,6 @@ AST *parse_fn_prototype() {
 }
 
 AST *parse_function(bool can_assign) {
-  printf("parse func\n");
   AST *prototype = parse_fn_prototype();
   AST *body = parse_fn_body();
   AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body, NULL);
@@ -117,7 +116,6 @@ AST *parse_function(bool can_assign) {
 
 AST *parse_named_function(char *name) {
 
-  printf("parse named func\n");
   AST *prototype = parse_fn_prototype();
   AST *body = parse_fn_body();
   AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body, name);
