@@ -1,5 +1,5 @@
-#ifndef _LANG_CODEGEN_CONTROL_FLOW_H
-#define _LANG_CODEGEN_CONTROL_FLOW_H
+#ifndef _LANG_CODEGEN_CONDITIONALS_H
+#define _LANG_CODEGEN_CONDITIONALS_H
 #include "ast.h"
 #include "llvm_backend.h"
 #include <llvm-c/Core.h>

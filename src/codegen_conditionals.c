@@ -1,4 +1,4 @@
-#include "codegen_control_flow.h"
+#include "codegen_conditionals.h"
 #include "codegen.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -20,9 +20,9 @@ static LLVMValueRef compare_eq(LLVMValueRef match_on, LLVMValueRef matcher,
 static LLVMValueRef match_predicate(LLVMValueRef match_on, LLVMValueRef test,
                                     Context *ctx) {
 
-  return LLVMBuildICmp(ctx->builder, LLVMIntEQ, match_on, test, inst_name("icmp"));
+  return LLVMBuildICmp(ctx->builder, LLVMIntEQ, match_on, test,
+                       inst_name("icmp"));
 }
-
 
 /*
  * Check if match_on evaluates to boolean 1
@@ -63,8 +63,11 @@ LLVMValueRef codegen_if_else(AST *ast, Context *ctx) {
   LLVMPositionBuilderAtEnd(ctx->builder, then_block);
 
   // Generate 'then' block.
+  enter_scope(ctx);
   LLVMValueRef then_value = codegen(ast->data.AST_IF_ELSE.then_body, ctx);
+  exit_scope(ctx);
   if (then_value == NULL) {
+
     return NULL;
   }
   LLVMBuildBr(ctx->builder, merge_block);
@@ -74,7 +77,9 @@ LLVMValueRef codegen_if_else(AST *ast, Context *ctx) {
 
   LLVMValueRef else_value;
   if (ast->data.AST_IF_ELSE.else_body != NULL) {
+    enter_scope(ctx);
     else_value = codegen(ast->data.AST_IF_ELSE.else_body, ctx);
+    exit_scope(ctx);
   }
 
   LLVMBuildBr(ctx->builder, merge_block);
@@ -106,7 +111,6 @@ LLVMValueRef codegen_match(AST *ast, Context *ctx) {
   LLVMBasicBlockRef block;
   LLVMValueRef condition;
 
-
   for (int i = 0; i < num_cases; i++) {
     AST *match_ast = case_asts[i];
     case_codegens[i].block =
@@ -130,8 +134,8 @@ LLVMValueRef codegen_match(AST *ast, Context *ctx) {
     AST *match_ast = case_asts[i];
 
     LLVMPositionBuilderAtEnd(ctx->builder, case_codegens[i].block);
-    codegen(match_ast->data.AST_BINOP.right, ctx);
-    ret = LLVMBuildBr(ctx->builder, mergeBlock);
+    ret = codegen(match_ast->data.AST_BINOP.right, ctx);
+    LLVMBuildBr(ctx->builder, mergeBlock);
   }
   LLVMPositionBuilderAtEnd(ctx->builder, mergeBlock);
   // LLVMSwitch

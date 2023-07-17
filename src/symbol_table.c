@@ -36,9 +36,9 @@ void pop_frame(SymbolTable *table) {
       Symbol *entry = frame->entries[i];
       while (entry != NULL) {
         Symbol *nextSymbol = entry->next;
-        printf("insert entry %s %p\n", entry->key, entry);
         free(entry->key);
         free(entry);
+        frame->entries[i] = NULL;
         entry = nextSymbol;
       }
     }
@@ -52,7 +52,6 @@ void table_insert(SymbolTable *table, const char *key, SymbolValue value) {
   StackFrame *frame = &table->stack[table->current_frame_index];
   Symbol *entry = frame->entries[index];
   Symbol *newSymbol = create_entry(key, value);
-  printf("insert entry %s %p %p\n", key, entry, newSymbol);
 
   // If there are no entries at the calculated index, insert the new entry
   if (entry == NULL) {

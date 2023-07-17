@@ -24,6 +24,9 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
     // LLVMValueRef global = sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     return LLVMGetInitializer(global);
+    // return LLVMBuildLoad2(ctx->builder,
+    // sym.data.TYPE_GLOBAL_VARIABLE.llvm_type,
+    //                       global, identifier);
   }
 
   case TYPE_FN_PARAM: {
@@ -63,19 +66,18 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
 
   LLVMSetInitializer(sym.data.TYPE_GLOBAL_VARIABLE.llvm_value, value);
 
-  table_insert(ctx->symbol_table, strdup(identifier), sym);
+  table_insert(ctx->symbol_table, identifier, sym);
   return sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
 }
 static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
                                   LLVMValueRef value, LLVMTypeRef type,
                                   Context *ctx) {
-  printf("assign pre-existing global\n");
   LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
 
+  LLVMTypeRef global_type = symbol.data.TYPE_GLOBAL_VARIABLE.llvm_type;
   if (symbol.data.TYPE_GLOBAL_VARIABLE.llvm_type != type) {
     fprintf(stderr, "Error assigning value of type %s to variable of type %s",
-            LLVMPrintTypeToString(type),
-            LLVMPrintTypeToString(symbol.data.TYPE_VARIABLE.llvm_type));
+            LLVMPrintTypeToString(type), LLVMPrintTypeToString(global_type));
     return NULL;
   }
 
@@ -93,7 +95,7 @@ static LLVMValueRef declare_local(char *identifier, LLVMValueRef value,
   sym.data.TYPE_VARIABLE.llvm_value = alloca;
   sym.data.TYPE_VARIABLE.llvm_type = type;
 
-  table_insert(ctx->symbol_table, strdup(identifier), sym);
+  table_insert(ctx->symbol_table, identifier, sym);
   return sym.data.TYPE_VARIABLE.llvm_value;
 }
 
