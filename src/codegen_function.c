@@ -4,7 +4,7 @@
 #include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>
-static LLVMTypeRef type_lookup(char *type, Context *ctx) {
+LLVMTypeRef type_lookup(char *type, Context *ctx) {
   // TODO: make this more smart
   if (strcmp(type, "int") == 0) {
     return LLVMInt32TypeInContext(ctx->context);

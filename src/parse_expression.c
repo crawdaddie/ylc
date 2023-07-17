@@ -202,6 +202,7 @@ void ast_match_push(struct AST_MATCH *tuple, AST *item) {
   }
 }
 static AST *parse_match(bool can_assign) {
+  printf("parse match\n");
   AST *match_on = parse_expression();
   AST *result_type = NULL;
   if (match_on->tag == AST_BINOP && match_on->data.AST_BINOP.op == TOKEN_PIPE) {
