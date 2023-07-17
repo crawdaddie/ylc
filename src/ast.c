@@ -22,6 +22,11 @@ void print_ast(AST ast, int indent) {
     break;
   }
 
+  case AST_STRING: {
+    printf(" '%s'", ast.data.AST_STRING.value);
+    break;
+  }
+
   case AST_BINOP: {
     printf("(");
     print_token((token){.type = ast.data.AST_BINOP.op});
@@ -145,6 +150,11 @@ void print_ast(AST ast, int indent) {
     }
     printf("match on :");
     print_ast(*ast.data.AST_MATCH.candidate, 0);
+    if (ast.data.AST_MATCH.result_type != NULL) {
+      printf("( returning ");
+      print_ast(*ast.data.AST_MATCH.result_type, 0);
+      printf(")");
+    }
 
     printf("\n");
     for (int i = 0; i < ast.data.AST_MATCH.length; i++) {

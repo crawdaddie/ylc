@@ -58,11 +58,11 @@ static AST *assignment_statement() {
   advance();
   if (check(TOKEN_FN)) {
     advance();
-    // printf("combined fn & var assignment\n");
     return parse_named_function(strdup(id_str));
   }
 
-  return AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
+  AST *expr = AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
+  return expr;
 }
 /**
  * match on tokens that begin a statement and call corresponding statement-type

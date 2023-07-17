@@ -65,7 +65,11 @@ static AST *integer(bool can_assign) {
   token token = parser.previous;
   return AST_NEW(INTEGER, token.as.vint);
 }
-
+static AST *parse_string(bool can_assign) {
+  token token = parser.previous;
+  AST *str = AST_NEW(STRING, strdup(token.as.vstr), strlen(token.as.vstr));
+  return str;
+}
 static AST *parse_literal(bool can_assign) {
   token token = parser.previous;
   return AST_NEW(BOOL, token.type == TOKEN_TRUE);
@@ -198,12 +202,19 @@ void ast_match_push(struct AST_MATCH *tuple, AST *item) {
   }
 }
 static AST *parse_match(bool can_assign) {
-  AST *candidate_expr = parse_expression();
+  AST *match_on = parse_expression();
+  AST *result_type = NULL;
+  if (match_on->tag == AST_BINOP && match_on->data.AST_BINOP.op == TOKEN_PIPE) {
+    result_type = match_on->data.AST_BINOP.right;
+    match_on = match_on->data.AST_BINOP.left;
+  }
 
   if (check(TOKEN_NL)) {
     advance();
   }
-  AST *match_ast = ast_match_list(0, candidate_expr);
+  AST *match_ast = ast_match_list(0, match_on);
+  match_ast->data.AST_MATCH.result_type = result_type;
+
   AST *match_expr;
   while (match(TOKEN_BAR)) {
     match_expr = parse_expression();
@@ -250,7 +261,7 @@ ParseRule rules[] = {
     [TOKEN_GT] = {NULL, parse_binary, PREC_COMPARISON},
     [TOKEN_LTE] = {NULL, parse_binary, PREC_COMPARISON},
     [TOKEN_GTE] = {NULL, parse_binary, PREC_COMPARISON},
-    // [TOKEN_STRING] = {string, NULL, PREC_NONE},
+    [TOKEN_STRING] = {parse_string, NULL, PREC_NONE},
     [TOKEN_NUMBER] = {number, NULL, PREC_NONE},
     [TOKEN_INTEGER] = {integer, NULL, PREC_NONE},
     /* [TOKEN_AND] = {NULL, and_, PREC_AND}, */

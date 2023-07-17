@@ -1,4 +1,6 @@
 #include "codegen_conditionals.h"
+#include "codegen_function.h"
+
 #include "codegen.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -113,7 +115,11 @@ LLVMValueRef codegen_match(AST *ast, Context *ctx) {
   // but would like to be able to use a match expr as an expr you can assign to
   // a variable
   // need to do some dynamic type inference but don't know how yet
-  LLVMTypeRef result_type = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+  AST *result_type_ast = ast->data.AST_MATCH.result_type;
+  LLVMTypeRef result_type =
+      result_type_ast
+          ? (type_lookup(result_type_ast->data.AST_IDENTIFIER.identifier, ctx))
+          : LLVMGetReturnType(LLVMGlobalGetValueType(func));
   LLVMValueRef result =
       LLVMBuildAlloca(ctx->builder, result_type, "result_var");
   LLVMBuildBr(ctx->builder, blocks[0]);

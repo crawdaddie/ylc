@@ -9,6 +9,7 @@ struct AST {
     AST_INTEGER,
     AST_NUMBER,
     AST_BOOL,
+    AST_STRING,
     AST_ADD,
     AST_SUBTRACT,
     AST_MUL,
@@ -44,6 +45,12 @@ struct AST {
     struct AST_NUMBER {
       float value;
     } AST_NUMBER;
+
+    struct AST_STRING {
+      const char *value;
+      int length;
+    } AST_STRING;
+
 
     struct AST_ADD {
       AST *left;
@@ -138,6 +145,7 @@ struct AST {
       AST *candidate;
       int length;
       AST **matches;
+      AST *result_type; // optional
     } AST_MATCH;
 
   } data;
