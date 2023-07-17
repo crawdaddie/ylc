@@ -29,4 +29,6 @@ typedef struct {
 
 AST *parse_expression();
 
+AST *parse_scoped_block(bool can_assign);
+
 #endif /* ifndef _LANG_EXPRESSION_H */

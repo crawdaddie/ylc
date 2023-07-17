@@ -93,9 +93,6 @@ AST *parse_statement() {
     // }
     // case TOKEN_LEFT_BRACE: {
     // }
-    // case TOKEN_IF: {
-    //   return if_statement();
-    // }
     case TOKEN_RETURN: {
       return return_statement();
     }

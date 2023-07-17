@@ -70,6 +70,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_number(ast, ctx);
   }
 
+  case AST_STRING: {
+    return codegen_number(ast, ctx);
+  }
+
   case AST_BINOP: {
     LLVMValueRef left = codegen(ast->data.AST_BINOP.left, ctx);
     LLVMValueRef right = codegen(ast->data.AST_BINOP.right, ctx);

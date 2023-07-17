@@ -1,4 +1,5 @@
 #include "parse_function.h"
+#include "parse_expression.h"
 #include "lexer.h"
 #include "parse.h"
 #include "parse_statement.h"
@@ -109,15 +110,17 @@ AST *parse_fn_prototype() {
 
 AST *parse_function(bool can_assign) {
   AST *prototype = parse_fn_prototype();
-  AST *body = parse_fn_body();
+  if (!match(TOKEN_LEFT_BRACE)) {
+    fprintf(stderr, "Error: expected { after function prototype\n");
+    return NULL;
+  }
+  AST *body = parse_scoped_block(true);
   AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body, NULL);
   return function_ast;
 }
 
 AST *parse_named_function(char *name) {
-
-  AST *prototype = parse_fn_prototype();
-  AST *body = parse_fn_body();
-  AST *function_ast = AST_NEW(FN_DECLARATION, prototype, body, name);
+  AST *function_ast = parse_function(true);
+  function_ast->data.AST_FN_DECLARATION.name = name;
   return function_ast;
 }

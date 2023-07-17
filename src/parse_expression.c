@@ -1,4 +1,5 @@
 #include "parse_expression.h"
+#include "parse_statement.h"
 #include "lexer.h"
 #include "parse.h"
 #include "parse_function.h"
@@ -125,13 +126,6 @@ static AST *parse_tuple() {
   return tuple;
 }
 
-static AST *parse_recursive_declaration(bool can_assign) {
-  printf("recursive fn\n");
-
-  print_current();
-  print_previous();
-  return NULL;
-}
 
 static AST *parse_call(bool can_assign, AST *prev_expr) {
   AST *parameters = parse_tuple();
@@ -202,7 +196,6 @@ void ast_match_push(struct AST_MATCH *tuple, AST *item) {
   }
 }
 static AST *parse_match(bool can_assign) {
-  printf("parse match\n");
   AST *match_on = parse_expression();
   AST *result_type = NULL;
   if (match_on->tag == AST_BINOP && match_on->data.AST_BINOP.op == TOKEN_PIPE) {
@@ -236,12 +229,37 @@ static AST *parse_match(bool can_assign) {
 
   return match_ast;
 }
+AST *parse_scoped_block(bool can_assign) {
+  AST *statements = ast_statement_list(0);
+
+  while (!match(TOKEN_RIGHT_BRACE)) {
+    if (check(TOKEN_EOF)) {
+      return NULL;
+    }
+    if (check(TOKEN_NL)) {
+      advance();
+      continue;
+    }
+    statements_push(&statements->data.AST_STATEMENT_LIST);
+  }
+  advance();
+
+  if (statements->data.AST_STATEMENT_LIST.length == 0) {
+    free_ast(statements);
+    return NULL;
+  }
+  if (statements->data.AST_STATEMENT_LIST.length == 1) {
+    return statements->data.AST_STATEMENT_LIST.statements[0];
+  }
+
+  return statements;
+}
 
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
-    /* [TOKEN_LEFT_BRACE] = {NULL, NULL, PREC_NONE}, */
-    /* [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
+    [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
+     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
     /* [TOKEN_DOT] = {NULL, dot, PREC_CALL}, */
     [TOKEN_MINUS] = {parse_unary, parse_binary, PREC_TERM},
@@ -272,7 +290,6 @@ ParseRule rules[] = {
     [TOKEN_FALSE] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_FOR] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_FN] = {parse_function, NULL, PREC_NONE},
-    // [TOKEN_REC] = {parse_recursive_declaration, NULL, PREC_NONE},
     [TOKEN_IF] = {if_expression, NULL, PREC_NONE},
     // [TOKEN_NIL] = {parse_literal, NULL, PREC_NONE},
     /* [TOKEN_OR] = {NULL, or_, PREC_OR}, */ /* [TOKEN_PRINT] = {NULL, NULL,
@@ -330,4 +347,4 @@ static AST *parse_precedence(Precedence precedence) {
   return expr;
 };
 
-AST *parse_expression() { return parse_precedence(PREC_ASSIGNMENT); }
+AST *parse_expression(){ return parse_precedence(PREC_ASSIGNMENT); }
