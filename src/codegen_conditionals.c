@@ -93,51 +93,58 @@ LLVMValueRef codegen_if_else(AST *ast, Context *ctx) {
   return phi;
 };
 
-typedef struct CodegenCase {
-  LLVMBasicBlockRef block;
-  LLVMValueRef condition;
-} CodegenCase;
-
 LLVMValueRef codegen_match(AST *ast, Context *ctx) {
   LLVMValueRef match_on = codegen(ast->data.AST_MATCH.candidate, ctx);
+
   // Retrieve function.
-  LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
+  LLVMValueRef func = current_function(ctx);
 
-  AST **case_asts = ast->data.AST_MATCH.matches;
   int num_cases = ast->data.AST_MATCH.length;
+  AST **match_expr_asts = ast->data.AST_MATCH.matches;
+  LLVMBasicBlockRef *blocks = malloc(sizeof(LLVMBasicBlockRef) * 2 * num_cases);
 
-  CodegenCase *case_codegens = malloc(sizeof(CodegenCase) * num_cases);
+  for (int i = 0; i < num_cases; ++i) {
+    blocks[2 * i] = LLVMAppendBasicBlock(func, inst_name("match_cond"));
+    blocks[2 * i + 1] = LLVMAppendBasicBlock(func, inst_name("match_expr"));
+  }
+  LLVMBasicBlockRef endBlock = LLVMAppendBasicBlock(func, "end");
 
-  LLVMBasicBlockRef block;
-  LLVMValueRef condition;
+  // TODO: treat type of match expression as equivalent to function return type
+  // but would like to be able to use a match expr as an expr you can assign to
+  // a variable
+  // need to do some dynamic type inference but don't know how yet
+  LLVMTypeRef result_type = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+  LLVMValueRef result =
+      LLVMBuildAlloca(ctx->builder, result_type, "result_var");
+  LLVMBuildBr(ctx->builder, blocks[0]);
 
-  for (int i = 0; i < num_cases; i++) {
-    AST *match_ast = case_asts[i];
-    case_codegens[i].block =
-        LLVMAppendBasicBlock(func, inst_name("case_block"));
-
+  for (int i = 0; i < num_cases; ++i) {
+    // FILL POSITION BLOCK
+    LLVMPositionBuilderAtEnd(ctx->builder, blocks[2 * i]);
     if (i < num_cases - 1) {
-      case_codegens[i].condition = match_predicate(
-          match_on, codegen(match_ast->data.AST_BINOP.left, ctx), ctx);
+      LLVMValueRef condition = match_predicate(
+          match_on, codegen(match_expr_asts[i]->data.AST_BINOP.left, ctx), ctx);
+
+      LLVMBuildCondBr(ctx->builder, condition, blocks[(2 * i) + 1],
+                      blocks[(2 * i) + 2]);
+    } else {
+      LLVMBuildBr(ctx->builder, blocks[(2 * i) + 1]);
     }
+
+    // FILL CORRESPONDING MATCH EXPR
+    LLVMPositionBuilderAtEnd(ctx->builder, blocks[2 * i + 1]);
+    enter_scope(ctx);
+    LLVMValueRef val = codegen(match_expr_asts[i]->data.AST_BINOP.right, ctx);
+    LLVMBuildStore(ctx->builder, val, result);
+    exit_scope(ctx);
+    // once we're done jump out of switch
+    LLVMBuildBr(ctx->builder, endBlock);
   }
-  LLVMBasicBlockRef mergeBlock = LLVMAppendBasicBlock(func, "merge");
 
-  for (int i = 0; i < num_cases - 1; i++) {
-    LLVMBuildCondBr(ctx->builder, case_codegens[i].condition,
-                    case_codegens[i].block, case_codegens[i + 1].block);
-  }
+  LLVMPositionBuilderAtEnd(ctx->builder, endBlock);
 
-  LLVMValueRef ret;
-  for (int i = 0; i < num_cases; i++) {
+  LLVMValueRef result_val =
+      LLVMBuildLoad2(ctx->builder, result_type, result, "match_result");
 
-    AST *match_ast = case_asts[i];
-
-    LLVMPositionBuilderAtEnd(ctx->builder, case_codegens[i].block);
-    ret = codegen(match_ast->data.AST_BINOP.right, ctx);
-    LLVMBuildBr(ctx->builder, mergeBlock);
-  }
-  LLVMPositionBuilderAtEnd(ctx->builder, mergeBlock);
-  // LLVMSwitch
-  return ret;
+  return result_val;
 }

@@ -53,7 +53,6 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
     LLVMDeleteFunction(func);
     return NULL;
   }
-  LLVMDumpValue(func);
 
   return func;
 }
