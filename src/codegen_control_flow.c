@@ -64,8 +64,6 @@ LLVMValueRef codegen_if_else(AST *ast, Context *ctx) {
 
   // Generate 'then' block.
   LLVMValueRef then_value = codegen(ast->data.AST_IF_ELSE.then_body, ctx);
-  // printf("\nthen type\n");
-  // LLVMDumpType(LLVMTypeOf(then_value));
   if (then_value == NULL) {
     return NULL;
   }

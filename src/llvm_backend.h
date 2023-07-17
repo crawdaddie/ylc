@@ -15,15 +15,14 @@ typedef struct {
   LLVMBuilderRef builder;
   LLVMExecutionEngineRef engine;
   SymbolTable *symbol_table;
-  LLVMValueRef currentFunction;
-  LLVMBasicBlockRef currentBlock;
 } Context;
 
 int init_ctx(Context *ctx);
 
 int reinit_ctx(Context *ctx);
 
-void enter_function(Context *ctx, LLVMValueRef function);
-void exit_function(Context *ctx, LLVMValueRef parentFunction);
+void enter_scope(Context *ctx);
+void exit_scope(Context *ctx);
+LLVMValueRef current_function(Context *ctx);
 
 #endif /* ifndef _LANG_LLVM_BACKEND_H */

@@ -27,14 +27,14 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
   // Generate body.
-  enter_function(ctx, func);
+  enter_scope(ctx);
 
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
 
   LLVMValueRef body = codegen(ast->data.AST_MAIN.body, ctx);
 
-  exit_function(ctx, NULL);
+  exit_scope(ctx);
   if (body == NULL) {
     LLVMDeleteFunction(func);
     return NULL;

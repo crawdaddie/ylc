@@ -78,16 +78,12 @@ int reinit_ctx(Context *ctx) {
   return 0;
 }
 
-void enter_function(Context *ctx, LLVMValueRef function) {
-  push_frame(ctx->symbol_table);
-  ctx->currentFunction = function;
-}
+void enter_scope(Context *ctx) { push_frame(ctx->symbol_table); }
 
-void exit_function(Context *ctx, LLVMValueRef parentFunction) {
+void exit_scope(Context *ctx) { pop_frame(ctx->symbol_table); }
 
-  print_table(ctx->symbol_table);
-  pop_frame(ctx->symbol_table);
-  ctx->currentFunction = parentFunction;
+LLVMValueRef current_function(Context *ctx) {
+  return LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
 }
 
 int LLVMRuntime(int repl, char *path) {

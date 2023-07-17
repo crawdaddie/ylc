@@ -27,7 +27,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   }
 
   case TYPE_FN_PARAM: {
-    return LLVMGetParam(ctx->currentFunction, sym.data.TYPE_FN_PARAM.arg_idx);
+    return LLVMGetParam(current_function(ctx), sym.data.TYPE_FN_PARAM.arg_idx);
   }
   case TYPE_RECURSIVE_REF: {
     LLVMValueRef func =

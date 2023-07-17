@@ -68,25 +68,6 @@ static void store_self(char *name, LLVMValueRef function, LLVMTypeRef func_type,
                                                      .llvm_type = func_type}}});
 }
 
-// LLVMValueRef codegen_function_prototype(AST *ast, Context *ctx) {
-//   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-//   bool recursive = ast->data.AST_FN_DECLARATION.name != NULL;
-//
-//   int arg_count = prototype_ast->data.AST_FN_PROTOTYPE.length;
-//
-//   LLVMTypeRef *prototype =
-//       codegen_function_type(ast->data.AST_FN_DECLARATION.prototype, ctx);
-//
-//   LLVMTypeRef ret_type =
-//       type_lookup(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
-//
-//   LLVMTypeRef function_type =
-//       LLVMFunctionType(ret_type, prototype, arg_count, 0);
-//
-//   LLVMValueRef func = LLVMAddFunction(ctx->module, "tmp", function_type);
-//   return func;
-// }
-
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
                        LLVMTypeRef *func_type) {
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
@@ -118,16 +99,15 @@ static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
 
-  LLVMValueRef prevFunc = ctx->currentFunction;
-  enter_function(ctx, func);
-  
+  enter_scope(ctx);
+
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
   store_self(name, func, func_type, ctx);
 
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 
-  exit_function(ctx, prevFunc);
+  exit_scope(ctx);
 
   LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
 
@@ -163,13 +143,12 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
   LLVMPositionBuilderAtEnd(ctx->builder, block);
 
-  LLVMValueRef prevFunc = ctx->currentFunction;
-  enter_function(ctx, func);
+  enter_scope(ctx);
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
 
-  exit_function(ctx, prevFunc);
+  exit_scope(ctx);
 
   LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
 
