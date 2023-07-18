@@ -1,9 +1,8 @@
-let rec_func = fn (int input) int {
-  if (input == 10) {
-    input
-  } else {
-    rec_func(input + 1)
-  }
+let rec_func = fn (int n) int {
+    match n
+    | 10 -> 10
+    | _  -> rec_func(n + 1)
+
 }
 
 rec_func(0)

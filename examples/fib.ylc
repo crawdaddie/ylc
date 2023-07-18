@@ -5,4 +5,4 @@ let fib = fn (int n) int {
     | _ -> fib(n - 1) + fib(n - 2)
 }
 
-fib(40)
+fib(50)

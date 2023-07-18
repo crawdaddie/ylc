@@ -68,7 +68,7 @@ static void store_self(char *name, LLVMValueRef function, LLVMTypeRef func_type,
 }
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
-                       LLVMTypeRef *func_type) {
+                       LLVMTypeRef *func_type, char *name) {
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
   int arg_count = ast->data.AST_FN_PROTOTYPE.length;
@@ -111,11 +111,11 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
 static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
   LLVMValueRef func;
   LLVMTypeRef func_type;
+  char *name = ast->data.AST_FN_DECLARATION.name;
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-  codegen_prototype(prototype_ast, ctx, &func, &func_type);
 
-  char *name = ast->data.AST_FN_DECLARATION.name;
+  codegen_prototype(prototype_ast, ctx, &func, &func_type, strdup(name));
 
   LLVMBasicBlockRef prevBlock = LLVMGetInsertBlock(ctx->builder);
 
@@ -160,7 +160,7 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   }
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-  codegen_prototype(prototype_ast, ctx, &func, &func_type);
+  codegen_prototype(prototype_ast, ctx, &func, &func_type, "anon_func");
 
   LLVMBasicBlockRef prevBlock = LLVMGetInsertBlock(ctx->builder);
 
@@ -205,7 +205,6 @@ static LLVMValueRef recursive_call(AST *ast, Context *ctx) {
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
-  printf("obtained func ");
   if (func == NULL) {
     fprintf(stderr, "Error: function %s not found in this scope\n",
             ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
