@@ -26,6 +26,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
   // Create function.
   LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
+
   // Generate body.
   enter_scope(ctx);
 

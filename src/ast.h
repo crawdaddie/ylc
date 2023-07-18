@@ -165,4 +165,5 @@ AST *ast_new(AST ast);
 #define AST_NEW(tag, ...)                                                      \
   ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
 
+#define AST_DATA(ast, TYPE) (struct AST_##TYPE)(ast->data.AST_##TYPE)
 #endif /* end of include guard: _LANG_AST_H */

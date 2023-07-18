@@ -12,4 +12,8 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx);
 
 LLVMValueRef declare_extern_function(char *identifier, LLVMValueRef value,
                                      LLVMTypeRef type, Context *ctx);
+
+SymbolValue get_value(char *identifier, Context *ctx);
+void set_value(char *identifier, Context *ctx, SymbolValue val);
+
 #endif /* ifndef _LANG_CODEGEN_SYMBOL_H */

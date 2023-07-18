@@ -52,14 +52,12 @@ static void store_self(char *name, LLVMValueRef function, LLVMTypeRef func_type,
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
                        LLVMTypeRef *func_type, char *name) {
-  AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
-  int arg_count = ast->data.AST_FN_PROTOTYPE.length;
+  struct AST_FN_PROTOTYPE data = AST_DATA(ast, FN_PROTOTYPE);
 
+  int arg_count = data.length;
   LLVMTypeRef *prototype = codegen_function_prototype_args(ast, ctx);
-
-  LLVMTypeRef ret_type = type_lookup(ast->data.AST_FN_PROTOTYPE.type, ctx);
-
+  LLVMTypeRef ret_type = type_lookup(data.type, ctx);
   LLVMTypeRef function_type =
       LLVMFunctionType(ret_type, prototype, arg_count, 0);
 
@@ -68,14 +66,14 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
 }
 
 static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
-  AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-  int arg_count = prototype_ast->data.AST_FN_PROTOTYPE.length;
+
+  int arg_count = ast->data.AST_FN_PROTOTYPE.length;
 
   LLVMTypeRef *param_types =
-      codegen_function_prototype_args(prototype_ast, ctx);
+      codegen_function_prototype_args(ast, ctx);
 
   LLVMTypeRef ret_type =
-      type_lookup(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
+      type_lookup(ast->data.AST_FN_PROTOTYPE.type, ctx);
 
   return LLVMFunctionType(ret_type, param_types, arg_count, 0);
 }
@@ -83,7 +81,9 @@ static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
 LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   char *name = ast->data.AST_FN_DECLARATION.name;
 
-  LLVMTypeRef func_type = codegen_extern_prototype(ast, ctx);
+  AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
+
+  LLVMTypeRef func_type = codegen_extern_prototype(prototype_ast, ctx);
 
   LLVMValueRef func = LLVMAddFunction(ctx->module, name, func_type);
 

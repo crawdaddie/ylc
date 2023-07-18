@@ -3,6 +3,23 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+SymbolValue get_value(char *identifier, Context *ctx) {
+  SymbolValue val;
+  if (table_lookup(ctx->symbol_table, identifier, &val) != 0) {
+    fprintf(stderr, "Error symbol %s not found\n", identifier);
+  }
+  return val;
+}
+
+void set_value(char *identifier, Context *ctx, SymbolValue val) {
+  SymbolValue v;
+  if (table_lookup(ctx->symbol_table, identifier, &v) != 0) {
+    fprintf(stderr, "Error symbol %s not found\n", identifier);
+    table_insert(ctx->symbol_table, identifier, val);
+  }
+  switch (v.type) {}
+}
+
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   char *identifier = ast->data.AST_IDENTIFIER.identifier;
   SymbolValue sym;
@@ -84,6 +101,7 @@ static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
   }
 
   LLVMSetInitializer(global, value);
+  // LLVMBuildLoad2(ctx->builder, global_type, global, "load");
   return global;
 }
 
