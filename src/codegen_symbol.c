@@ -22,7 +22,8 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
 
   case TYPE_GLOBAL_VARIABLE: {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-    return LLVMGetInitializer(global);
+    LLVMValueRef init = LLVMGetInitializer(global);
+    return init;
   }
 
   case TYPE_FN_PARAM: {
@@ -32,6 +33,11 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     LLVMValueRef func =
         LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
     return func;
+  }
+
+  case TYPE_EXTERN_FN: {
+    // return sym.data.TYPE_EXTERN_FN.llvm_value;
+    return LLVMGetNamedFunction(ctx->module, identifier);
   }
   }
 }
@@ -93,6 +99,15 @@ static LLVMValueRef declare_local(char *identifier, LLVMValueRef value,
 
   table_insert(ctx->symbol_table, identifier, sym);
   return sym.data.TYPE_VARIABLE.llvm_value;
+}
+LLVMValueRef declare_extern_function(char *identifier, LLVMValueRef value,
+                                     LLVMTypeRef type, Context *ctx) {
+  SymbolValue sym;
+  sym.type = TYPE_EXTERN_FN;
+  sym.data.TYPE_EXTERN_FN.llvm_value = value;
+  sym.data.TYPE_EXTERN_FN.llvm_type = type;
+  table_insert(ctx->symbol_table, identifier, sym);
+  return sym.data.TYPE_EXTERN_FN.llvm_value;
 }
 
 static LLVMValueRef assign_local(SymbolValue symbol, char *identifier,

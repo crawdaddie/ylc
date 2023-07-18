@@ -25,7 +25,6 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
 }
 static LLVMTypeRef *codegen_function_prototype_args(AST *prot, Context *ctx) {
   int arg_count = prot->data.AST_FN_PROTOTYPE.length;
-  printf("type %d\n", arg_count);
 
   AST **parameters = prot->data.AST_FN_PROTOTYPE.parameters;
 
@@ -87,7 +86,6 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
 
 static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-
   int arg_count = prototype_ast->data.AST_FN_PROTOTYPE.length;
 
   LLVMTypeRef *param_types =
@@ -104,10 +102,9 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
 
   LLVMTypeRef func_type = codegen_extern_prototype(ast, ctx);
 
-  LLVMValueRef func = LLVMAddFunction(
-      ctx->module, ast->data.AST_FN_DECLARATION.name, func_type);
+  LLVMValueRef func = LLVMAddFunction(ctx->module, name, func_type);
 
-  codegen_symbol(name, func, LLVMTypeOf(func), ctx);
+  declare_extern_function(name, func, func_type, ctx);
   return func;
 }
 
@@ -147,6 +144,7 @@ static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
     LLVMDeleteFunction(func);
     return NULL;
   }
+  LLVMRunFunctionPassManager(ctx->pass_manager, func);
   codegen_symbol(name, func, LLVMTypeOf(func), ctx);
   return func;
 }
@@ -188,7 +186,6 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
     LLVMDeleteFunction(func);
     return NULL;
   }
-  printf("return anon func\n");
   return func;
 }
 static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
@@ -208,12 +205,12 @@ static LLVMValueRef recursive_call(AST *ast, Context *ctx) {
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
+  printf("obtained func ");
   if (func == NULL) {
     fprintf(stderr, "Error: function %s not found in this scope\n",
             ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
     return NULL;
   }
-  LLVMDumpValue(func);
 
   // Evaluate arguments.
   AST *parameters = ast->data.AST_CALL.parameters;
@@ -233,7 +230,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   // Create call instruction.
 
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
-
                                     func, args, arg_count, inst_name("call"));
   free(args);
   return val;

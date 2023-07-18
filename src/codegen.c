@@ -74,10 +74,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     const char *str = ast->data.AST_STRING.value;
     int len = ast->data.AST_STRING.length;
-    LLVMValueRef string_const = LLVMConstString(str, len, 0);
-
-    // Get a pointer to the format string
-    return string_const;
+    return LLVMBuildGlobalStringPtr(ctx->builder, str, str);
   }
 
   case AST_BINOP: {

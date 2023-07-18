@@ -15,6 +15,7 @@ typedef struct {
   LLVMBuilderRef builder;
   LLVMExecutionEngineRef engine;
   SymbolTable *symbol_table;
+  LLVMPassManagerRef pass_manager;
 } Context;
 
 int init_ctx(Context *ctx);

@@ -53,6 +53,7 @@ typedef struct SymbolValue {
     TYPE_STRUCT,
     TYPE_CHAR,
     TYPE_STRING,
+    TYPE_EXTERN_FN,
   } type;
 
   union {
@@ -75,6 +76,10 @@ typedef struct SymbolValue {
       int arg_idx;
       // LLVMTypeRef type;
     } TYPE_FN_PARAM;
+    struct TYPE_EXTERN_FN {
+      LLVMValueRef llvm_value;
+      LLVMTypeRef llvm_type;
+    } TYPE_EXTERN_FN;
 
     // Int TYPE_INT;
     // Number TYPE_NUMBER;

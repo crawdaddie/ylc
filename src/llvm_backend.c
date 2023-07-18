@@ -31,6 +31,16 @@ int init_ctx(Context *ctx) {
   LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
   LLVMExecutionEngineRef engine;
 
+  LLVMPassManagerRef pass_manager =
+      LLVMCreateFunctionPassManagerForModule(module);
+
+  LLVMAddPromoteMemoryToRegisterPass(pass_manager);
+  LLVMAddInstructionCombiningPass(pass_manager);
+  LLVMAddReassociatePass(pass_manager);
+  LLVMAddGVNPass(pass_manager);
+  LLVMAddCFGSimplificationPass(pass_manager);
+  LLVMInitializeFunctionPassManager(pass_manager);
+
   char *error = NULL;
   if (LLVMCreateJITCompilerForModule(&engine, module, 2, &error) != 0) {
     fprintf(stderr, "Failed to create execution engine: %s\n", error);
@@ -42,6 +52,7 @@ int init_ctx(Context *ctx) {
   ctx->builder = builder;
   ctx->engine = engine;
   ctx->module = module;
+  ctx->pass_manager = pass_manager;
   return 0;
 }
 
@@ -99,16 +110,6 @@ int LLVMRuntime(int repl, char *path) {
   ctx.symbol_table = &symbol_table;
 
   // optimizations
-  // LLVMPassManagerRef pass_manager =
-  //     LLVMCreateFunctionPassManagerForModule(ctx.module);
-  // LLVMAddPromoteMemoryToRegisterPass(pass_manager);
-  // LLVMAddInstructionCombiningPass(pass_manager);
-  // LLVMAddReassociatePass(pass_manager);
-  // LLVMAddGVNPass(pass_manager);
-  // LLVMAddCFGSimplificationPass(pass_manager);
-  // LLVMInitializeFunctionPassManager(pass_manager);
-  //
-  //
 
   if (path) {
     char *filename = path;
