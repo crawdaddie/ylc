@@ -125,7 +125,13 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
         ast->data.AST_FN_DECLARATION.is_extern) {
       return codegen_extern_function(ast, ctx);
     }
-    return codegen_function(ast, ctx);
+
+    char *name = NULL;
+    if (ast->data.AST_FN_DECLARATION.name != NULL) {
+      name = ast->data.AST_FN_DECLARATION.name;
+    }
+
+    return codegen_named_function(ast, ctx, name);
   }
   case AST_CALL: {
     return codegen_call(ast, ctx);

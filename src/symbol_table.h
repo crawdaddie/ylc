@@ -5,43 +5,9 @@
 
 #define TABLE_SIZE 100
 #define STACK_SIZE 100
-// #define TYPES_TABLE_SIZE 31
-//
-// typedef struct TYPE_INT {
-//   LLVMTypeRef cgen_type_ref;
-// } Int;
-// typedef struct TYPE_NUMBER {
-//   LLVMTypeRef cgen_type_ref;
-// } Number;
-// typedef struct TYPE_BOOL {
-//   LLVMTypeRef cgen_type_ref;
-// } Bool;
-//
-// typedef struct TYPE_LIST {
-//   LLVMTypeRef cgen_type_ref;
-// } List;
-//
-// typedef struct TYPE_STRUCT {
-//   LLVMTypeRef cgen_type_ref;
-// } Struct;
-//
-// typedef struct TYPE_STRING {
-//   LLVMTypeRef cgen_type_ref;
-// } String;
-//
-// typedef struct TYPE_CHAR {
-//   LLVMTypeRef cgen_type_ref;
-// } Char;
 
 typedef struct SymbolValue {
   enum {
-    // TYPE_INTEGER,
-    // TYPE_NUMBER,
-    // TYPE_BOOL,
-    // TYPE_TUPLE,
-    // TYPE_FUNCTION,
-    // TYPE_POINTER,
-    // TYPE_STRUCT,
     TYPE_FN_PARAM,
     TYPE_VARIABLE,
     TYPE_GLOBAL_VARIABLE,
@@ -81,20 +47,15 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_EXTERN_FN;
-
-    // Int TYPE_INT;
-    // Number TYPE_NUMBER;
-    // Bool TYPE_BOOL;
-    // List TYPE_LIST;
-    // Struct TYPE_STRUCT;
-    // Char TYPE_CHAR;
-    // String TYPE_STRING;
-
   } data;
 } SymbolValue;
 
-#define SYMBOL(type)                                                           \
-  (SymbolValue) { tag }
+#define VALUE(type_tag, ...)                                                   \
+  (SymbolValue) {                                                              \
+    TYPE_##type_tag, {                                                         \
+      .TYPE_##type_tag = (struct TYPE_##type_tag) { __VA_ARGS__ }              \
+    }                                                                          \
+  }
 
 // Structure representing a symbol table entry
 typedef struct Symbol {

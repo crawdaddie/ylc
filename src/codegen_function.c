@@ -91,10 +91,9 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   return func;
 }
 
-static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
+LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef func;
   LLVMTypeRef func_type;
-  char *name = ast->data.AST_FN_DECLARATION.name;
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
@@ -108,7 +107,9 @@ static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
   enter_scope(ctx);
 
   store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
-  store_self(name, func, func_type, ctx);
+  if (name != NULL) {
+    store_self(name, func, func_type, ctx);
+  }
 
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
   LLVMBuildRet(ctx->builder, body);
@@ -128,49 +129,12 @@ static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
     return NULL;
   }
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
-  codegen_symbol(name, func, LLVMTypeOf(func), ctx);
-  return func;
-}
-
-LLVMValueRef codegen_function(AST *ast, Context *ctx) {
-  if (!(ast->data.AST_FN_DECLARATION.body)) {
-    return NULL;
-  }
-  LLVMValueRef func;
-  LLVMTypeRef func_type;
-  if (ast->data.AST_FN_DECLARATION.name != NULL) {
-    return codegen_named_function(ast, ctx);
-  }
-
-  AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-  codegen_prototype(prototype_ast, ctx, &func, &func_type, "anon_func");
-
-  LLVMBasicBlockRef prevBlock = LLVMGetInsertBlock(ctx->builder);
-
-  LLVMBasicBlockRef block = LLVMAppendBasicBlock(func, "entry");
-  LLVMPositionBuilderAtEnd(ctx->builder, block);
-
-  enter_scope(ctx);
-  store_parameters(ast->data.AST_FN_DECLARATION.prototype, ctx);
-  LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
-  LLVMBuildRet(ctx->builder, body);
-
-  exit_scope(ctx);
-
-  LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
-
-  if (!(func && body)) {
-    return NULL;
-  }
-
-  // Verify function.
-  if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
-    fprintf(stderr, "Invalid function");
-    LLVMDeleteFunction(func);
-    return NULL;
+  if (name != NULL) {
+    codegen_symbol(name, func, LLVMTypeOf(func), ctx);
   }
   return func;
 }
+
 static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
                                    LLVMValueRef func, Context *ctx) {
   fprintf(stderr,
@@ -179,12 +143,7 @@ static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
 
   return NULL;
 }
-static LLVMValueRef recursive_call(AST *ast, Context *ctx) {
 
-  // Retrieve function.
-  LLVMValueRef func = LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
-  return func;
-}
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
 
