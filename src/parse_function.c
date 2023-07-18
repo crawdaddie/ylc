@@ -119,6 +119,14 @@ AST *parse_function(bool can_assign) {
   return function_ast;
 }
 
+AST *parse_extern_function(char *name) {
+  advance();
+  AST *prototype = parse_fn_prototype();
+  AST *fn_decl = AST_NEW(FN_DECLARATION, prototype);
+  fn_decl->data.AST_FN_DECLARATION.name = strdup(name);
+  fn_decl->data.AST_FN_DECLARATION.is_extern = true;
+  return fn_decl;
+}
 AST *parse_named_function(char *name) {
   AST *function_ast = parse_function(true);
   function_ast->data.AST_FN_DECLARATION.name = name;

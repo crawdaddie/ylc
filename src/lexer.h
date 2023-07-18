@@ -51,16 +51,16 @@ typedef enum token_type {
   TOKEN_EOF,
   TOKEN_BAR,
   TOKEN_MATCH,
+  TOKEN_EXTERN,
 } token_type;
 
 typedef struct keyword {
   enum token_type kw;
   char *match;
 } keyword;
-#define NUM_KEYWORDS 10
+#define NUM_KEYWORDS 11
 static keyword keywords[NUM_KEYWORDS] = {{TOKEN_FN, "fn"},
                                          {TOKEN_RETURN, "return"},
-                                         /* {TOKEN_PRINT, "print"}, */
                                          {TOKEN_TRUE, "true"},
                                          {TOKEN_FALSE, "false"},
                                          {TOKEN_LET, "let"},
@@ -68,7 +68,9 @@ static keyword keywords[NUM_KEYWORDS] = {{TOKEN_FN, "fn"},
                                          {TOKEN_ELSE, "else"},
                                          {TOKEN_WHILE, "while"},
                                          {TOKEN_NIL, "nil"},
-                                         {TOKEN_MATCH, "match"}};
+                                         {TOKEN_MATCH, "match"},
+                                         {TOKEN_EXTERN, "extern"},
+};
 
 typedef union literal {
   char *vstr;

@@ -1,0 +1,4 @@
+let printf = extern fn (str input) int
+let a = "hello world"
+
+printf(a)

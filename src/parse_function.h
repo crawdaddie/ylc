@@ -9,4 +9,6 @@ AST *parse_function(bool can_assign);
 AST *parse_named_function(char *name);
 
 AST *ast_fn_prototype(int length, ...);
+
+AST *parse_extern_function(char *name);
 #endif /* ifndef _LANG_PARSE_FUNCTION_H */

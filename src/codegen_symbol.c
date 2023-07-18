@@ -22,11 +22,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
 
   case TYPE_GLOBAL_VARIABLE: {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-    // LLVMValueRef global = sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     return LLVMGetInitializer(global);
-    // return LLVMBuildLoad2(ctx->builder,
-    // sym.data.TYPE_GLOBAL_VARIABLE.llvm_type,
-    //                       global, identifier);
   }
 
   case TYPE_FN_PARAM: {

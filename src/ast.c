@@ -86,6 +86,8 @@ void print_ast(AST ast, int indent) {
     char *name = ast.data.AST_FN_DECLARATION.name;
     if (name == NULL) {
       printf("fn: \n");
+    } else if (ast.data.AST_FN_DECLARATION.is_extern) {
+      printf("extern %s = fn: \n", name);
     } else {
       printf("%s = fn: \n", name);
     }

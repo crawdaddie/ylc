@@ -71,7 +71,13 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_STRING: {
-    return codegen_number(ast, ctx);
+
+    const char *str = ast->data.AST_STRING.value;
+    int len = ast->data.AST_STRING.length;
+    LLVMValueRef string_const = LLVMConstString(str, len, 0);
+
+    // Get a pointer to the format string
+    return string_const;
   }
 
   case AST_BINOP: {
@@ -118,6 +124,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_FN_DECLARATION: {
+    if (ast->data.AST_FN_DECLARATION.name != NULL &&
+        ast->data.AST_FN_DECLARATION.is_extern) {
+      return codegen_extern_function(ast, ctx);
+    }
     return codegen_function(ast, ctx);
   }
   case AST_CALL: {

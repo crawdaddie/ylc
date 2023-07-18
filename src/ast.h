@@ -102,6 +102,7 @@ struct AST {
       AST *prototype;
       AST *body;
       char *name;
+      bool is_extern;
     } AST_FN_DECLARATION;
 
     struct AST_FN_PROTOTYPE {

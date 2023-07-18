@@ -56,6 +56,10 @@ static AST *assignment_statement() {
   char *id_str = id_token.as.vstr;
 
   advance();
+  if (match(TOKEN_EXTERN)) {
+    return parse_extern_function(id_str);
+  }
+
   if (check(TOKEN_FN)) {
     advance();
     return parse_named_function(strdup(id_str));

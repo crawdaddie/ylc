@@ -541,7 +541,7 @@ static int _NUMBER_MATCHER(const char *input, token *tail) {
   }
   return 0;
 }
-static int _MATCH_IDENTIFIER(const char *input, token *tail) {
+static int _IDENTIFIER_MATCHER(const char *input, token *tail) {
   int offset = 0;
   if ((offset = seek_identifier(input)) != 0) {
     char *str = malloc((offset + 1) * sizeof(char));
@@ -558,7 +558,7 @@ static token_matcher matchers[NUM_MATCHERS] = {
     _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER, _PIPE_MATCHER,
     _MINUS_MATCHER,     _BANG_MATCHER,         _MODULO_MATCHER, _PLUS_MATCHER,
     _SLASH_MATCHER,     _STAR_MATCHER,         _NL_MATCHER,     _STRING_MATCHER,
-    _NUMBER_MATCHER,    _MATCH_IDENTIFIER,     _BAR_MATCHER,
+    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,     _BAR_MATCHER,
     // _AND_MATCHER
 };
 

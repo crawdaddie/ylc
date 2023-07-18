@@ -17,10 +17,15 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
   if (strcmp(type, "bool") == 0) {
     return LLVMInt1Type();
   }
+
+  if (strcmp(type, "str") == 0) {
+    return LLVMPointerType(LLVMInt8Type(), 0);
+  }
   return NULL;
 }
 static LLVMTypeRef *codegen_function_prototype_args(AST *prot, Context *ctx) {
   int arg_count = prot->data.AST_FN_PROTOTYPE.length;
+  printf("type %d\n", arg_count);
 
   AST **parameters = prot->data.AST_FN_PROTOTYPE.parameters;
 
@@ -34,11 +39,6 @@ static LLVMTypeRef *codegen_function_prototype_args(AST *prot, Context *ctx) {
 
     char *type_str = param_symbol.type;
     params[i] = type_lookup(type_str, ctx);
-
-    // // insert param into symbol table for current stack
-    // table_insert(
-    //     ctx->symbol_table, param_symbol.identifier,
-    //     (SymbolValue){TYPE_FN_PARAM, {.TYPE_FN_PARAM = {i, params[i]}}});
   }
   return params;
 }
@@ -83,6 +83,32 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
 
   *func = LLVMAddFunction(ctx->module, "tmp", function_type);
   *func_type = LLVMTypeOf(*func);
+}
+
+static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
+  AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
+
+  int arg_count = prototype_ast->data.AST_FN_PROTOTYPE.length;
+
+  LLVMTypeRef *param_types =
+      codegen_function_prototype_args(prototype_ast, ctx);
+
+  LLVMTypeRef ret_type =
+      type_lookup(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
+
+  return LLVMFunctionType(ret_type, param_types, arg_count, 0);
+}
+
+LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
+  char *name = ast->data.AST_FN_DECLARATION.name;
+
+  LLVMTypeRef func_type = codegen_extern_prototype(ast, ctx);
+
+  LLVMValueRef func = LLVMAddFunction(
+      ctx->module, ast->data.AST_FN_DECLARATION.name, func_type);
+
+  codegen_symbol(name, func, LLVMTypeOf(func), ctx);
+  return func;
 }
 
 static LLVMValueRef codegen_named_function(AST *ast, Context *ctx) {
@@ -187,6 +213,7 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
             ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
     return NULL;
   }
+  LLVMDumpValue(func);
 
   // Evaluate arguments.
   AST *parameters = ast->data.AST_CALL.parameters;
@@ -206,6 +233,7 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   // Create call instruction.
 
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
+
                                     func, args, arg_count, inst_name("call"));
   free(args);
   return val;
