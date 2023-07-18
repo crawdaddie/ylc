@@ -1,10 +1,10 @@
 let printf = extern fn (str input) int
 
-let print = fn (str input) int {
+let println = fn (str input) int {
     printf(input)
-    printf("\0A")
+    printf("\n")
 }
 
 let a = "hello world"
 
-print(a)
+println(a)

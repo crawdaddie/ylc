@@ -520,7 +520,18 @@ static int _STRING_MATCHER(const char *input, token *tail) {
   if (*input == '"') {
     int offset = seek_char(input, '"');
     char *str = malloc((offset) * sizeof(char));
-    strlcpy(str, input + 1, offset);
+    int x = 0;
+    while (x < offset) {
+    // strlcpy(str, input + 1, offset);
+      char c = *(input + 1 + x);
+      if (c == '\\' && *(input + 1 + x + 1) == 'n') {
+        str[x] = '\n';
+        x++;
+      } else {
+        str[x] = c;
+      }
+      x++;
+    }
     str[offset - 1] = '\0';
     literal lit = {.vstr = str};
     *tail = create_literal_token(TOKEN_STRING, lit);

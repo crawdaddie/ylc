@@ -69,6 +69,8 @@ static AST *integer(bool can_assign) {
 static AST *parse_string(bool can_assign) {
   token token = parser.previous;
   AST *str = AST_NEW(STRING, strdup(token.as.vstr), strlen(token.as.vstr));
+  // printf("string ast\n");
+  // print_ast(*str, 0);
   return str;
 }
 static AST *parse_literal(bool can_assign) {
