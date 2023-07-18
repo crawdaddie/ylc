@@ -6,6 +6,7 @@
 
 #include "codegen.h"
 #include "llvm_backend.h"
+#include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
@@ -101,7 +102,8 @@ LLVMValueRef current_function(Context *ctx) {
 static int dump_ir(Context *ctx, char *output) {
   LLVMModuleRef module = ctx->module;
 
-  LLVMPrintModuleToFile(module, output, NULL);
+  // LLVMPrintModuleToFile(module, output, NULL);
+  LLVMWriteBitcodeToFile(module, output);
   return 0;
 }
 int LLVMRuntime(int repl, char *path, char *output) {

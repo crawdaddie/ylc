@@ -1,2 +1,5 @@
 *.o
 build/*
+examples/*.ll
+examples/*.bc
+examples/*.o

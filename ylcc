@@ -1,0 +1,9 @@
+#! /bin/bash
+#
+LANG=build/lang
+INPUT=$1
+LL_OUTPUT="${INPUT%.*}.bc"
+
+$LANG --emit $LL_OUTPUT $INPUT
+llc -filetype=obj $LL_OUTPUT -o "${LL_OUTPUT%.*}.o"
+clang "${LL_OUTPUT%.*}.o" -o "${LL_OUTPUT%.*}"
