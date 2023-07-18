@@ -7,7 +7,7 @@
 #include <stdbool.h>
 
 #define INPUT_BUFSIZE 2048
-int LLVMRuntime(int repl, char *path);
+int LLVMRuntime(int repl, char *path, char *output);
 
 typedef struct {
   LLVMContextRef context;

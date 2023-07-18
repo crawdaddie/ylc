@@ -98,8 +98,13 @@ void exit_scope(Context *ctx) { pop_frame(ctx->symbol_table); }
 LLVMValueRef current_function(Context *ctx) {
   return LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
 }
+static int dump_ir(Context *ctx, char *output) {
+  LLVMModuleRef module = ctx->module;
 
-int LLVMRuntime(int repl, char *path) {
+  LLVMPrintModuleToFile(module, output, NULL);
+  return 0;
+}
+int LLVMRuntime(int repl, char *path, char *output) {
   LLVMInitializeCore(LLVMGetGlobalPassRegistry());
   LLVMInitializeNativeTarget();
   LLVMInitializeNativeAsmPrinter();
@@ -111,22 +116,26 @@ int LLVMRuntime(int repl, char *path) {
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;
 
-  // optimizations
-
   if (path) {
     char *filename = path;
     char *input = read_file(path);
     AST *ast = parse(input);
     free(input);
 
-    dump_ast(ast);
+    if (output) {
+      // printf("build exe from %s to %s\n", path, output);
+      LLVMValueRef value = codegen(ast, &ctx);
+      dump_ir(&ctx, output);
 
-    LLVMValueRef value = codegen(ast, &ctx);
+      free_ast(ast);
 
-    dump_module(ctx.module);
-    run_value(ctx.engine, value);
-
-    free_ast(ast);
+    } else {
+      dump_ast(ast);
+      LLVMValueRef value = codegen(ast, &ctx);
+      dump_module(ctx.module);
+      run_value(ctx.engine, value);
+      free_ast(ast);
+    }
   }
 
   if (repl) {
