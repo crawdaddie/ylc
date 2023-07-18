@@ -41,14 +41,10 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
     return NULL;
   }
 
-  // Insert body as return vale.
-  // LLVMBuildRet(ctx->builder, LLVMVoidLLVMVoid);
-
   LLVMPositionBuilderAtEnd(ctx->builder, LLVMGetInsertBlock(ctx->builder));
   LLVMBuildRetVoid(ctx->builder);
 
   // Verify function.
-  // printf("verify func\n");
   if (LLVMVerifyFunction(func, LLVMPrintMessageAction) == 1) {
     fprintf(stderr, "Invalid main function");
     LLVMDeleteFunction(func);
@@ -72,19 +68,21 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_STRING: {
+    struct AST_STRING data = AST_DATA(ast, STRING);
 
-    const char *str = ast->data.AST_STRING.value;
-    int len = ast->data.AST_STRING.length;
+    const char *str = data.value;
+    int len = data.length;
     return LLVMBuildGlobalStringPtr(ctx->builder, str, str);
   }
 
   case AST_BINOP: {
-    LLVMValueRef left = codegen(ast->data.AST_BINOP.left, ctx);
-    LLVMValueRef right = codegen(ast->data.AST_BINOP.right, ctx);
+    struct AST_BINOP data = AST_DATA(ast, BINOP);
+    LLVMValueRef left = codegen(data.left, ctx);
+    LLVMValueRef right = codegen(data.right, ctx);
 
     if (value_is_numeric(left) && value_is_numeric(right)) {
 
-      return numerical_binop(ast->data.AST_BINOP.op, left, right, ctx);
+      return numerical_binop(data.op, left, right, ctx);
     }
     return NULL;
   }
@@ -101,10 +99,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_STATEMENT_LIST: {
+    struct AST_STATEMENT_LIST data = AST_DATA(ast, STATEMENT_LIST);
     LLVMValueRef statement = NULL;
-    for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
-      LLVMValueRef tmp_stmt =
-          codegen(ast->data.AST_STATEMENT_LIST.statements[i], ctx);
+    for (int i = 0; i < data.length; i++) {
+      LLVMValueRef tmp_stmt = codegen(data.statements[i], ctx);
 
       if (tmp_stmt != NULL) {
         statement = tmp_stmt;
@@ -122,18 +120,13 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_FN_DECLARATION: {
-    if (ast->data.AST_FN_DECLARATION.name != NULL &&
-        ast->data.AST_FN_DECLARATION.is_extern) {
+    struct AST_FN_DECLARATION data = AST_DATA(ast, FN_DECLARATION);
+    if (data.name != NULL && data.is_extern) {
       return codegen_extern_function(ast, ctx);
     }
-
-    char *name = NULL;
-    if (ast->data.AST_FN_DECLARATION.name != NULL) {
-      name = ast->data.AST_FN_DECLARATION.name;
-    }
-
-    return codegen_named_function(ast, ctx, name);
+    return codegen_named_function(ast, ctx, data.name);
   }
+
   case AST_CALL: {
     return codegen_call(ast, ctx);
   }
