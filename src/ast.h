@@ -30,6 +30,7 @@ struct AST {
     AST_TUPLE,
     AST_IF_ELSE,
     AST_MATCH,
+    AST_STRUCT,
   } tag;
 
   union {
@@ -50,7 +51,6 @@ struct AST {
       const char *value;
       int length;
     } AST_STRING;
-
 
     struct AST_ADD {
       AST *left;
@@ -148,6 +148,10 @@ struct AST {
       AST **matches;
       AST *result_type; // optional
     } AST_MATCH;
+    struct AST_STRUCT {
+      int length;
+      AST **members;
+    } AST_STRUCT;
 
   } data;
 };

@@ -1,28 +1,11 @@
 #include "codegen_function.h"
 #include "codegen.h"
 #include "codegen_symbol.h"
+#include "codegen_types.h"
 #include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>
-LLVMTypeRef type_lookup(char *type, Context *ctx) {
-  // TODO: make this more smart
-  if (strcmp(type, "int") == 0) {
-    return LLVMInt32TypeInContext(ctx->context);
-  }
 
-  if (strcmp(type, "double") == 0) {
-    return LLVMDoubleTypeInContext(ctx->context);
-  }
-
-  if (strcmp(type, "bool") == 0) {
-    return LLVMInt1Type();
-  }
-
-  if (strcmp(type, "str") == 0) {
-    return LLVMPointerType(LLVMInt8Type(), 0);
-  }
-  return NULL;
-}
 static LLVMTypeRef *codegen_function_prototype_args(AST *prot, Context *ctx) {
   int arg_count = prot->data.AST_FN_PROTOTYPE.length;
 
@@ -203,6 +186,7 @@ static LLVMValueRef recursive_call(AST *ast, Context *ctx) {
   return func;
 }
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
+  char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
   if (func == NULL) {

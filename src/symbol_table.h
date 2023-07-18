@@ -74,8 +74,9 @@ typedef struct SymbolValue {
 
     struct TYPE_FN_PARAM {
       int arg_idx;
-      // LLVMTypeRef type;
+      LLVMTypeRef type;
     } TYPE_FN_PARAM;
+
     struct TYPE_EXTERN_FN {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
