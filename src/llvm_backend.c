@@ -39,7 +39,7 @@ int init_ctx(Context *ctx) {
   LLVMAddReassociatePass(pass_manager);
   LLVMAddGVNPass(pass_manager);
   LLVMAddCFGSimplificationPass(pass_manager);
-  // LLVMAddTailCallEliminationPass(pass_manager);
+  LLVMAddTailCallEliminationPass(pass_manager);
 
   LLVMInitializeFunctionPassManager(pass_manager);
 
