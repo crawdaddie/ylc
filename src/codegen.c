@@ -3,6 +3,7 @@
 #include "codegen_conditionals.h"
 #include "codegen_function.h"
 #include "codegen_symbol.h"
+#include "codegen_types.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Types.h>
@@ -81,7 +82,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     LLVMValueRef right = codegen(data.right, ctx);
 
     if (value_is_numeric(left) && value_is_numeric(right)) {
-
       return numerical_binop(data.op, left, right, ctx);
     }
     return NULL;
@@ -111,7 +111,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return statement;
   }
 
-
   case AST_FN_DECLARATION: {
     struct AST_FN_DECLARATION data = AST_DATA(ast, FN_DECLARATION);
     if (data.name != NULL && data.is_extern) {
@@ -130,7 +129,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_identifier(ast, ctx);
   }
 
-
   case AST_SYMBOL_DECLARATION: {
     // symbol declaration [ let a ]- rarely used
     return codegen_symbol_declaration(ast, ctx);
@@ -147,6 +145,28 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_MATCH: {
     return codegen_match(ast, ctx);
+  }
+  case AST_MEMBER_ACCESS: {
+    struct AST_MEMBER_ACCESS data = AST_DATA(ast, MEMBER_ACCESS);
+    return NULL;
+  }
+  case AST_TUPLE: {
+    struct AST_TUPLE data = AST_DATA(ast, TUPLE);
+    LLVMValueRef *members = malloc(sizeof(LLVMValueRef) * data.length);
+    // LLVMTypeRef *types = malloc(sizeof(LLVMTypeRef) * data.length);
+    for (int i = 0; i < data.length; i++) {
+      members[i] = codegen(data.members[i], ctx);
+      // types[i] = LLVMTypeOf(members[i]);
+    }
+    LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+    return tuple_struct;
+  }
+  case AST_TYPE_DECLARATION: {
+    struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
+    LLVMTypeRef type = codegen_type(data.type_expr, ctx);
+    printf("cgen type decl %s\n", data.name);
+    LLVMDumpType(type);
+    return NULL;
   }
   }
   return NULL;

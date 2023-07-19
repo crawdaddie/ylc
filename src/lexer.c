@@ -522,7 +522,7 @@ static int _STRING_MATCHER(const char *input, token *tail) {
     char *str = malloc((offset) * sizeof(char));
     int x = 0;
     while (x < offset) {
-    // strlcpy(str, input + 1, offset);
+      // strlcpy(str, input + 1, offset);
       char c = *(input + 1 + x);
       if (c == '\\' && *(input + 1 + x + 1) == 'n') {
         str[x] = '\n';
@@ -569,7 +569,7 @@ static token_matcher matchers[NUM_MATCHERS] = {
     _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER, _PIPE_MATCHER,
     _MINUS_MATCHER,     _BANG_MATCHER,         _MODULO_MATCHER, _PLUS_MATCHER,
     _SLASH_MATCHER,     _STAR_MATCHER,         _NL_MATCHER,     _STRING_MATCHER,
-    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,     _BAR_MATCHER,
+    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,   _BAR_MATCHER,
     // _AND_MATCHER
 };
 

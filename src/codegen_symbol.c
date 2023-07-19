@@ -17,11 +17,24 @@ void set_value(char *identifier, Context *ctx, SymbolValue val) {
     fprintf(stderr, "Error symbol %s not found\n", identifier);
     table_insert(ctx->symbol_table, identifier, val);
   }
-  switch (v.type) {}
+  switch (v.type) {
+  case TYPE_VARIABLE: {
+    LLVMBuildLoad2(ctx->builder, v.data.TYPE_VARIABLE.llvm_type,
+                   val.data.TYPE_VARIABLE.llvm_value, identifier);
+    break;
+  }
+
+  case TYPE_GLOBAL_VARIABLE: {
+    LLVMBuildLoad2(ctx->builder, v.data.TYPE_GLOBAL_VARIABLE.llvm_type,
+                   val.data.TYPE_GLOBAL_VARIABLE.llvm_value, identifier);
+    break;
+  }
+  }
 }
 
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
-  char *identifier = ast->data.AST_IDENTIFIER.identifier;
+  struct AST_IDENTIFIER data = AST_DATA(ast, IDENTIFIER);
+  char *identifier = data.identifier;
   SymbolValue sym;
 
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
@@ -46,6 +59,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   case TYPE_FN_PARAM: {
     return LLVMGetParam(current_function(ctx), sym.data.TYPE_FN_PARAM.arg_idx);
   }
+
   case TYPE_RECURSIVE_REF: {
     LLVMValueRef func =
         LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
@@ -53,7 +67,6 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   }
 
   case TYPE_EXTERN_FN: {
-    // return sym.data.TYPE_EXTERN_FN.llvm_value;
     return LLVMGetNamedFunction(ctx->module, identifier);
   }
   }
@@ -78,15 +91,15 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
   SymbolValue sym;
 
   // global
+  LLVMValueRef global = LLVMAddGlobal(ctx->module, type, identifier);
   sym.type = TYPE_GLOBAL_VARIABLE;
-  sym.data.TYPE_GLOBAL_VARIABLE.llvm_value =
-      LLVMAddGlobal(ctx->module, type, identifier);
+  sym.data.TYPE_GLOBAL_VARIABLE.llvm_value = global;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_type = type;
 
   LLVMSetInitializer(sym.data.TYPE_GLOBAL_VARIABLE.llvm_value, value);
 
   table_insert(ctx->symbol_table, identifier, sym);
-  return sym.data.TYPE_GLOBAL_VARIABLE.llvm_value;
+  return global;
 }
 static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
                                   LLVMValueRef value, LLVMTypeRef type,
@@ -99,9 +112,11 @@ static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
             LLVMPrintTypeToString(type), LLVMPrintTypeToString(global_type));
     return NULL;
   }
-
   LLVMSetInitializer(global, value);
+
   // LLVMBuildLoad2(ctx->builder, global_type, global, "load");
+  // LLVMBuildStore(ctx->builder, value, global);
+
   return global;
 }
 

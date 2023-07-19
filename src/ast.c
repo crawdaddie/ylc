@@ -77,9 +77,11 @@ void print_ast(AST ast, int indent) {
       print_ast(*ast.data.AST_FN_PROTOTYPE.parameters[i], 0);
       printf(", ");
     }
-    printf("\n");
-    left_pad(indent);
-    printf("returns %s", ast.data.AST_FN_PROTOTYPE.type);
+    if (ast.data.AST_FN_PROTOTYPE.type) {
+      printf("\n");
+      left_pad(indent);
+      printf("returns %s", ast.data.AST_FN_PROTOTYPE.type);
+    }
     break;
   }
   case AST_FN_DECLARATION: {
@@ -163,6 +165,20 @@ void print_ast(AST ast, int indent) {
       print_ast(*ast.data.AST_MATCH.matches[i], indent + 1);
       printf("\n");
     }
+    break;
+  }
+  case AST_STRUCT: {
+    printf("struct\n");
+    break;
+  }
+
+  case AST_TYPE_DECLARATION: {
+    printf("type\n");
+    break;
+  }
+  case AST_MEMBER_ACCESS: {
+    print_ast(*ast.data.AST_MEMBER_ACCESS.object, indent);
+    printf(" . %s", ast.data.AST_MEMBER_ACCESS.member_name);
     break;
   }
   }

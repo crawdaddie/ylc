@@ -11,7 +11,7 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx);
 LLVMValueRef codegen_function_prototoype(AST *ast, Context *ctx);
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
-                       LLVMTypeRef *func_type, char *name);
+                       LLVMTypeRef *func_type, const char *name);
 
 LLVMTypeRef type_lookup(char *type, Context *ctx);
 

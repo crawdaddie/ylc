@@ -1,7 +1,7 @@
 #include "parse_function.h"
-#include "parse_expression.h"
 #include "lexer.h"
 #include "parse.h"
+#include "parse_expression.h"
 #include "parse_statement.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -34,8 +34,7 @@ AST *ast_fn_prototype(int length, ...) {
 
   return proto;
 }
-void arg_list_push(struct AST_FN_PROTOTYPE *proto) {
-  AST *arg = parse_fn_arg();
+void arg_list_push(struct AST_FN_PROTOTYPE *proto, AST *arg) {
   if (arg) {
     proto->length++;
     proto->parameters =
@@ -94,7 +93,9 @@ AST *parse_fn_prototype() {
   };
 
   while (!match(TOKEN_RP)) {
-    arg_list_push(&proto->data.AST_FN_PROTOTYPE);
+    AST *arg = parse_fn_arg();
+
+    arg_list_push(&proto->data.AST_FN_PROTOTYPE, arg);
     if (check(TOKEN_COMMA)) {
       advance();
     }
@@ -110,6 +111,9 @@ AST *parse_fn_prototype() {
 
 AST *parse_function(bool can_assign) {
   AST *prototype = parse_fn_prototype();
+  if (!prototype) {
+    return NULL;
+  }
   if (!match(TOKEN_LEFT_BRACE)) {
     fprintf(stderr, "Error: expected { after function prototype\n");
     return NULL;

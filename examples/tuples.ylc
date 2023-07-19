@@ -1,0 +1,2 @@
+type Triple = (int, int, int)
+let a = (1,2,3)

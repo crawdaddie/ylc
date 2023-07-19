@@ -68,6 +68,22 @@ static AST *assignment_statement() {
   AST *expr = AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
   return expr;
 }
+
+static AST *type_declaration() {
+  advance();
+  if (!match(TOKEN_IDENTIFIER)) {
+    fprintf(stderr, "Error: expected name after type keyword");
+    return NULL;
+  }
+  char *name = parser.previous.as.vstr;
+  if (!match(TOKEN_ASSIGNMENT)) {
+    fprintf(stderr, "Error: expected = after type declaration name");
+    return NULL;
+  }
+  AST *type_expression = parse_expression();
+  print_ast(*type_expression, 0);
+  return AST_NEW(TYPE_DECLARATION, name, type_expression);
+}
 /**
  * match on tokens that begin a statement and call corresponding statement-type
  *constructors
@@ -87,6 +103,9 @@ AST *parse_statement() {
     }
     case TOKEN_RETURN: {
       return return_statement();
+    }
+    case TOKEN_TYPE: {
+      return type_declaration();
     }
     default: {
       return parse_expression();

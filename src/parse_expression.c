@@ -52,6 +52,10 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     binop->data.AST_BINOP.left = prev_expr;
     return binop;
   }
+  case TOKEN_DOT: {
+    char *member_name = right->data.AST_IDENTIFIER.identifier;
+    return AST_NEW(MEMBER_ACCESS, prev_expr, strdup(member_name));
+  }
   default:
     return NULL;
   }
@@ -144,9 +148,12 @@ static AST *identifier(bool can_assign) {
 
 static AST *parse_grouping(bool can_assign) {
   AST *tuple = parse_tuple();
-  AST *expr = tuple->data.AST_TUPLE.members[0];
-  free_ast(tuple);
-  return expr;
+  if (tuple->data.AST_TUPLE.length == 1) {
+    AST *expr = tuple->data.AST_TUPLE.members[0];
+    free_ast(tuple);
+    return expr;
+  }
+  return tuple;
 }
 
 static AST *if_expression(bool can_assign) {
@@ -255,6 +262,34 @@ AST *parse_scoped_block(bool can_assign) {
 
   return statements;
 }
+AST *parse_struct(bool can_assign) {
+
+  AST *proto = ast_fn_prototype(0);
+  if (!match(TOKEN_LP)) {
+    fprintf(stderr, "Error: expected ( after struct keyword\n");
+    return NULL;
+  };
+
+  while (!match(TOKEN_RP)) {
+    if (check(TOKEN_NL)) {
+      advance();
+    }
+    if (check(TOKEN_RP)) {
+      advance();
+      break;
+    }
+    AST *arg = parse_fn_arg();
+    arg_list_push(&proto->data.AST_FN_PROTOTYPE, arg);
+    if (check(TOKEN_COMMA)) {
+      advance();
+    }
+  }
+
+  proto->tag = AST_STRUCT;
+  proto->data.AST_STRUCT.length = proto->data.AST_FN_PROTOTYPE.length;
+  proto->data.AST_STRUCT.members = proto->data.AST_FN_PROTOTYPE.parameters;
+  return proto;
+}
 
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
@@ -262,7 +297,7 @@ ParseRule rules[] = {
     [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
-    /* [TOKEN_DOT] = {NULL, dot, PREC_CALL}, */
+    [TOKEN_DOT] = {NULL, parse_binary, PREC_CALL},
     [TOKEN_MINUS] = {parse_unary, parse_binary, PREC_TERM},
     [TOKEN_PLUS] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_EQUALITY] = {NULL, parse_binary, PREC_TERM},
@@ -305,6 +340,7 @@ ParseRule rules[] = {
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
     [TOKEN_MATCH] = {parse_match, NULL, PREC_NONE},
+    [TOKEN_STRUCT] = {parse_struct, NULL, PREC_NONE},
     // [TOKEN_PIPE] = {NULL, parse_binary, PREC_NONE}
 };
 

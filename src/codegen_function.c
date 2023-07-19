@@ -52,7 +52,7 @@ static void store_self(char *name, LLVMValueRef function, LLVMTypeRef function_t
 }
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
-                       LLVMTypeRef *func_type, char *name) {
+                       LLVMTypeRef *func_type, const char *name) {
 
   struct AST_FN_PROTOTYPE data = AST_DATA(ast, FN_PROTOTYPE);
 
@@ -62,7 +62,7 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   LLVMTypeRef function_type =
       LLVMFunctionType(ret_type, prototype, arg_count, 0);
 
-  *func = LLVMAddFunction(ctx->module, "tmp", function_type);
+  *func = LLVMAddFunction(ctx->module, name, function_type);
   *func_type = LLVMTypeOf(*func);
 }
 
@@ -170,7 +170,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
   }
 
-  // Create call instruction.
 
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
                                     func, args, arg_count, inst_name("call"));

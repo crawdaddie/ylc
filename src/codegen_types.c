@@ -40,3 +40,20 @@ void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx) {
   }
   LLVMStructSetBody(structType, structFields, num_members, 0);
 }
+
+LLVMTypeRef codegen_type(AST *ast, Context *ctx) {
+  switch (ast->tag) {
+    case AST_STRUCT: {
+      return NULL;
+    }
+
+    case AST_TUPLE: {
+      struct AST_TUPLE data = AST_DATA(ast, TUPLE);
+      LLVMTypeRef *types = malloc(sizeof(LLVMTypeRef) * data.length);
+      for (int i = 0; i < data.length; i++) {
+        types[i] = type_lookup(data.members[i]->data.AST_IDENTIFIER.identifier, ctx);
+      }
+      return LLVMStructType(types, data.length, true);
+    }
+  }
+}

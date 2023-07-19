@@ -9,10 +9,7 @@ let fib = fn (int n) int {
     match n
     | 0 -> 0
     | 1 -> 1
-    | _ -> {
-        println("x")
-        fib(n - 1) + fib(n - 2)
-    }
+    | _ -> fib(n - 1) + fib(n - 2)
 }
 
 fib(10)

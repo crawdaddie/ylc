@@ -31,6 +31,8 @@ struct AST {
     AST_IF_ELSE,
     AST_MATCH,
     AST_STRUCT,
+    AST_TYPE_DECLARATION,
+    AST_MEMBER_ACCESS,
   } tag;
 
   union {
@@ -148,10 +150,21 @@ struct AST {
       AST **matches;
       AST *result_type; // optional
     } AST_MATCH;
+
     struct AST_STRUCT {
       int length;
       AST **members;
     } AST_STRUCT;
+
+    struct AST_TYPE_DECLARATION {
+      char *name;
+      AST *type_expr;
+    } AST_TYPE_DECLARATION;
+
+    struct AST_MEMBER_ACCESS {
+      AST *object;
+      char *member_name;
+    } AST_MEMBER_ACCESS;
 
   } data;
 };
