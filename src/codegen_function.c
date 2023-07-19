@@ -42,12 +42,13 @@ static void store_parameters(AST *prot, Context *ctx) {
   }
 }
 
-static void store_self(char *name, LLVMValueRef function, LLVMTypeRef func_type,
+static void store_self(char *name, LLVMValueRef function, LLVMTypeRef function_type,
                        Context *ctx) {
+
   table_insert(ctx->symbol_table, name,
                (SymbolValue){TYPE_RECURSIVE_REF,
                              {.TYPE_RECURSIVE_REF = {.llvm_value = function,
-                                                     .llvm_type = func_type}}});
+                                                     .llvm_type = function_type}}});
 }
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,

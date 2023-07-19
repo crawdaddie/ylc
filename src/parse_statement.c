@@ -82,21 +82,9 @@ AST *parse_statement() {
     case TOKEN_LET: {
       return let_statement();
     }
-    // case TOKEN_IDENTIFIER: {
-    //   advance();
-    //   return parse_statement();
-    // }
     case TOKEN_ASSIGNMENT: {
       return assignment_statement();
     }
-    // case TOKEN_WHILE: {
-    // }
-    // case TOKEN_FN: {
-    // printf("fn decl\n");
-    // return function_declaration();
-    // }
-    // case TOKEN_LEFT_BRACE: {
-    // }
     case TOKEN_RETURN: {
       return return_statement();
     }

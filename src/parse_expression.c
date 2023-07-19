@@ -1,8 +1,8 @@
 #include "parse_expression.h"
-#include "parse_statement.h"
 #include "lexer.h"
 #include "parse.h"
 #include "parse_function.h"
+#include "parse_statement.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -128,7 +128,6 @@ static AST *parse_tuple() {
   return tuple;
 }
 
-
 static AST *parse_call(bool can_assign, AST *prev_expr) {
   AST *parameters = parse_tuple();
   return AST_NEW(CALL, prev_expr, parameters);
@@ -220,7 +219,7 @@ static AST *parse_match(bool can_assign) {
     }
   }
   if (match_ast->data.AST_MATCH.length == 0) {
-    fprintf(stderr, "Error: match expression must contain at least one path"); 
+    fprintf(stderr, "Error: match expression must contain at least one path");
     return NULL;
   }
 
@@ -261,7 +260,7 @@ ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
     [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
-     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
+    // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},
     /* [TOKEN_DOT] = {NULL, dot, PREC_CALL}, */
     [TOKEN_MINUS] = {parse_unary, parse_binary, PREC_TERM},
@@ -349,4 +348,4 @@ static AST *parse_precedence(Precedence precedence) {
   return expr;
 };
 
-AST *parse_expression(){ return parse_precedence(PREC_ASSIGNMENT); }
+AST *parse_expression() { return parse_precedence(PREC_ASSIGNMENT); }

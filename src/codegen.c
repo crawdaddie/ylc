@@ -111,13 +111,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return statement;
   }
 
-  case AST_SYMBOL_DECLARATION: {
-    return codegen_symbol_declaration(ast, ctx);
-  }
-
-  case AST_ASSIGNMENT: {
-    return codegen_symbol_assignment(ast, ctx);
-  }
 
   case AST_FN_DECLARATION: {
     struct AST_FN_DECLARATION data = AST_DATA(ast, FN_DECLARATION);
@@ -130,8 +123,23 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_CALL: {
     return codegen_call(ast, ctx);
   }
+
   case AST_IDENTIFIER: {
+    struct AST_IDENTIFIER data = AST_DATA(ast, IDENTIFIER);
+    SymbolValue value = get_value(data.identifier, ctx);
     return codegen_identifier(ast, ctx);
+  }
+
+
+  case AST_SYMBOL_DECLARATION: {
+    // symbol declaration [ let a ]- rarely used
+    return codegen_symbol_declaration(ast, ctx);
+  }
+
+  case AST_ASSIGNMENT: {
+    // symbol assignment [ a = x ]
+    // also handles immediate declaration + assignment [ let a = x ]
+    return codegen_symbol_assignment(ast, ctx);
   }
 
   case AST_IF_ELSE: {
