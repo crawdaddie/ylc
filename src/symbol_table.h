@@ -20,6 +20,7 @@ typedef struct SymbolValue {
     TYPE_CHAR,
     TYPE_STRING,
     TYPE_EXTERN_FN,
+    TYPE_TYPE_DECLARATION,
   } type;
 
   union {
@@ -47,6 +48,9 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_EXTERN_FN;
+    struct TYPE_TYPE_DECLARATION {
+      LLVMTypeRef llvm_type;
+    } TYPE_TYPE_DECLARATION;
   } data;
 } SymbolValue;
 

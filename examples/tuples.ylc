@@ -1,2 +1,8 @@
 type Triple = (int, int, int)
 let a = (1,2,3)
+
+
+let first = fn (Triple t) int {
+    1
+}
+

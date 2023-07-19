@@ -153,10 +153,8 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_TUPLE: {
     struct AST_TUPLE data = AST_DATA(ast, TUPLE);
     LLVMValueRef *members = malloc(sizeof(LLVMValueRef) * data.length);
-    // LLVMTypeRef *types = malloc(sizeof(LLVMTypeRef) * data.length);
     for (int i = 0; i < data.length; i++) {
       members[i] = codegen(data.members[i], ctx);
-      // types[i] = LLVMTypeOf(members[i]);
     }
     LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
     return tuple_struct;
@@ -164,8 +162,13 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_TYPE_DECLARATION: {
     struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
     LLVMTypeRef type = codegen_type(data.type_expr, ctx);
-    printf("cgen type decl %s\n", data.name);
-    LLVMDumpType(type);
+
+    SymbolValue v = VALUE(TYPE_DECLARATION, type);
+    if (table_lookup(ctx->symbol_table, data.name, &v) != 0) {
+      table_insert(ctx->symbol_table, data.name, v);
+      return NULL;
+    }
+
     return NULL;
   }
   }

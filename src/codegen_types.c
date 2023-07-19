@@ -20,11 +20,11 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
   if (strcmp(type, "str") == 0) {
     return LLVMPointerType(LLVMInt8Type(), 0);
   }
-
-  LLVMTypeRef ctxType = LLVMGetTypeByName2(ctx->context, type);
-  if (ctxType) {
-    return ctxType;
+  SymbolValue v;
+  if (table_lookup(ctx->symbol_table, type, &v) == 0) {
+    return v.data.TYPE_TYPE_DECLARATION.llvm_type;
   }
+
   return NULL;
 }
 void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx) {
