@@ -49,6 +49,7 @@ AST *parse_fn_arg() {
     return NULL;
   }
   char *type_str = strdup(parser.previous.as.vstr);
+
   if (!match(TOKEN_IDENTIFIER)) {
     fprintf(stderr, "Expected param name\n");
   }

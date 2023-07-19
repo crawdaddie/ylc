@@ -17,6 +17,9 @@ clean:
 	rm -f build/src/*.o
 	rm -f build/lang
 
+.PHONY: wasm
+wasm:
+
 
 TEST_DIR = src/test
 .PHONY: lang_test_suite

@@ -1,5 +1,6 @@
 #include "codegen_conditionals.h"
 #include "codegen_function.h"
+#include "codegen_types.h"
 
 #include "codegen.h"
 #include <stdio.h>
