@@ -62,7 +62,7 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   LLVMTypeRef function_type =
       LLVMFunctionType(ret_type, prototype, arg_count, 0);
 
-  *func = LLVMAddFunction(ctx->module, name, function_type);
+  *func = LLVMAddFunction(ctx->module, "tmp_func", function_type);
   *func_type = LLVMTypeOf(*func);
 }
 
