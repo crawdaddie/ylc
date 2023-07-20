@@ -6,5 +6,5 @@ void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx);
 
 LLVMTypeRef type_lookup(char *type, Context *ctx);
 
-LLVMTypeRef codegen_type(AST *ast, Context *ctx);
+LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx);
 #endif

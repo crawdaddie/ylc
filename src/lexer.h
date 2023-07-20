@@ -8,6 +8,9 @@ typedef enum token_type {
   TOKEN_LEFT_BRACE,
   TOKEN_RIGHT_BRACE,
 
+  TOKEN_LEFT_SQ,
+  TOKEN_RIGHT_SQ,
+
   TOKEN_COMMA,
 
   TOKEN_DOT, // OPERATORS

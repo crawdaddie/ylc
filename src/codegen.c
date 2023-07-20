@@ -161,7 +161,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_TYPE_DECLARATION: {
     struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
-    LLVMTypeRef type = codegen_type(data.type_expr, ctx);
+    LLVMTypeRef type = codegen_type(data.type_expr, data.name, ctx);
 
     SymbolValue v = VALUE(TYPE_DECLARATION, type);
     if (table_lookup(ctx->symbol_table, data.name, &v) != 0) {
@@ -170,6 +170,31 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     }
 
     return NULL;
+  }
+  case AST_INDEX_ACCESS: {
+    struct AST_INDEX_ACCESS data = AST_DATA(ast, INDEX_ACCESS);
+    LLVMValueRef object = codegen(data.object, ctx);
+    if (data.index_expr->tag == AST_INTEGER) {
+      int index = data.index_expr->data.AST_INTEGER.value;
+      return LLVMBuildExtractValue(ctx->builder, object, index, "nth_member");
+    }
+    LLVMTypeRef object_type = LLVMTypeOf(object);
+    LLVMValueRef allocaInst =
+        LLVMBuildAlloca(ctx->builder, object_type, "tmp_alloca_for_ptr");
+    LLVMTypeRef struct_ptr_type = LLVMPointerType(LLVMTypeOf(object), 0);
+    LLVMValueRef struct_ptr = LLVMBuildPointerCast(
+        ctx->builder, allocaInst, struct_ptr_type, "object_ptr_cast");
+
+    LLVMValueRef index_val = codegen(data.index_expr, ctx);
+    LLVMValueRef member_ptr = LLVMBuildGEP2(
+        ctx->builder, struct_ptr_type, struct_ptr, &index_val, 1, "nth_member");
+
+    printf("member access\n");
+      LLVMDumpValue(member_ptr);
+    // LLVMDumpType( LLVMGetElementType(LLVMTypeOf(member_ptr)));
+
+    return LLVMBuildLoad2(ctx->builder, LLVMInt32TypeInContext(ctx->context),
+                          member_ptr, "ptr_deref");
   }
   }
   return NULL;

@@ -146,13 +146,31 @@ static AST *identifier(bool can_assign) {
   return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
 }
 
+static AST *parse_index_access(bool can_assign, AST *prev_expr) {
+
+  AST *indices = ast_tuple(0);
+  while (!match(TOKEN_RIGHT_SQ)) {
+    AST *member = parse_expression();
+    ast_tuple_push((AST *)&indices->data.AST_TUPLE, member);
+    if (check(TOKEN_COMMA)) {
+      advance();
+    }
+  }
+  if (indices->data.AST_TUPLE.length == 1) {
+    indices = indices->data.AST_TUPLE.members[0];
+  }
+  return AST_NEW(INDEX_ACCESS, prev_expr, indices);
+}
+
 static AST *parse_grouping(bool can_assign) {
   AST *tuple = parse_tuple();
+
   if (tuple->data.AST_TUPLE.length == 1) {
     AST *expr = tuple->data.AST_TUPLE.members[0];
     free_ast(tuple);
     return expr;
   }
+
   return tuple;
 }
 
@@ -294,6 +312,8 @@ AST *parse_struct(bool can_assign) {
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
+
+    [TOKEN_LEFT_SQ] = {NULL, parse_index_access, PREC_CALL},
     [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},

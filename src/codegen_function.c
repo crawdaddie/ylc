@@ -42,13 +42,14 @@ static void store_parameters(AST *prot, Context *ctx) {
   }
 }
 
-static void store_self(char *name, LLVMValueRef function, LLVMTypeRef function_type,
-                       Context *ctx) {
+static void store_self(char *name, LLVMValueRef function,
+                       LLVMTypeRef function_type, Context *ctx) {
 
-  table_insert(ctx->symbol_table, name,
-               (SymbolValue){TYPE_RECURSIVE_REF,
-                             {.TYPE_RECURSIVE_REF = {.llvm_value = function,
-                                                     .llvm_type = function_type}}});
+  table_insert(
+      ctx->symbol_table, name,
+      (SymbolValue){TYPE_RECURSIVE_REF,
+                    {.TYPE_RECURSIVE_REF = {.llvm_value = function,
+                                            .llvm_type = function_type}}});
 }
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
@@ -70,11 +71,9 @@ static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
 
   int arg_count = ast->data.AST_FN_PROTOTYPE.length;
 
-  LLVMTypeRef *param_types =
-      codegen_function_prototype_args(ast, ctx);
+  LLVMTypeRef *param_types = codegen_function_prototype_args(ast, ctx);
 
-  LLVMTypeRef ret_type =
-      type_lookup(ast->data.AST_FN_PROTOTYPE.type, ctx);
+  LLVMTypeRef ret_type = type_lookup(ast->data.AST_FN_PROTOTYPE.type, ctx);
 
   return LLVMFunctionType(ret_type, param_types, arg_count, 0);
 }
@@ -147,6 +146,7 @@ static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
 
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+  printf("call %s\n", name);
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
   if (func == NULL) {
@@ -169,7 +169,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   for (i = 0; i < arg_count; i++) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
   }
-
 
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
                                     func, args, arg_count, inst_name("call"));

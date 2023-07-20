@@ -38,6 +38,7 @@ bool match(enum token_type type) {
 }
 
 static AST *rec_parse(AST *ast) {
+
   if (match(TOKEN_EOF)) {
     return ast;
   }

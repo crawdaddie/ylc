@@ -33,6 +33,7 @@ struct AST {
     AST_STRUCT,
     AST_TYPE_DECLARATION,
     AST_MEMBER_ACCESS,
+    AST_INDEX_ACCESS,
   } tag;
 
   union {
@@ -165,6 +166,11 @@ struct AST {
       AST *object;
       char *member_name;
     } AST_MEMBER_ACCESS;
+
+    struct AST_INDEX_ACCESS {
+      AST *object;
+      AST *index_expr;
+    } AST_INDEX_ACCESS;
 
   } data;
 };

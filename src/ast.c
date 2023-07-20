@@ -181,6 +181,14 @@ void print_ast(AST ast, int indent) {
     printf(" . %s", ast.data.AST_MEMBER_ACCESS.member_name);
     break;
   }
+
+  case AST_INDEX_ACCESS: {
+    print_ast(*ast.data.AST_INDEX_ACCESS.object, indent);
+    printf("[");
+    print_ast(*ast.data.AST_INDEX_ACCESS.index_expr, 0);
+    printf("] ");
+    break;
+  }
   }
 }
 void free_ast(AST *ast) {

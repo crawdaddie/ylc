@@ -2,7 +2,16 @@ type Triple = (int, int, int)
 let a = (1,2,3)
 
 
-let first = fn (Triple t) int {
-    t[0]
+#let first = fn (Triple t) int {
+#    t[2]
+#}
+
+
+#first(a)
+
+let nth = fn (Triple t, int n) int {
+    t[n]
 }
+
+nth(a, 0)
 

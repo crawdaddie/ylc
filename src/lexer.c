@@ -42,6 +42,17 @@ void print_token(token token) {
     printf("}");
     break;
   }
+
+  case TOKEN_LEFT_SQ: {
+
+    printf("[");
+    break;
+  }
+  case TOKEN_RIGHT_SQ: {
+
+    printf("]");
+    break;
+  }
   case TOKEN_COMMA: {
 
     printf(",");
@@ -312,16 +323,23 @@ static int _BRACKET_MATCHER(const char *input, token *tail) {
   case '(':
     *tail = create_symbol_token(TOKEN_LP);
     return 1;
-
   case ')':
     *tail = create_symbol_token(TOKEN_RP);
     return 1;
+
   case '{':
     *tail = create_symbol_token(TOKEN_LEFT_BRACE);
     return 1;
 
   case '}':
     *tail = create_symbol_token(TOKEN_RIGHT_BRACE);
+    return 1;
+
+  case '[':
+    *tail = create_symbol_token(TOKEN_LEFT_SQ);
+    return 1;
+  case ']':
+    *tail = create_symbol_token(TOKEN_RIGHT_SQ);
     return 1;
   default:
     return 0;

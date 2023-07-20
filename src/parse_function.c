@@ -44,7 +44,9 @@ void arg_list_push(struct AST_FN_PROTOTYPE *proto, AST *arg) {
 }
 AST *parse_fn_arg() {
   if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Expected param type\n");
+    token token = parser.current;
+
+    fprintf(stderr, "Expected param type found %d\n", token.type);
 
     return NULL;
   }

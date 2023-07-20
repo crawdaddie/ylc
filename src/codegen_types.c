@@ -20,6 +20,7 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
   if (strcmp(type, "str") == 0) {
     return LLVMPointerType(LLVMInt8Type(), 0);
   }
+
   SymbolValue v;
   if (table_lookup(ctx->symbol_table, type, &v) == 0) {
     return v.data.TYPE_TYPE_DECLARATION.llvm_type;
@@ -41,7 +42,7 @@ void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx) {
   LLVMStructSetBody(structType, structFields, num_members, 0);
 }
 
-LLVMTypeRef codegen_type(AST *ast, Context *ctx) {
+LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
   switch (ast->tag) {
     case AST_STRUCT: {
       return NULL;
@@ -53,6 +54,9 @@ LLVMTypeRef codegen_type(AST *ast, Context *ctx) {
       for (int i = 0; i < data.length; i++) {
         types[i] = type_lookup(data.members[i]->data.AST_IDENTIFIER.identifier, ctx);
       }
+      // LLVMTypeRef type = LLVMStructCreateNamed(ctx->context , name);
+      // LLVMStructSetBody(type, types, data.length, true);
+      // return type;
       return LLVMStructType(types, data.length, true);
     }
   }

@@ -81,7 +81,6 @@ static AST *type_declaration() {
     return NULL;
   }
   AST *type_expression = parse_expression();
-  print_ast(*type_expression, 0);
   return AST_NEW(TYPE_DECLARATION, name, type_expression);
 }
 /**
