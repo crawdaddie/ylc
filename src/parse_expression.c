@@ -123,9 +123,15 @@ void ast_tuple_push(struct AST *tuple, AST *item) {
 static AST *parse_tuple() {
   AST *tuple = ast_tuple(0);
   while (!match(TOKEN_RP)) {
+    if (check(TOKEN_NL)) {
+      advance();
+    }
     AST *member = parse_expression();
     ast_tuple_push((AST *)&tuple->data.AST_TUPLE, member);
     if (check(TOKEN_COMMA)) {
+      advance();
+    }
+    if (check(TOKEN_NL)) {
       advance();
     }
   }

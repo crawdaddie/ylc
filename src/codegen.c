@@ -182,6 +182,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
     LLVMTypeRef type = codegen_type(data.type_expr, data.name, ctx);
 
+
     SymbolValue v = VALUE(TYPE_DECLARATION, type);
     if (table_lookup(ctx->symbol_table, data.name, &v) != 0) {
       table_insert(ctx->symbol_table, data.name, v);

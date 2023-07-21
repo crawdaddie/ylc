@@ -53,7 +53,11 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
       types[i] =
           type_lookup(type, ctx);
     }
-    return LLVMStructType(types, data.length, true);
+    LLVMTypeRef type = LLVMStructCreateNamed(ctx->context, name);
+    LLVMStructSetBody(type, types, data.length, true);
+
+    return type;
+       // /LLVMStructType(types, data.length, true);
   }
 
   case AST_TUPLE: {
