@@ -108,7 +108,14 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_ASSIGNMENT: {
-    printf("%s = ", ast.data.AST_ASSIGNMENT.identifier);
+
+    if (ast.data.AST_ASSIGNMENT.type != NULL) {
+      printf("%s %s", ast.data.AST_ASSIGNMENT.type,
+             ast.data.AST_ASSIGNMENT.identifier);
+    } else {
+      printf("%s", ast.data.AST_ASSIGNMENT.identifier);
+    }
+    printf(" = ");
     print_ast(*ast.data.AST_ASSIGNMENT.expression, 0);
     break;
   }
@@ -169,11 +176,17 @@ void print_ast(AST ast, int indent) {
   }
   case AST_STRUCT: {
     printf("struct\n");
+    for (int i = 0; i < ast.data.AST_STRUCT.length; i++) {
+      print_ast(*ast.data.AST_STRUCT.members[i], indent + 1);
+      printf("\n");
+    }
+
     break;
   }
 
   case AST_TYPE_DECLARATION: {
     printf("type\n");
+    print_ast(*ast.data.AST_TYPE_DECLARATION.type_expr, indent + 1);
     break;
   }
   case AST_MEMBER_ACCESS: {

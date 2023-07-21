@@ -1,12 +1,11 @@
 type Triple = (int, int, int)
 let a = (1,100,3)
-let b = a[1]
 
 let printf = extern fn (str input, int i) int
 
 let printint = fn (int input) int {
 let x = input
-    printf("%p\n", input)
+    printf("%d\n", input)
 }
 
 

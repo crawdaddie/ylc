@@ -1,5 +1,6 @@
 #include "codegen_symbol.h"
 #include "codegen.h"
+#include "codegen_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -191,9 +192,10 @@ LLVMValueRef codegen_symbol(char *identifier, LLVMValueRef value,
 }
 
 LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
+  struct AST_ASSIGNMENT data = AST_DATA(ast, ASSIGNMENT);
 
-  char *identifier = ast->data.AST_ASSIGNMENT.identifier;
-  AST *expr = ast->data.AST_ASSIGNMENT.expression;
+  char *identifier = data.identifier;
+  AST *expr = data.expression;
 
   LLVMValueRef value = codegen(expr, ctx);
 
@@ -201,7 +203,14 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
     return NULL;
   }
 
-  LLVMTypeRef type = LLVMTypeOf(value);
+  // LLVMTypeRef type = LLVMTypeOf(value);
+  LLVMTypeRef type;
 
+  if (data.type) {
+    type = type_lookup(data.type, ctx);
+  }
+  if (!type) {
+    type = LLVMTypeOf(value);
+  }
   return codegen_symbol(identifier, value, type, ctx);
 }

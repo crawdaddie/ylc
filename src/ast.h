@@ -116,6 +116,7 @@ struct AST {
 
     struct AST_ASSIGNMENT {
       char *identifier;
+      char *type;
       AST *expression;
     } AST_ASSIGNMENT;
 

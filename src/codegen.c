@@ -62,11 +62,11 @@ static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
       LLVMBuildAlloca(ctx->builder, object_type, "tmp_alloca_for_ptr");
   LLVMBuildStore(ctx->builder, tuple, allocaInst);
   LLVMValueRef indices[] = {
-    index,
+      index,
   };
 
-  LLVMValueRef elementPtr = LLVMBuildInBoundsGEP2(ctx->builder, object_type, allocaInst,
-                                          indices, 1, "element_ptr");
+  LLVMValueRef elementPtr = LLVMBuildInBoundsGEP2(
+      ctx->builder, object_type, allocaInst, indices, 1, "element_ptr");
 
   return LLVMBuildLoad2(ctx->builder, LLVMInt32Type(), elementPtr,
                         "load_ptr_val");
@@ -165,7 +165,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_MEMBER_ACCESS: {
     struct AST_MEMBER_ACCESS data = AST_DATA(ast, MEMBER_ACCESS);
-    return NULL;
+    LLVMValueRef in = get_int(1, ctx);
+    // LLVMDumpValue(in);
+    return in;
   }
   case AST_TUPLE: {
     struct AST_TUPLE data = AST_DATA(ast, TUPLE);

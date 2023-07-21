@@ -35,37 +35,42 @@ AST *ast_statement_list(int length, ...) {
   return stmt_list;
 }
 static AST *return_statement() { return NULL; }
-static AST *assignment_statement();
+static AST *assignment_statement(char *id, char *type);
 static AST *let_statement() {
   advance();
   if (match(TOKEN_IDENTIFIER)) {
+    token id_token = parser.previous;
+    char *id_str = strdup(id_token.as.vstr);
+    char *type = NULL;
+
+    if (match(TOKEN_IDENTIFIER)) {
+      // first id was actually a type
+      type = id_str;
+      id_str = strdup(parser.previous.as.vstr);
+    }
+
     if (check(TOKEN_ASSIGNMENT)) {
       // let <id> = <expr> - declaration immediately followed by assignment
-      return assignment_statement();
+      return assignment_statement(id_str, type);
     }
-    token id_token = parser.previous;
-    char *id_str = id_token.as.vstr;
-    return AST_NEW(SYMBOL_DECLARATION, strdup(id_str), NULL);
+    return AST_NEW(SYMBOL_DECLARATION, id_str, type);
   } else {
     printf("error missing identifier");
     return NULL;
   }
 }
-static AST *assignment_statement() {
-  token id_token = parser.previous;
-  char *id_str = id_token.as.vstr;
-
+static AST *assignment_statement(char *id, char *type) {
   advance();
   if (match(TOKEN_EXTERN)) {
-    return parse_extern_function(id_str);
+    return parse_extern_function(id);
   }
 
   if (check(TOKEN_FN)) {
     advance();
-    return parse_named_function(strdup(id_str));
+    return parse_named_function(strdup(id));
   }
 
-  AST *expr = AST_NEW(ASSIGNMENT, strdup(id_str), parse_expression());
+  AST *expr = AST_NEW(ASSIGNMENT, id, type, parse_expression());
   return expr;
 }
 
@@ -97,9 +102,9 @@ AST *parse_statement() {
     case TOKEN_LET: {
       return let_statement();
     }
-    case TOKEN_ASSIGNMENT: {
-      return assignment_statement();
-    }
+    // case TOKEN_ASSIGNMENT: {
+    //   return assignment_statement();
+    // }
     case TOKEN_RETURN: {
       return return_statement();
     }

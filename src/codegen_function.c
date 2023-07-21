@@ -128,8 +128,10 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
     LLVMDeleteFunction(func);
     return NULL;
   }
+  LLVMDumpValue(func);
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
   if (name != NULL) {
+    printf("saving func %s\n", name);
     codegen_symbol(name, func, LLVMTypeOf(func), ctx);
   }
   return func;
