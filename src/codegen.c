@@ -54,6 +54,23 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 
   return func;
 }
+static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
+                                           LLVMValueRef index, Context *ctx) {
+
+  LLVMTypeRef object_type = LLVMTypeOf(tuple);
+  LLVMValueRef allocaInst =
+      LLVMBuildAlloca(ctx->builder, object_type, "tmp_alloca_for_ptr");
+  LLVMBuildStore(ctx->builder, tuple, allocaInst);
+  LLVMValueRef indices[] = {
+    index,
+  };
+
+  LLVMValueRef elementPtr = LLVMBuildGEP2(ctx->builder, object_type, allocaInst,
+                                          indices, 1, "element_ptr");
+
+  return LLVMBuildLoad2(ctx->builder, LLVMInt32Type(), elementPtr,
+                        "load_ptr_val");
+}
 
 LLVMValueRef codegen(AST *ast, Context *ctx) {
   switch (ast->tag) {
@@ -178,23 +195,26 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       int index = data.index_expr->data.AST_INTEGER.value;
       return LLVMBuildExtractValue(ctx->builder, object, index, "nth_member");
     }
-    LLVMTypeRef object_type = LLVMTypeOf(object);
-    LLVMValueRef allocaInst =
-        LLVMBuildAlloca(ctx->builder, object_type, "tmp_alloca_for_ptr");
-    LLVMTypeRef struct_ptr_type = LLVMPointerType(LLVMTypeOf(object), 0);
-    LLVMValueRef struct_ptr = LLVMBuildPointerCast(
-        ctx->builder, allocaInst, struct_ptr_type, "object_ptr_cast");
 
-    LLVMValueRef index_val = codegen(data.index_expr, ctx);
-    LLVMValueRef member_ptr = LLVMBuildGEP2(
-        ctx->builder, struct_ptr_type, struct_ptr, &index_val, 1, "nth_member");
-
-    printf("member access\n");
-      LLVMDumpValue(member_ptr);
-    // LLVMDumpType( LLVMGetElementType(LLVMTypeOf(member_ptr)));
-
-    return LLVMBuildLoad2(ctx->builder, LLVMInt32TypeInContext(ctx->context),
-                          member_ptr, "ptr_deref");
+    return codegen_dynamic_access(object, codegen(data.index_expr, ctx), ctx);
+    // LLVMTypeRef object_type = LLVMTypeOf(object);
+    // LLVMValueRef allocaInst =
+    //     LLVMBuildAlloca(ctx->builder, object_type, "tmp_alloca_for_ptr");
+    // LLVMTypeRef struct_ptr_type = LLVMPointerType(LLVMTypeOf(object), 0);
+    // LLVMValueRef struct_ptr = LLVMBuildPointerCast(
+    //     ctx->builder, allocaInst, struct_ptr_type, "object_ptr_cast");
+    //
+    // LLVMValueRef index_val = codegen(data.index_expr, ctx);
+    // LLVMValueRef member_ptr = LLVMBuildGEP2(
+    //     ctx->builder, struct_ptr_type, struct_ptr, &index_val, 1,
+    //     "nth_member");
+    //
+    // printf("member access\n");
+    //   LLVMDumpValue(member_ptr);
+    // // LLVMDumpType( LLVMGetElementType(LLVMTypeOf(member_ptr)));
+    //
+    // return LLVMBuildLoad2(ctx->builder, LLVMInt32TypeInContext(ctx->context),
+    //                       member_ptr, "ptr_deref");
   }
   }
   return NULL;
