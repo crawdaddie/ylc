@@ -165,9 +165,16 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_MEMBER_ACCESS: {
     struct AST_MEMBER_ACCESS data = AST_DATA(ast, MEMBER_ACCESS);
-    LLVMValueRef in = get_int(1, ctx);
-    // LLVMDumpValue(in);
-    return in;
+
+    LLVMValueRef value = codegen(data.object, ctx);
+    char *struct_name = LLVMGetStructName(LLVMTypeOf(value));
+    type_symbol_table *metadata = get_type_metadata(struct_name, ctx);
+    if (metadata == NULL) {
+      return NULL;
+    }
+    int index = get_member_index(data.member_name, metadata);
+    return LLVMBuildExtractValue(ctx->builder, value, index, "nth_member");
+    
   }
   case AST_TUPLE: {
     struct AST_TUPLE data = AST_DATA(ast, TUPLE);
@@ -178,28 +185,17 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
     return tuple_struct;
   }
+
   case AST_TYPE_DECLARATION: {
     struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
     LLVMTypeRef type = codegen_type(data.type_expr, data.name, ctx);
-    type_symbol_table *type_lookups = NULL;
+    type_symbol_table *type_metadata = NULL;
 
     if (data.type_expr->tag == AST_STRUCT) {
-      struct AST_STRUCT struct_def = AST_DATA(data.type_expr, STRUCT);
-      type_lookups = malloc(sizeof(type_symbol_table));
-      member_type *types = malloc(sizeof(member_type) * struct_def.length);
-      for (int i = 0; i < struct_def.length; i++) {
-        struct AST_SYMBOL_DECLARATION sym_dec =
-            struct_def.members[i]->data.AST_SYMBOL_DECLARATION;
-        printf("codegen struct sym table %s %s\n", sym_dec.type,
-               sym_dec.identifier);
-        types[i] = (member_type){sym_dec.identifier, sym_dec.type};
-      }
-      type_lookups->length = struct_def.length;
-      type_lookups->member_types = types;
-    }
+      type_metadata =  compute_type_metadata(data.type_expr);   }
 
     SymbolValue v = VALUE(TYPE_DECLARATION, type);
-    v.data.TYPE_TYPE_DECLARATION.type_lookups = type_lookups;
+    v.data.TYPE_TYPE_DECLARATION.type_metadata = type_metadata;
 
     if (table_lookup(ctx->symbol_table, data.name, &v) != 0) {
       table_insert(ctx->symbol_table, data.name, v);

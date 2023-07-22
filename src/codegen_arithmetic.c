@@ -112,6 +112,10 @@ LLVMValueRef get_int(int val, Context *ctx) {
   return LLVMConstInt(LLVMInt32TypeInContext(ctx->context), val, false);
 }
 
+LLVMValueRef get_double(double val, Context *ctx) {
+  return LLVMConstInt(LLVMFloatTypeInContext(ctx->context), val, false);
+}
+
 LLVMValueRef codegen_int(AST *ast, Context *ctx) {
   return get_int(ast->data.AST_INTEGER.value, ctx);
 }

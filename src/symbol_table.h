@@ -8,7 +8,7 @@
 
 typedef struct member_type {
   char *name;
-  char *type;
+  int index;
 } member_type;
 typedef struct type_symbol_table {
   int length;
@@ -60,7 +60,7 @@ typedef struct SymbolValue {
 
     struct TYPE_TYPE_DECLARATION {
       LLVMTypeRef llvm_type;
-      type_symbol_table *type_lookups;
+      type_symbol_table *type_metadata;
     } TYPE_TYPE_DECLARATION;
   } data;
 } SymbolValue;
