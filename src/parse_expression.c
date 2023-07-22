@@ -56,6 +56,10 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     char *member_name = right->data.AST_IDENTIFIER.identifier;
     return AST_NEW(MEMBER_ACCESS, prev_expr, strdup(member_name));
   }
+  case TOKEN_ASSIGNMENT: {
+    char *member_name = prev_expr->data.AST_IDENTIFIER.identifier;
+    return AST_NEW(ASSIGNMENT, member_name, NULL, right);
+  }
   default:
     return NULL;
   }
@@ -73,8 +77,6 @@ static AST *integer(bool can_assign) {
 static AST *parse_string(bool can_assign) {
   token token = parser.previous;
   AST *str = AST_NEW(STRING, strdup(token.as.vstr), strlen(token.as.vstr));
-  // printf("string ast\n");
-  // print_ast(*str, 0);
   return str;
 }
 static AST *parse_literal(bool can_assign) {
@@ -144,10 +146,9 @@ static AST *parse_call(bool can_assign, AST *prev_expr) {
 }
 static AST *identifier(bool can_assign) {
   token token = parser.previous;
-
   if (match(TOKEN_ASSIGNMENT)) {
     AST *assignment_expression = parse_expression();
-    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), assignment_expression);
+    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), NULL, assignment_expression);
   }
   return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
 }
@@ -334,7 +335,7 @@ ParseRule rules[] = {
     [TOKEN_BANG] = {parse_unary, NULL, PREC_NONE},
     [TOKEN_PIPE] = {NULL, parse_binary, PREC_PIPE},
     /* [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY}, */
-    /* [TOKEN_ASSIGNMENT] = {NULL, NULL, PREC_NONE}, */
+    [TOKEN_ASSIGNMENT] = {NULL, parse_binary, PREC_NONE},
     /* [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY}, */
     /* [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON}, */
     /* [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON}, */
@@ -362,7 +363,7 @@ ParseRule rules[] = {
     /* [TOKEN_TRUE] = {literal, NULL, PREC_NONE}, */
     /* [TOKEN_VAR] = {NULL, NULL, PREC_NONE}, */
     /* [TOKEN_WHILE] = {NULL, NULL, PREC_NONE}, */
-    [TOKEN_IDENTIFIER] = {identifier, NULL, PREC_NONE},
+    [TOKEN_IDENTIFIER] = {identifier, NULL, PREC_ASSIGNMENT},
     [TOKEN_ERROR] = {NULL, NULL, PREC_NONE},
     [TOKEN_EOF] = {NULL, NULL, PREC_NONE},
     [TOKEN_MATCH] = {parse_match, NULL, PREC_NONE},
