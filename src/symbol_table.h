@@ -6,6 +6,15 @@
 #define TABLE_SIZE 100
 #define STACK_SIZE 100
 
+typedef struct member_type {
+  char *name;
+  char *type;
+} member_type;
+typedef struct type_symbol_table {
+  int length;
+  member_type *member_types;
+} type_symbol_table;
+
 typedef struct SymbolValue {
   enum {
     TYPE_FN_PARAM,
@@ -48,8 +57,10 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_EXTERN_FN;
+
     struct TYPE_TYPE_DECLARATION {
       LLVMTypeRef llvm_type;
+      type_symbol_table *type_lookups;
     } TYPE_TYPE_DECLARATION;
   } data;
 } SymbolValue;
