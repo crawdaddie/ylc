@@ -119,6 +119,11 @@ int LLVMRuntime(int repl, char *path, char *output) {
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;
 
+  printf("\033[1;31m"
+         "YLC LANG REPL       \n"
+         "--------------------\n"
+         "version 0.0.0       \n"
+         "\033[1;0m");
 
   if (path) {
     char *filename = path;
@@ -149,7 +154,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
     char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
     for (;;) {
 
-      repl_input(input, INPUT_BUFSIZE, "> ");
+      repl_input(input, INPUT_BUFSIZE, "\033[1;31mλ \033[1;0m"
+                 "\033[1;31m"
+                 );
+      printf("\033[1;0m");
 
       AST *ast = parse(input);
       dump_ast(ast);
