@@ -15,6 +15,7 @@ static AST *parse_unary(bool can_assign) {
   enum token_type op_type = parser.previous.type;
   AST *operand = parse_precedence(PREC_UNARY);
   switch (op_type) {
+  case TOKEN_AMPERSAND:
   case TOKEN_BANG:
   case TOKEN_MINUS: {
     return AST_NEW(UNOP, op_type, operand);
@@ -323,6 +324,8 @@ AST *parse_struct(bool can_assign) {
   proto->data.AST_STRUCT.members = proto->data.AST_FN_PROTOTYPE.parameters;
   return proto;
 }
+AST *parse_ptr(bool can_assign) {
+}
 
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
@@ -377,6 +380,7 @@ ParseRule rules[] = {
     [TOKEN_MATCH] = {parse_match, NULL, PREC_NONE},
     [TOKEN_STRUCT] = {parse_struct, NULL, PREC_NONE},
     // [TOKEN_PIPE] = {NULL, parse_binary, PREC_NONE}
+    [TOKEN_AMPERSAND] = {parse_unary, NULL, PREC_NONE},
 };
 
 static ParseRule *get_rule(enum token_type type) { return &(rules[type]); }

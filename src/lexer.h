@@ -57,7 +57,9 @@ typedef enum token_type {
   TOKEN_EXTERN,
   TOKEN_STRUCT,
   TOKEN_TYPE,
-  TOKEN_IMPORT
+  TOKEN_IMPORT,
+  TOKEN_AMPERSAND,
+  TOKEN_LOGICAL_AND,
 } token_type;
 
 typedef struct keyword {

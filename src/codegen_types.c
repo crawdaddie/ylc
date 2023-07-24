@@ -10,6 +10,10 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
     return LLVMInt32TypeInContext(ctx->context);
   }
 
+  if (strcmp(type, "int8") == 0) {
+    return LLVMInt8TypeInContext(ctx->context);
+  }
+
   if (strcmp(type, "double") == 0) {
     return LLVMDoubleTypeInContext(ctx->context);
   }
@@ -97,6 +101,18 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
           type_lookup(data.members[i]->data.AST_IDENTIFIER.identifier, ctx);
     }
     return LLVMStructType(types, data.length, true);
+  }
+  case AST_UNOP: {
+    struct AST_UNOP data = AST_DATA(ast, UNOP);
+    if (data.op == TOKEN_AMPERSAND) {
+      LLVMTypeRef base_type = codegen_type(data.operand, name, ctx);
+      LLVMTypeRef pointer_type = LLVMPointerType(base_type, 0);
+      return pointer_type;
+    }
+    return NULL;
+  }
+  case AST_IDENTIFIER: {
+    return type_lookup(ast->data.AST_IDENTIFIER.identifier, ctx);
   }
   }
 }
