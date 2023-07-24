@@ -1,3 +1,6 @@
 import "libs/libyalce_synth.so"
 
 let setup_audio = extern fn () int
+let stop_audio = extern fn () int
+let sq_detune = extern fn (double freq) int
+

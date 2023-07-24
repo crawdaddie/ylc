@@ -23,7 +23,7 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
 
   void *fp = LLVMGetPointerToGlobal(engine, value);
   int (*FP)() = (int (*)())(intptr_t)fp;
-  fprintf(stderr, "Evaluted to %d\n", FP());
+  fprintf(stderr, "(%d)\n", FP());
   return 0;
 }
 
@@ -155,7 +155,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     for (;;) {
 
       repl_input(input, INPUT_BUFSIZE, "\033[1;31mλ \033[1;0m"
-                 "\033[1;31m"
+                 "\033[1;36m"
                  );
       printf("\033[1;0m");
 

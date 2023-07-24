@@ -5,17 +5,13 @@
 #include <string.h>
 
 static int usage(char *exe) {
-  fprintf(stderr,
-          "Usage: %s [options]\n"
-          "Options:\n"
-          "  [--backend dummy|alsa|pulseaudio|jack|coreaudio|wasapi]\n"
-          "  [--device id]\n"
-          "  [--raw]\n"
-          "  [--name stream_name]\n"
-          "  [--latency seconds]\n"
-          "  [--sample-rate hz]\n"
-          "  [--oscilloscope]\n",
-          exe);
+  fprintf(
+      stderr,
+      "Usage: %s [options] input_file.ylc\n"
+      "Options:\n"
+      "  [--emit (file) compile input_file and output IR bytecode to file]\n"
+      "  [--repl / -r start in repl mode]\n",
+      exe);
   return 1;
 }
 
@@ -60,7 +56,7 @@ static int process_opts(int argc, char **argv, char **output, char **input,
   if (input != NULL) {
     // printf("Input file: %s\n", *input);
   } else {
-    fprintf(stderr, "Input file not specified\n");
+    usage(argv[0]);
     return 1;
   }
 

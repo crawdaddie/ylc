@@ -22,6 +22,10 @@ LLVMTypeRef type_lookup(char *type, Context *ctx) {
     return LLVMPointerType(LLVMInt8Type(), 0);
   }
 
+  if (strcmp(type, "void") == 0) {
+    return LLVMVoidTypeInContext(ctx->context);
+  }
+
   SymbolValue v;
   if (table_lookup(ctx->symbol_table, type, &v) == 0) {
     return v.data.TYPE_TYPE_DECLARATION.llvm_type;
