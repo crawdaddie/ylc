@@ -195,6 +195,14 @@ void print_ast(AST ast, int indent) {
     break;
   }
 
+  case AST_MEMBER_ASSIGNMENT: {
+    print_ast(*ast.data.AST_MEMBER_ASSIGNMENT.object, indent);
+    printf(" . %s", ast.data.AST_MEMBER_ASSIGNMENT.member_name);
+    printf(" = ");
+    print_ast(*ast.data.AST_MEMBER_ASSIGNMENT.expression, 0);
+    break;
+  }
+
   case AST_INDEX_ACCESS: {
     print_ast(*ast.data.AST_INDEX_ACCESS.object, indent);
     printf("[");
@@ -202,6 +210,9 @@ void print_ast(AST ast, int indent) {
     printf("] ");
     break;
   }
+  default:
+    printf("ast node %d\n", ast.tag);
+    break;
   }
 }
 void free_ast(AST *ast) {

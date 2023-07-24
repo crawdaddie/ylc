@@ -53,6 +53,13 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     return binop;
   }
   case TOKEN_DOT: {
+    if (right->tag == AST_ASSIGNMENT) {
+      char *member_name = right->data.AST_ASSIGNMENT.identifier;
+      // printf("\ntoken dot %s assignment\n", member_name);
+      // print_ast(*right, 0);
+      return AST_NEW(MEMBER_ASSIGNMENT, prev_expr, strdup(member_name),
+                     right->data.AST_ASSIGNMENT.expression);
+    }
     char *member_name = right->data.AST_IDENTIFIER.identifier;
     return AST_NEW(MEMBER_ACCESS, prev_expr, strdup(member_name));
   }
@@ -148,7 +155,8 @@ static AST *identifier(bool can_assign) {
   token token = parser.previous;
   if (match(TOKEN_ASSIGNMENT)) {
     AST *assignment_expression = parse_expression();
-    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), NULL, assignment_expression);
+    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), NULL,
+                   assignment_expression);
   }
   return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
 }

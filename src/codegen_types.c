@@ -1,8 +1,8 @@
 #include "codegen_types.h"
+#include "codegen.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "codegen.h"
 
 LLVMTypeRef type_lookup(char *type, Context *ctx) {
   // TODO: make this more smart / quick
@@ -46,7 +46,7 @@ type_symbol_table *compute_type_metadata(AST *type_expr) {
   return type_metadata;
 }
 
-type_symbol_table *get_type_metadata(char *type_name, Context *ctx) {
+type_symbol_table *get_type_metadata(const char *type_name, Context *ctx) {
   SymbolValue v;
   if (table_lookup(ctx->symbol_table, type_name, &v) == 0) {
     return v.data.TYPE_TYPE_DECLARATION.type_metadata;
@@ -107,7 +107,9 @@ int get_member_index(char *member, type_symbol_table *metadata) {
   return -1;
 }
 
-LLVMValueRef struct_instance_with_metadata(AST *expr, LLVMTypeRef type, type_symbol_table *metadata, Context *ctx) {
+LLVMValueRef struct_instance_with_metadata(AST *expr, LLVMTypeRef type,
+                                           type_symbol_table *metadata,
+                                           Context *ctx) {
   LLVMValueRef *values = malloc(sizeof(LLVMValueRef) * metadata->length);
   for (int i = 0; i < expr->data.AST_TUPLE.length; i++) {
     AST *mem = expr->data.AST_TUPLE.members[i];
@@ -115,15 +117,12 @@ LLVMValueRef struct_instance_with_metadata(AST *expr, LLVMTypeRef type, type_sym
     AST *mem_expression = mem->data.AST_ASSIGNMENT.expression;
     int index = get_member_index(member_name, metadata);
     if (index == -1) {
-      fprintf(stderr, "Error: struct does not have a member named %s\n", member_name);
+      fprintf(stderr, "Error: struct does not have a member named %s\n",
+              member_name);
       continue;
     }
-    values[index] = codegen(mem_expression, ctx); 
+    values[index] = codegen(mem_expression, ctx);
   }
-
 
   return LLVMConstNamedStruct(type, values, metadata->length);
 }
-
-
-

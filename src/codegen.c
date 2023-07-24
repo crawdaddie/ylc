@@ -167,14 +167,28 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     struct AST_MEMBER_ACCESS data = AST_DATA(ast, MEMBER_ACCESS);
 
     LLVMValueRef value = codegen(data.object, ctx);
-    char *struct_name = LLVMGetStructName(LLVMTypeOf(value));
+    const char *struct_name = LLVMGetStructName(LLVMTypeOf(value));
     type_symbol_table *metadata = get_type_metadata(struct_name, ctx);
     if (metadata == NULL) {
       return NULL;
     }
     int index = get_member_index(data.member_name, metadata);
     return LLVMBuildExtractValue(ctx->builder, value, index, "nth_member");
-    
+  }
+
+  case AST_MEMBER_ASSIGNMENT: {
+    struct AST_MEMBER_ASSIGNMENT data = AST_DATA(ast, MEMBER_ASSIGNMENT);
+
+    LLVMValueRef value = codegen(data.object, ctx);
+    const char *struct_name = LLVMGetStructName(LLVMTypeOf(value));
+    type_symbol_table *metadata = get_type_metadata(struct_name, ctx);
+    if (metadata == NULL) {
+      return NULL;
+    }
+    int index = get_member_index(data.member_name, metadata);
+    LLVMValueRef assignment_value = codegen(data.expression, ctx);
+    return LLVMBuildInsertValue(ctx->builder, value, assignment_value, index,
+                                "nth_member");
   }
   case AST_TUPLE: {
     struct AST_TUPLE data = AST_DATA(ast, TUPLE);
@@ -192,7 +206,8 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     type_symbol_table *type_metadata = NULL;
 
     if (data.type_expr->tag == AST_STRUCT) {
-      type_metadata =  compute_type_metadata(data.type_expr);   }
+      type_metadata = compute_type_metadata(data.type_expr);
+    }
 
     SymbolValue v = VALUE(TYPE_DECLARATION, type);
     v.data.TYPE_TYPE_DECLARATION.type_metadata = type_metadata;

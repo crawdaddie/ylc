@@ -13,4 +13,6 @@ let Point x = (
     y = 1.0,
 )
 
-let g = x.x
+
+x.y = 1.5
+
