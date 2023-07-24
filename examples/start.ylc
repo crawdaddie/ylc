@@ -1,0 +1,3 @@
+import "libs/libyalce_synth.so"
+
+let setup_audio = extern fn () int

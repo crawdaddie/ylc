@@ -19,19 +19,34 @@ static int usage(char *exe) {
   return 1;
 }
 
-static int process_opts(int argc, char **argv, char **output, char **input) {
+static int process_opts(int argc, char **argv, char **output, char **input,
+                        int *repl) {
   int option;
   // Define the long options
   struct option longOptions[] = {{"emit", required_argument, NULL, 'e'},
+                                 {"include", required_argument, NULL, 'i'},
+                                 {"repl", no_argument, NULL, 'r'},
                                  {NULL, 0, NULL, 0}};
 
   // Parse the command-line options
-  while ((option = getopt_long(argc, argv, "e:", longOptions, NULL)) != -1) {
+  while ((option = getopt_long(argc, argv, "e:i:r", longOptions, NULL)) != -1) {
+
     switch (option) {
     case 'e':
       *output = optarg;
       break;
+
+    case 'i':
+      // *include = optarg;
+      break;
+
+    case 'r':
+      *repl = 1;
+      // *include = optarg;
+      break;
+
     default:
+
       fprintf(stderr, "Unknown option: %c\n", option);
       return 1;
     }
@@ -58,8 +73,7 @@ int main(int argc, char **argv) {
 
   char *input = NULL;
   char *output = NULL;
-  process_opts(argc, argv, &output, &input);
-  repl = input == NULL;
+  process_opts(argc, argv, &output, &input, &repl);
 
   return LLVMRuntime(repl, input, output);
 }

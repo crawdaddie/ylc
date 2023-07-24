@@ -1,18 +1,21 @@
 type Point = struct (
-    int x,
+    double x,
     double y,
 )
 
 
-let dist = fn (Point p) double {
-    (p.x * p.x) + (p.y * p.y)
-}
-
 let Point x = (
-    x = 2,
+    x = 2.0,
     y = 1.0,
 )
 
+let zero = fn(Point p, double x) Point {
+    p.x = x
+#    p
+}
 
-x.y = 1.5
+
+x.x = 2.5
+
+
 

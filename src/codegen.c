@@ -4,11 +4,14 @@
 #include "codegen_function.h"
 #include "codegen_symbol.h"
 #include "codegen_types.h"
+#include <dlfcn.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
+#include <llvm-c/Support.h>
 #include <llvm-c/Types.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static bool value_is_numeric(LLVMValueRef value) {
   LLVMTypeRef type = LLVMTypeOf(value);
@@ -72,13 +75,40 @@ static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
                         "load_ptr_val");
 }
 
+int hasExtension(const char *str, const char *extension) {
+  size_t strLen = strlen(str);
+  size_t extensionLen = strlen(extension);
+
+  if (strLen >= extensionLen) {
+    const char *endOfStr = str + strLen - extensionLen;
+    if (strcmp(endOfStr, extension) == 0) {
+      return 1; // The string ends with ".so"
+    }
+  }
+
+  return 0; // The string does not end with ".so"
+}
 LLVMValueRef codegen(AST *ast, Context *ctx) {
   switch (ast->tag) {
   case AST_MAIN: {
     return codegen_main(ast, ctx);
   }
+  case AST_IMPORT: {
+    const char *module_name = ast->data.AST_IMPORT.module_name;
+    if (hasExtension(module_name, ".so")) {
+      void *libHandle = dlopen(ast->data.AST_IMPORT.module_name, RTLD_LAZY);
+      if (!libHandle) {
+        fprintf(stderr, "Error loading the shared library: %s\n", dlerror());
+      }
+      return NULL;
+    };
+
+    // TODO: handle native .ylc source modules
+    return NULL;
+  }
 
   case AST_INTEGER:
+    printf("codegen ast int\n");
     return codegen_int(ast, ctx);
 
   case AST_NUMBER: {
@@ -99,7 +129,8 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     LLVMValueRef right = codegen(data.right, ctx);
 
     if (value_is_numeric(left) && value_is_numeric(right)) {
-      return numerical_binop(data.op, left, right, ctx);
+      LLVMValueRef num_binop = numerical_binop(data.op, left, right, ctx);
+      return num_binop;
     }
     return NULL;
   }
@@ -118,9 +149,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_STATEMENT_LIST: {
     struct AST_STATEMENT_LIST data = AST_DATA(ast, STATEMENT_LIST);
     LLVMValueRef statement = NULL;
+
     for (int i = 0; i < data.length; i++) {
       LLVMValueRef tmp_stmt = codegen(data.statements[i], ctx);
-
       if (tmp_stmt != NULL) {
         statement = tmp_stmt;
       }

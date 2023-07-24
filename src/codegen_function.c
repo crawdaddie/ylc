@@ -67,13 +67,13 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   *func_type = LLVMTypeOf(*func);
 }
 
-static LLVMTypeRef codegen_extern_prototype(AST *ast, Context *ctx) {
+static LLVMTypeRef codegen_extern_prototype(AST *extern_ast, Context *ctx) {
 
-  int arg_count = ast->data.AST_FN_PROTOTYPE.length;
+  int arg_count = extern_ast->data.AST_FN_PROTOTYPE.length;
 
-  LLVMTypeRef *param_types = codegen_function_prototype_args(ast, ctx);
+  LLVMTypeRef *param_types = codegen_function_prototype_args(extern_ast, ctx);
 
-  LLVMTypeRef ret_type = type_lookup(ast->data.AST_FN_PROTOTYPE.type, ctx);
+  LLVMTypeRef ret_type = type_lookup(extern_ast->data.AST_FN_PROTOTYPE.type, ctx);
 
   return LLVMFunctionType(ret_type, param_types, arg_count, 0);
 }
@@ -128,10 +128,8 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
     LLVMDeleteFunction(func);
     return NULL;
   }
-  LLVMDumpValue(func);
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
   if (name != NULL) {
-    printf("saving func %s\n", name);
     codegen_symbol(name, func, LLVMTypeOf(func), ctx);
   }
   return func;
@@ -148,7 +146,6 @@ static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
 
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
-  printf("call %s\n", name);
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
   if (func == NULL) {

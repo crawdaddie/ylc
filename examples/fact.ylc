@@ -6,3 +6,14 @@ let fact = fn (int n) int {
 }
 
 let g = fact(45)
+
+
+type Triple = (int, int, int)
+
+let fact = fn (Triple t) int {
+    match n
+    | (_, _, x) -> x
+    | 1 -> 1
+    | _ -> n * fact(n - 1)
+}
+

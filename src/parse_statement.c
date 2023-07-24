@@ -88,6 +88,16 @@ static AST *type_declaration() {
   AST *type_expression = parse_expression();
   return AST_NEW(TYPE_DECLARATION, name, type_expression);
 }
+static AST *import_module() {
+  advance();
+  if (!match(TOKEN_STRING)) {
+    fprintf(stderr, "expected module path after import keyword\n");
+    return NULL;
+  }
+  token token = parser.previous;
+  advance();
+  return AST_NEW(IMPORT, strdup(token.as.vstr));
+}
 /**
  * match on tokens that begin a statement and call corresponding statement-type
  *constructors
@@ -110,6 +120,10 @@ AST *parse_statement() {
     }
     case TOKEN_TYPE: {
       return type_declaration();
+    }
+
+    case TOKEN_IMPORT: {
+      return import_module();
     }
     default: {
       return parse_expression();

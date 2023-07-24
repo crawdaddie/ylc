@@ -30,11 +30,17 @@ LLVMOpcode OperatorMapFloat[] = {
     [TOKEN_PLUS] = LLVMFAdd,   [TOKEN_MINUS] = LLVMFSub,
     [TOKEN_STAR] = LLVMFMul,   [TOKEN_SLASH] = LLVMFDiv,
     [TOKEN_MODULO] = LLVMFRem,
+
+    // [TOKEN_EQUALITY] = LLVMRealUEQ,            /**< True if unordered or
+    // equal */ [TOKEN_EQUALITY] = LLVMF
 };
 
 LLVMOpcode OperatorMapSInt[] = {
     [TOKEN_PLUS] = LLVMAdd,   [TOKEN_MINUS] = LLVMSub,   [TOKEN_STAR] = LLVMMul,
     [TOKEN_SLASH] = LLVMSDiv, [TOKEN_MODULO] = LLVMSRem,
+
+    // [TOKEN_EQUALITY] = LLVMIntEQ,            /**< True if unordered or equal
+    // */
 };
 
 static LLVMOpcode op_map(token_type op, int is_float) {
@@ -44,11 +50,38 @@ static LLVMOpcode op_map(token_type op, int is_float) {
   return OperatorMapSInt[op];
 }
 
-static LLVMValueRef codegen_equality(LLVMValueRef left, LLVMValueRef right,
-                                     Context *ctx) {
-  // return 1 for equal, 0 for false
-  return LLVMBuildICmp(ctx->builder, LLVMIntEQ, left, right, inst_name("icmp"));
+// static LLVMValueRef codegen_equality(LLVMValueRef left, LLVMValueRef right,
+//                                      Context *ctx) {
+//   // return 1 for equal, 0 for false
+//   return LLVMBuildICmp(ctx->builder, LLVMIntEQ, left, right,
+//   inst_name("icmp"));
+// }
+
+LLVMValueRef codegen_numerical_equality(LLVMValueRef left, LLVMTypeRef ltype,
+                              LLVMValueRef right, LLVMTypeRef rtype,
+                              Context *ctx) {
+
+  LLVMTypeRef itype = int_type(ctx);
+
+  if (ltype == itype && rtype == itype) {
+    return LLVMBuildICmp(ctx->builder, LLVMIntEQ, left, right, "int_eq");
+  }
+
+
+  LLVMTypeRef dbltype = double_type(ctx);
+
+  if (ltype == itype && rtype == dbltype) {
+    left = LLVMBuildSIToFP(ctx->builder, left, dbltype, "dbl_eq");
+  }
+
+  if (ltype == dbltype && rtype == itype) {
+    right = LLVMBuildSIToFP(ctx->builder, right, dbltype, "dbl_eq");
+  }
+
+  return LLVMBuildFCmp(ctx->builder, LLVMRealUEQ, left, right,
+                       "dbl_eq");
 }
+
 LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,
                              LLVMValueRef right, Context *ctx) {
 
@@ -57,7 +90,7 @@ LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,
   LLVMTypeRef itype = int_type(ctx);
 
   if (op == TOKEN_EQUALITY) {
-    return codegen_equality(left, right, ctx);
+    return codegen_numerical_equality(left, ltype, right, rtype, ctx);
   }
 
   if (ltype == itype && rtype == itype) {
@@ -117,7 +150,8 @@ LLVMValueRef get_double(double val, Context *ctx) {
 }
 
 LLVMValueRef codegen_int(AST *ast, Context *ctx) {
-  return get_int(ast->data.AST_INTEGER.value, ctx);
+  LLVMValueRef g = get_int(ast->data.AST_INTEGER.value, ctx);
+  return g;
 }
 
 LLVMValueRef codegen_number(AST *ast, Context *ctx) {

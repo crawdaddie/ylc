@@ -18,9 +18,9 @@ typedef struct {
   LLVMPassManagerRef pass_manager;
 } Context;
 
-int init_ctx(Context *ctx);
+int init_lang_ctx(Context *ctx);
 
-int reinit_ctx(Context *ctx);
+int reinit_lang_ctx(Context *ctx);
 
 void enter_scope(Context *ctx);
 void exit_scope(Context *ctx);

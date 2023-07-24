@@ -9,7 +9,7 @@ LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 
 build/lang: $(obj)
-	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
+	$(CC) $(LLVM_CC_FLAGS) -c $(src) -DDEBUG $(INCLUDES)
 	$(LD) $(LLVM_LINK_FLAGS) $(obj) -o $@ 
 
 .PHONY: clean
@@ -50,3 +50,7 @@ repl:
 .PHONY: test
 test:
 	make && ./build/lang examples/test.ylc
+
+.PHONY: yalce-synth 
+yalce-synth:
+	(cd ~/projects/yalce && make libyalce_synth.so && cp libyalce_synth.so ~/projects/langs/ylc/libs/)

@@ -35,6 +35,7 @@ struct AST {
     AST_MEMBER_ACCESS,
     AST_MEMBER_ASSIGNMENT,
     AST_INDEX_ACCESS,
+    AST_IMPORT,
   } tag;
 
   union {
@@ -179,6 +180,10 @@ struct AST {
       AST *object;
       AST *index_expr;
     } AST_INDEX_ACCESS;
+
+    struct AST_IMPORT {
+      char *module_name;
+    } AST_IMPORT;
 
   } data;
 };
