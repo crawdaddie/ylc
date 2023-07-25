@@ -73,7 +73,8 @@ static LLVMTypeRef codegen_extern_prototype(AST *extern_ast, Context *ctx) {
 
   LLVMTypeRef *param_types = codegen_function_prototype_args(extern_ast, ctx);
 
-  LLVMTypeRef ret_type = type_lookup(extern_ast->data.AST_FN_PROTOTYPE.type, ctx);
+  LLVMTypeRef ret_type =
+      type_lookup(extern_ast->data.AST_FN_PROTOTYPE.type, ctx);
 
   return LLVMFunctionType(ret_type, param_types, arg_count, 0);
 }

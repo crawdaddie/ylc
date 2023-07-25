@@ -108,7 +108,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_INTEGER:
-    printf("codegen ast int\n");
     return codegen_int(ast, ctx);
 
   case AST_NUMBER: {
@@ -160,6 +159,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
 
   case AST_FN_DECLARATION: {
+
     struct AST_FN_DECLARATION data = AST_DATA(ast, FN_DECLARATION);
     if (data.name != NULL && data.is_extern) {
       return codegen_extern_function(ast, ctx);

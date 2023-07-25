@@ -93,11 +93,16 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
 
   // global
   LLVMValueRef global = LLVMAddGlobal(ctx->module, type, identifier);
+  LLVMSetLinkage(global, LLVMPrivateLinkage);
   sym.type = TYPE_GLOBAL_VARIABLE;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_value = global;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_type = type;
 
-  LLVMSetInitializer(sym.data.TYPE_GLOBAL_VARIABLE.llvm_value, value);
+  if (LLVMIsConstant(value)) {
+    LLVMSetInitializer(global, value);
+  } else {
+    LLVMBuildStore(ctx->builder, value, global);
+  }
 
   table_insert(ctx->symbol_table, identifier, sym);
   return global;
@@ -113,7 +118,12 @@ static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
             LLVMPrintTypeToString(type), LLVMPrintTypeToString(global_type));
     return NULL;
   }
-  LLVMSetInitializer(global, value);
+
+  if (LLVMIsConstant(value)) {
+    LLVMSetInitializer(global, value);
+  } else {
+    LLVMBuildStore(ctx->builder, value, global);
+  }
 
   // LLVMBuildLoad2(ctx->builder, global_type, global, "load");
   // LLVMBuildStore(ctx->builder, value, global);

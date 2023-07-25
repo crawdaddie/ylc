@@ -23,7 +23,9 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
 
   void *fp = LLVMGetPointerToGlobal(engine, value);
   int (*FP)() = (int (*)())(intptr_t)fp;
-  fprintf(stderr, "(%d)\n", FP());
+  // fprintf(stderr, "(%d)\n", FP());
+  FP();
+  printf("segfault???? %p\n", FP);
   return 0;
 }
 
@@ -154,15 +156,16 @@ int LLVMRuntime(int repl, char *path, char *output) {
     char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
     for (;;) {
 
-      repl_input(input, INPUT_BUFSIZE, "\033[1;31mλ \033[1;0m"
-                 "\033[1;36m"
-                 );
+      repl_input(input, INPUT_BUFSIZE,
+                 "\033[1;31mλ \033[1;0m"
+                 "\033[1;36m");
       printf("\033[1;0m");
 
       AST *ast = parse(input);
       dump_ast(ast);
 
       LLVMValueRef value = codegen(ast, &ctx);
+      LLVMDumpValue(value);
       dump_module(ctx.module);
 
       run_value(ctx.engine, value);
