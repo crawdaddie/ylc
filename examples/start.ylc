@@ -7,6 +7,16 @@ let stop_audio = extern fn () int
 let sq_detune = extern fn (double freq) Node
 let impulse = extern fn (double freq) Node
 
+let lpf = extern fn (double freq, double bw) Node
+let play_node = extern fn (Node node) Node
+
+let chain = extern fn (int sig_idx, Node dest, Node src) Node
+
 
 setup_audio()
 
+#let sq_synth = fn (double freq, double lpfreq) Node {
+#    let snd = sq_detune(freq)
+#    snd = chain(0, lpf(lpfreq, 0.1), snd)
+#    play_node(snd)
+#}
