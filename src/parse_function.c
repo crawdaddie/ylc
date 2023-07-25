@@ -46,18 +46,20 @@ AST *parse_fn_arg() {
   if (!match(TOKEN_IDENTIFIER)) {
     token token = parser.current;
 
+
     fprintf(stderr, "Expected param type found %d\n", token.type);
 
     return NULL;
   }
-  char *type_str = strdup(parser.previous.as.vstr);
+  char *type_expr = strdup(parser.previous.as.vstr);
+  // AST *type_expr = parse_expression();
 
   if (!match(TOKEN_IDENTIFIER)) {
     fprintf(stderr, "Expected param name\n");
   }
 
   char *id_str = strdup(parser.previous.as.vstr);
-  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_str);
+  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_expr);
   return param;
 }
 

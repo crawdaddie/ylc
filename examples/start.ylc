@@ -1,6 +1,9 @@
 import "libs/libyalce_synth.so"
 
-type Node = &int8
+type NodePtr = &int8 
+type Node = struct (
+  NodePtr nodeptr,
+)
 
 let setup_audio = extern fn () int
 let stop_audio = extern fn () int

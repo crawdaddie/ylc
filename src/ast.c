@@ -185,10 +185,11 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_TYPE_DECLARATION: {
-    printf("type\n");
+    printf("type %s\n", ast.data.AST_TYPE_DECLARATION.name);
     print_ast(*ast.data.AST_TYPE_DECLARATION.type_expr, indent + 1);
     break;
   }
+
   case AST_MEMBER_ACCESS: {
     print_ast(*ast.data.AST_MEMBER_ACCESS.object, indent);
     printf(" . %s", ast.data.AST_MEMBER_ACCESS.member_name);

@@ -105,6 +105,7 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
   case AST_UNOP: {
     struct AST_UNOP data = AST_DATA(ast, UNOP);
     if (data.op == TOKEN_AMPERSAND) {
+      // Ptr type
       LLVMTypeRef base_type = codegen_type(data.operand, name, ctx);
       LLVMTypeRef pointer_type = LLVMPointerType(base_type, 0);
       return pointer_type;
