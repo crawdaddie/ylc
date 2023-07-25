@@ -68,6 +68,8 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     char *member_name = prev_expr->data.AST_IDENTIFIER.identifier;
     return AST_NEW(ASSIGNMENT, member_name, NULL, right);
   }
+  // case TOKEN_AMPERSAND: {
+  //   }
   default:
     return NULL;
   }
