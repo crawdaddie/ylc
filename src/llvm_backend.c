@@ -131,13 +131,11 @@ int LLVMRuntime(int repl, char *path, char *output) {
     AST *ast = parse(input);
     free(input);
 
+    ctx.module_path = path;
     if (output) {
-      // printf("build exe from %s to %s\n", path, output);
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
-
       free_ast(ast);
-
     } else {
       dump_ast(ast);
       LLVMValueRef value = codegen(ast, &ctx);

@@ -1,5 +1,5 @@
 import "libs/libyalce_synth.so"
-import "examples/strings.ylc"
+import "./strings.ylc"
 
 
 type Node = &int8 

@@ -16,6 +16,8 @@ typedef struct {
   LLVMExecutionEngineRef engine;
   SymbolTable *symbol_table;
   LLVMPassManagerRef pass_manager;
+
+  char *module_path;
 } Context;
 
 int init_lang_ctx(Context *ctx);

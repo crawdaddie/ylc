@@ -4,18 +4,24 @@
 #include "input.h"
 #include "llvm_backend.h"
 #include "parse.h"
+#include "paths.h"
+#include <libgen.h>
 #include <llvm-c/Linker.h>
-
 LLVMValueRef codegen_module(char *filename, Context *ctx) {
+
+  char resolved_path[256];
+  resolve_path(dirname(ctx->module_path), filename, resolved_path);
+
   Context this_ctx;
   init_lang_ctx(&this_ctx);
   SymbolTable symbol_table;
   init_symbol_table(&symbol_table);
   this_ctx.symbol_table = &symbol_table;
 
-  char *input = read_file(filename);
+  char *input = read_file(resolved_path);
   AST *ast = parse(input);
   free(input);
+  this_ctx.module_path = resolved_path;
   codegen(ast, &this_ctx);
 
   for (int i = 0; i < TABLE_SIZE; i++) {
