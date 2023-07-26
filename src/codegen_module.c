@@ -29,6 +29,8 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
   }
   LLVMLinkModules2(ctx->module, this_ctx.module);
 
+  // Return 'something' from import 'module' - TODO: actually create a struct
+  // holding global values from the source module to namespace functionality
   return LLVMAddGlobal(ctx->module, LLVMInt32TypeInContext(ctx->context),
                        filename);
 }
