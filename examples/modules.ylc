@@ -1,0 +1,2 @@
+import "examples/strings.ylc"
+println("hi dickhead")

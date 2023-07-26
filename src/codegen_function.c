@@ -131,7 +131,13 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   }
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
   if (name != NULL) {
-    codegen_symbol(name, func, LLVMTypeOf(func), ctx);
+    // codegen_symbol(name, func, LLVMTypeOf(func), ctx);
+    SymbolValue sym;
+
+    sym.type = TYPE_FUNCTION;
+    sym.data.TYPE_FUNCTION.llvm_value = func;
+    sym.data.TYPE_FUNCTION.llvm_type = func_type;
+    table_insert(ctx->symbol_table, name, sym);
   }
   return func;
 }

@@ -61,6 +61,10 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     return LLVMGetParam(current_function(ctx), sym.data.TYPE_FN_PARAM.arg_idx);
   }
 
+  case TYPE_FUNCTION: {
+    return LLVMGetNamedFunction(ctx->module, identifier);
+  }
+
   case TYPE_RECURSIVE_REF: {
     LLVMValueRef func =
         LLVMGetBasicBlockParent(LLVMGetInsertBlock(ctx->builder));
@@ -90,11 +94,11 @@ LLVMValueRef codegen_symbol_declaration(AST *ast, Context *ctx) {
 static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
                                    LLVMTypeRef type, Context *ctx) {
   SymbolValue sym;
-
   // global
   LLVMValueRef global = LLVMAddGlobal(ctx->module, type, identifier);
   sym.type = TYPE_GLOBAL_VARIABLE;
-  sym.data.TYPE_GLOBAL_VARIABLE.llvm_value = global;
+  sym.data.TYPE_GLOBAL_VARIABLE.llvm_value = value;
+  // global;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_type = type;
 
   if (LLVMIsConstant(value)) {
@@ -104,7 +108,7 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
   }
 
   table_insert(ctx->symbol_table, identifier, sym);
-  return global;
+  return value;
 }
 static LLVMValueRef assign_global(SymbolValue symbol, char *identifier,
                                   LLVMValueRef value, LLVMTypeRef type,

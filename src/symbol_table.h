@@ -31,6 +31,7 @@ typedef struct SymbolValue {
     TYPE_STRING,
     TYPE_EXTERN_FN,
     TYPE_TYPE_DECLARATION,
+    TYPE_FUNCTION,
   } type;
 
   union {
@@ -43,6 +44,11 @@ typedef struct SymbolValue {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
     } TYPE_GLOBAL_VARIABLE;
+
+    struct TYPE_FUNCTION {
+      LLVMValueRef llvm_value;
+      LLVMTypeRef llvm_type;
+    } TYPE_FUNCTION;
 
     struct TYPE_RECURSIVE_REF {
       LLVMValueRef llvm_value;
