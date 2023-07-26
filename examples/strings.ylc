@@ -5,6 +5,3 @@ let println = fn (str input) int {
     printf("\n")
 }
 
-let a = "hello world"
-
-println(a)

@@ -2,6 +2,7 @@
 #include "codegen_arithmetic.h"
 #include "codegen_conditionals.h"
 #include "codegen_function.h"
+#include "codegen_module.h"
 #include "codegen_symbol.h"
 #include "codegen_types.h"
 #include <dlfcn.h>
@@ -28,7 +29,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
       LLVMFunctionType(LLVMVoidTypeInContext(ctx->context), NULL, 0, 0);
 
   // Create function.
-  LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
+  LLVMValueRef func = LLVMAddFunction(ctx->module, inst_name("main"), funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
 
   // Generate body.
@@ -104,7 +105,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     };
 
     // TODO: handle native .ylc source modules
-    return NULL;
+    return codegen_module(ast->data.AST_IMPORT.module_name, ctx);
   }
 
   case AST_INTEGER:

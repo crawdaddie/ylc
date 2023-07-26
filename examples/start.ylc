@@ -1,4 +1,6 @@
 import "libs/libyalce_synth.so"
+import "examples/strings.ylc"
+
 
 type Node = &int8 
 let setup_audio = extern fn () int
@@ -12,7 +14,6 @@ let play_node = extern fn (Node node) Node
 let chain = extern fn (int sig_idx, Node dest, Node src) Node
 let msleepd = extern fn (double msec) int
 
-let printf = extern fn (str input) int
 
 
 let sq_synth = fn (double freq, double lpfreq) Node {
@@ -25,7 +26,7 @@ let g = fn (int i) int {
     | 100 -> 1
     | _ -> {
         msleepd(100.0)
-        printf("hi ")
+        #printf("hi ")
         g(i + 1)
     }
 }
