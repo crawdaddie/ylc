@@ -1,10 +1,6 @@
 import "libs/libyalce_synth.so"
 
 type Node = &int8 
-#type Node = struct (
-#  NodePtr nodeptr,
-#)
-
 let setup_audio = extern fn () int
 let stop_audio = extern fn () int
 let sq_detune = extern fn (double freq) Node
@@ -14,15 +10,27 @@ let lpf = extern fn (double freq, double bw) Node
 let play_node = extern fn (Node node) Node
 
 let chain = extern fn (int sig_idx, Node dest, Node src) Node
+let msleepd = extern fn (double msec) int
+
+let printf = extern fn (str input) int
 
 
-
-# let sq_synth = fn (double freq, double lpfreq) Node {
-#     let snd = sq_detune(freq)
-#     snd = chain(0, lpf(lpfreq, 0.1), snd)
-#     play_node(snd)
-# }
-let sq_synth = fn (double freq) double {
-    freq * 2
+let sq_synth = fn (double freq, double lpfreq) Node {
+    let snd = sq_detune(freq)
+    snd = chain(0, lpf(lpfreq, 0.1), snd)
+    play_node(snd)
 }
+let g = fn (int i) int {
+    match i
+    | 100 -> 1
+    | _ -> {
+        msleepd(100.0)
+        printf("hi ")
+        g(i + 1)
+    }
+}
+
+
 setup_audio()
+
+

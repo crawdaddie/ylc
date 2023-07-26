@@ -7,10 +7,11 @@ LD=clang
 
 LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+LINK=-lpthread
 
 build/lang: $(obj)
-	$(CC) $(LLVM_CC_FLAGS) -c $(src) -DDEBUG $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(obj) -o $@ 
+	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
+	$(LD) $(LLVM_LINK_FLAGS) $(obj) $(LINK) -o $@ 
 
 .PHONY: clean
 clean:

@@ -10,6 +10,7 @@ typedef struct member_type {
   char *name;
   int index;
 } member_type;
+
 typedef struct type_symbol_table {
   int length;
   member_type *member_types;

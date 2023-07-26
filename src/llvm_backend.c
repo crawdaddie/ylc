@@ -23,9 +23,7 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
 
   void *fp = LLVMGetPointerToGlobal(engine, value);
   int (*FP)() = (int (*)())(intptr_t)fp;
-  // fprintf(stderr, "(%d)\n", FP());
-  FP();
-  printf("segfault???? %p\n", FP);
+  fprintf(stderr, "(%d)\n", FP());
   return 0;
 }
 
