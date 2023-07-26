@@ -17,13 +17,18 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
   AST *ast = parse(input);
   free(input);
   codegen(ast, &this_ctx);
+
   for (int i = 0; i < TABLE_SIZE; i++) {
     Symbol *sym = this_ctx.symbol_table->stack[0].entries[i];
     while (sym) {
-      table_insert(ctx->symbol_table, sym->key, sym->value);
+      table_insert(ctx->symbol_table, sym->key,
+                   sym->value); // Copy top-level symbols from loaded module
+                                // to loading module
       sym = sym->next;
     }
   }
   LLVMLinkModules2(ctx->module, this_ctx.module);
-  return NULL;
+
+  return LLVMAddGlobal(ctx->module, LLVMInt32TypeInContext(ctx->context),
+                       filename);
 }
