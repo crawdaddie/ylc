@@ -36,7 +36,7 @@ static void store_parameters(AST *prot, Context *ctx) {
 
     char *type_str = param_symbol.type;
 
-    // // insert param into symbol table for current stack
+    // insert param into symbol table for current stack
     table_insert(ctx->symbol_table, param_symbol.identifier,
                  (SymbolValue){TYPE_FN_PARAM, {.TYPE_FN_PARAM = {i}}});
   }
@@ -53,13 +53,16 @@ static void store_self(char *name, LLVMValueRef function,
 }
 
 void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
-                       LLVMTypeRef *func_type, const char *name) {
+                       LLVMTypeRef *func_type, LLVMTypeRef *func_return_type,
+                       const char *name) {
 
   struct AST_FN_PROTOTYPE data = AST_DATA(ast, FN_PROTOTYPE);
 
   int arg_count = data.length;
   LLVMTypeRef *prototype = codegen_function_prototype_args(ast, ctx);
   LLVMTypeRef ret_type = type_lookup(data.type, ctx);
+  *func_return_type = ret_type;
+
   LLVMTypeRef function_type =
       LLVMFunctionType(ret_type, prototype, arg_count, 0);
 
@@ -95,10 +98,12 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
 LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef func;
   LLVMTypeRef func_type;
+  LLVMTypeRef ret_type;
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
-  codegen_prototype(prototype_ast, ctx, &func, &func_type, strdup(name));
+  codegen_prototype(prototype_ast, ctx, &func, &func_type, &ret_type,
+                    strdup(name));
 
   LLVMBasicBlockRef prevBlock = LLVMGetInsertBlock(ctx->builder);
 
@@ -113,6 +118,16 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   }
 
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
+
+  // Get the return type of the function
+  // LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+  // int is_void = 0;
+
+  // Check if the return type is void
+  // if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
+  //   is_void = 1;
+  // }
+
   LLVMBuildRet(ctx->builder, body);
 
   exit_scope(ctx);
@@ -129,6 +144,7 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
     LLVMDeleteFunction(func);
     return NULL;
   }
+
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
   if (name != NULL) {
     // codegen_symbol(name, func, LLVMTypeOf(func), ctx);
@@ -137,6 +153,7 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
     sym.type = TYPE_FUNCTION;
     sym.data.TYPE_FUNCTION.llvm_value = func;
     sym.data.TYPE_FUNCTION.llvm_type = func_type;
+    // sym.data.TYPE_FUNCTION.ret_type = ret_type;
     table_insert(ctx->symbol_table, name, sym);
   }
   return func;
@@ -176,8 +193,17 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
   }
 
+  // Get the return type of the function
+  LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+  int is_void = 0;
+
+  // Check if the return type is void
+  if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
+    is_void = 1;
+  }
   LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
-                                    func, args, arg_count, inst_name("call"));
+                                    func, args, arg_count, is_void ? "" : inst_name("call"));
+
   free(args);
   return val;
 }

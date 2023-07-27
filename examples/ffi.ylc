@@ -1,0 +1,9 @@
+import "libffi.so"
+type Cb = fn (int val) int
+let perform_cb = extern fn (int ch, int cc, Cb callback) void
+
+let h = fn (int x) int {
+  x + 1
+}
+
+perform_cb(0, 2, h)

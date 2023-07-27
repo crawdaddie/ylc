@@ -11,8 +11,10 @@
 
 #define mu_assert(TEST, MSG, ...) do {\
     if (!(TEST)) {\
-        fprintf(stderr, "%s:%d: %s " MSG "\n", __FILE__, __LINE__, #TEST, ##__VA_ARGS__);\
+        fprintf(stderr, "❌: %s:%d: %s " MSG "\n", __FILE__, __LINE__, #TEST, ##__VA_ARGS__);\
         return 1;\
+    } else { \
+      fprintf(stderr, "✅: %s\n", MSG);  \
     }\
 } while (0)
 
@@ -21,6 +23,7 @@
     int rc = TEST();\
     if (rc) {\
         fprintf(stderr, "\n  Test Failure: %s()\n", #TEST);\
+        test_result = 1; \
         return rc;\
     }\
 } while (0)

@@ -8,6 +8,7 @@ extern int test_result;
   do {                                                                         \
     if (!(compare_ast(a, b) == 0)) {                                           \
       printf("❌: %s\n", message);                                             \
+                                                                               \
       printf("expected:\n");                                                   \
       print_ast(*b, 0);                                                        \
       printf("\n");                                                            \

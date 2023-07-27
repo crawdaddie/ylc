@@ -1,5 +1,6 @@
 #include "codegen_types.h"
 #include "codegen.h"
+#include "codegen_function.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -114,6 +115,13 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
   }
   case AST_IDENTIFIER: {
     return type_lookup(ast->data.AST_IDENTIFIER.identifier, ctx);
+  }
+  case AST_FN_PROTOTYPE: {
+    LLVMValueRef func;
+    LLVMTypeRef func_type;
+    LLVMTypeRef ret_type;
+    codegen_prototype(ast, ctx, &func, &func_type, &ret_type, "typedef_func");
+    return LLVMPointerType(func_type, 0);
   }
   }
 }

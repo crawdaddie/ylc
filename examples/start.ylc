@@ -21,18 +21,15 @@ let sq_synth = fn (double freq, double lpfreq) Node {
     snd = chain(0, lpf(lpfreq, 0.1), snd)
     play_node(snd)
 }
-let g = fn (int i) int {
-    match i
-    | 100 -> 1
-    | _ -> {
-        msleepd(100.0)
-        println("hi ")
-        g(i + 1)
-    }
+
+type CCHandler = fn (int chan, int cc, int val) int
+let register_midi_handler = extern fn (int ch, int cc, CCHandler cb) void
+
+setup_audio()
+
+let h = fn (int ch, int cc, int val) int {
+  ch + cc + val
 }
 
-
-#setup_audio()
-g(0)
-
+register_midi_handler(0, 2, h)
 

@@ -229,5 +229,14 @@ int main() {
       "type PtrType = &int8", 1,
       AST_NEW(TYPE_DECLARATION, "PtrType",
               AST_NEW(UNOP, TOKEN_AMPERSAND, AST_NEW(IDENTIFIER, "int8"))));
+
+  /* function types */
+  AST *fn_proto_params[] = {
+      AST_NEW(SYMBOL_DECLARATION, "a", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "b", "int"),
+  };
+  test_parse("type FnType = fn (int a, int b) int", 1,
+             AST_NEW(TYPE_DECLARATION, "FnType",
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params, "int")));
   return test_result;
 }

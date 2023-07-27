@@ -30,16 +30,27 @@ lang_test_suite: $(wildcard $(TEST_DIR)/*.test.simple)
 		./test_file.sh $${file} ; \
   done
 	
-TEST_SRC = $(filter-out src/main.c, $(src))
-TEST_SRC += tests/utils.c 
-TEST_SRC += tests/parse_test.c 
-TEST_OBJ = $(TEST_SRC:.c=.o)
+PARSE_TEST_SRC = $(filter-out src/main.c, $(src))
+PARSE_TEST_SRC += tests/utils.c 
+PARSE_TEST_SRC += tests/parse_test.c 
+PARSE_TEST_OBJ = $(PARSE_TEST_SRC:.c=.o)
 
-build/test_parser: $(TEST_OBJ)
+build/test_parser: $(PARSE_TEST_OBJ)
 	mkdir -p build
-	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@
+	$(CC) $(LLVM_CC_FLAGS) -c $(PARSE_TEST_SRC) $(INCLUDES)
+	$(LD) $(LLVM_LINK_FLAGS) $(PARSE_TEST_OBJ) -o $@
 	./build/test_parser
+
+CODEGEN_TEST_SRC = $(filter-out src/main.c, $(src))
+CODEGEN_TEST_SRC += tests/utils.c 
+CODEGEN_TEST_SRC += tests/codegen_test.c 
+CODEGEN_TEST_OBJ = $(CODEGEN_TEST_SRC:.c=.o)
+
+build/test_codegen: $(CODEGEN_TEST_OBJ)
+	mkdir -p build
+	$(CC) $(LLVM_CC_FLAGS) -c $(CODEGEN_TEST_SRC) $(INCLUDES)
+	$(LD) $(LLVM_LINK_FLAGS) $(CODEGEN_TEST_OBJ) -o $@
+	./build/test_codegen
 
 build/test_parser_ci: $(TEST_OBJ)
 	mkdir -p build
@@ -62,3 +73,8 @@ test:
 .PHONY: yalce-synth 
 yalce-synth:
 	(cd ~/projects/yalce && make libyalce_synth.so && cp libyalce_synth.so ~/projects/langs/ylc/libs/)
+
+EXPORT_COMPILER_OPTIONS = -Werror -Wall -Wextra -fPIC 
+.PHONY: libffi
+libffi:
+	$(CC) -shared -o libffi.so experiments/libffi.c $(EXPORT_COMPILER_OPTIONS)

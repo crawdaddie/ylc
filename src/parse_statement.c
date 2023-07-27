@@ -85,7 +85,13 @@ static AST *type_declaration() {
     fprintf(stderr, "Error: expected = after type declaration name");
     return NULL;
   }
-  AST *type_expression = parse_expression();
+  AST *type_expression;
+  if (match(TOKEN_FN)) {
+    type_expression = parse_fn_prototype();
+  } else {
+    type_expression = parse_expression();
+  }
+
   return AST_NEW(TYPE_DECLARATION, name, type_expression);
 }
 static AST *import_module() {

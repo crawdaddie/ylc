@@ -48,6 +48,7 @@ typedef struct SymbolValue {
     struct TYPE_FUNCTION {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
+      LLVMTypeRef ret_type;
     } TYPE_FUNCTION;
 
     struct TYPE_RECURSIVE_REF {
