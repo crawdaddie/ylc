@@ -18,10 +18,10 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -y install clang llvm
-        export CPATH=$(llvm-config --includedir):$CPATH
 
         # Additional setup for LLVM if needed
 
     - name: Build and Test Parser
       run: |
+        export CPATH=$(llvm-config --includedir):$CPATH
         make build/test_parser
