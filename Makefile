@@ -38,7 +38,7 @@ TEST_OBJ = $(TEST_SRC:.c=.o)
 build/test_parser: $(TEST_OBJ)
 	mkdir -p build
 	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ 
+	$(LD) $(LLVM_LINK_FLAGS) -lbsd $(TEST_OBJ) -o $@ 
 	./build/test_parser
 
 .PHONY: debug-lang
