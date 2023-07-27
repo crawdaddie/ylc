@@ -174,5 +174,45 @@ int compare_ast(AST *a, AST *b) {
     }
     return 0;
   }
+
+  case AST_IF_ELSE: {
+    if ((compare_ast(a->data.AST_IF_ELSE.condition,
+                     b->data.AST_IF_ELSE.condition) != 0) ||
+        (compare_ast(a->data.AST_IF_ELSE.then_body,
+                     b->data.AST_IF_ELSE.then_body) != 0)) {
+      return 1;
+    }
+    if (a->data.AST_IF_ELSE.else_body != NULL &&
+        (compare_ast(a->data.AST_IF_ELSE.then_body,
+                     b->data.AST_IF_ELSE.then_body) != 0)) {
+      return 1;
+    }
+    return 0;
+  }
+  case AST_MATCH: {
+    if ((compare_ast(a->data.AST_MATCH.candidate,
+                     b->data.AST_MATCH.candidate) != 0) ||
+        (a->data.AST_MATCH.length != b->data.AST_MATCH.length)) {
+      return 1;
+    }
+
+    if (a->data.AST_MATCH.result_type != NULL &&
+        (compare_ast(a->data.AST_MATCH.result_type,
+                     b->data.AST_MATCH.result_type) != 0)) {
+      return 1;
+    }
+
+    for (int i = 0; i < a->data.AST_MATCH.length; i++) {
+      if (compare_ast(a->data.AST_MATCH.matches[i],
+                      b->data.AST_MATCH.matches[i]) != 0) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+
+  default: {
+    printf("missing comparison for ast nodes type: %d\n", a->tag);
+  }
   }
 }

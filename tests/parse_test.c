@@ -140,4 +140,47 @@ int main() {
   test_parse("object.x = 1", 1,
              AST_NEW(MEMBER_ASSIGNMENT, AST_NEW(IDENTIFIER, "object"), "x",
                      AST_NEW(INTEGER, 1)));
+
+  /*
+   * Test if / else
+   */
+  test_parse("if (x == 1) {x = 2} else {x = 3}", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
+                                                   AST_NEW(INTEGER, 2))),
+                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
+                                                   AST_NEW(INTEGER, 3)))));
+
+  test_parse("if (x == 1) {x = 2}", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
+                                                   AST_NEW(INTEGER, 2))),
+                     NULL));
+
+  /*
+   * Test pattern matching expressions
+   * */
+  AST *matches[] = {
+      AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(INTEGER, 1), AST_NEW(INTEGER, 1)),
+      AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(INTEGER, 2), AST_NEW(INTEGER, 2)),
+      AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(IDENTIFIER, "_"), AST_NEW(INTEGER, 3)),
+  };
+
+  test_parse("match val -> int\n" // type hint for return of match expr
+             "| 1 -> 1\n"
+             "| 2 -> 2\n"
+             "| _ -> 3\n",
+             1,
+             AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches,
+                     AST_NEW(IDENTIFIER, "int")));
+
+  test_parse("match val\n" // no type hint
+             "| 1 -> 1\n"
+             "| 2 -> 2\n"
+             "| _ -> 3\n",
+             1, AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches, NULL));
 }
