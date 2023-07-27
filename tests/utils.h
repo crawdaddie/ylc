@@ -3,7 +3,7 @@
 #include "../src/ast.h"
 
 int compare_ast(AST *a, AST *b);
-
+extern int test_result;
 #define assert_ast_compare(a, b, message)                                      \
   do {                                                                         \
     if (!(compare_ast(a, b) == 0)) {                                           \
@@ -13,6 +13,7 @@ int compare_ast(AST *a, AST *b);
       printf("\n");                                                            \
       printf("actual:\n");                                                     \
       print_ast(*a, 0);                                                        \
+      test_result = 1;                                                         \
     } else {                                                                   \
       printf("✅: %s\n", message);                                             \
     }                                                                          \

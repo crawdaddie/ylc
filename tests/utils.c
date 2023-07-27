@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+int test_result;
 
 int compare_ast(AST *a, AST *b) {
   if (a->tag != b->tag) {

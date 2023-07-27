@@ -37,6 +37,7 @@ static void test_parse(char *input, int length, ...) {
 }
 
 int main() {
+  test_result = 0;
   /*
    * symbol declaration + assignment
    * */
@@ -71,7 +72,7 @@ int main() {
                        AST_NEW(SYMBOL_DECLARATION, "c", "int"));
   expected_fn_proto->data.AST_FN_PROTOTYPE.type = "int";
 
-  test_parse("let a = fn (int a, int b, int c) int {}\n", 1,
+  test_parse("let a = fn (int a, int b, int c) int {}", 1,
              AST_NEW(FN_DECLARATION, expected_fn_proto, NULL, "a", false));
 
   /*
@@ -173,7 +174,7 @@ int main() {
   test_parse("match val -> int\n" // type hint for return of match expr
              "| 1 -> 1\n"
              "| 2 -> 2\n"
-             "| _ -> 3\n",
+             "| _ -> 3",
              1,
              AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches,
                      AST_NEW(IDENTIFIER, "int")));
@@ -181,7 +182,7 @@ int main() {
   test_parse("match val\n" // no type hint
              "| 1 -> 1\n"
              "| 2 -> 2\n"
-             "| _ -> 3\n",
+             "| _ -> 3",
              1, AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches, NULL));
 
   /*
@@ -228,4 +229,5 @@ int main() {
       "type PtrType = &int8", 1,
       AST_NEW(TYPE_DECLARATION, "PtrType",
               AST_NEW(UNOP, TOKEN_AMPERSAND, AST_NEW(IDENTIFIER, "int8"))));
+  return test_result;
 }
