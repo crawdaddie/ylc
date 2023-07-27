@@ -592,9 +592,7 @@ static token_matcher matchers[NUM_MATCHERS] = {
     _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER, _PIPE_MATCHER,
     _MINUS_MATCHER,     _BANG_MATCHER,         _MODULO_MATCHER, _PLUS_MATCHER,
     _SLASH_MATCHER,     _STAR_MATCHER,         _NL_MATCHER,     _STRING_MATCHER,
-    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,   _BAR_MATCHER,
-    _AND_MATCHER
-};
+    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,   _BAR_MATCHER,    _AND_MATCHER};
 
 static token error_token(char *msg) {
   return create_literal_token(TOKEN_ERROR, (literal){.vstr = msg});
