@@ -24,4 +24,4 @@ jobs:
     - name: Build and Test Parser
       run: |
         export CPATH=$(llvm-config --includedir):$CPATH
-        make build/test_parser
+        make build/test_parser_ci
