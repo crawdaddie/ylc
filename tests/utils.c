@@ -210,6 +210,48 @@ int compare_ast(AST *a, AST *b) {
     }
     return 0;
   }
+  case AST_TUPLE: {
+    if (a->data.AST_TUPLE.length != b->data.AST_TUPLE.length) {
+      return 1;
+    }
+    for (int i = 0; i < a->data.AST_TUPLE.length; i++) {
+      if (compare_ast(a->data.AST_TUPLE.members[i],
+                      b->data.AST_TUPLE.members[i]) != 0) {
+        return 1;
+      }
+    }
+    return 0;
+  }
+  case AST_CALL: {
+    if (compare_ast(a->data.AST_CALL.identifier, b->data.AST_CALL.identifier) !=
+            0 ||
+        compare_ast(a->data.AST_CALL.parameters, b->data.AST_CALL.parameters)) {
+      return 1;
+    }
+    return 0;
+  }
+  case AST_TYPE_DECLARATION: {
+    if (strcmp(a->data.AST_TYPE_DECLARATION.name,
+               b->data.AST_TYPE_DECLARATION.name) != 0 ||
+        compare_ast(a->data.AST_TYPE_DECLARATION.type_expr,
+                    b->data.AST_TYPE_DECLARATION.type_expr) != 0) {
+      return 1;
+    }
+    return 0;
+  }
+
+  case AST_STRUCT: {
+    if (a->data.AST_STRUCT.length != b->data.AST_STRUCT.length) {
+      return 1;
+    }
+    for (int i = 0; i < a->data.AST_STRUCT.length; i++) {
+      if (compare_ast(a->data.AST_STRUCT.members[i],
+                      b->data.AST_STRUCT.members[i]) != 0) {
+        return 1;
+      }
+    }
+    return 0;
+  }
 
   default: {
     printf("missing comparison for ast nodes type: %d\n", a->tag);

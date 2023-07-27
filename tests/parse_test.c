@@ -183,4 +183,49 @@ int main() {
              "| 2 -> 2\n"
              "| _ -> 3\n",
              1, AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches, NULL));
+
+  /*
+   * test tuple
+   * */
+
+  AST *tuple_members[] = {
+      AST_NEW(INTEGER, 1),
+      AST_NEW(INTEGER, 2),
+      AST_NEW(NUMBER, 3.5),
+  };
+  test_parse("(1,2,3.5) # (tuple)", 1, AST_NEW(TUPLE, 3, tuple_members));
+  /*
+   * test function call expression
+   */
+  AST *params[] = {AST_NEW(INTEGER, 1), AST_NEW(INTEGER, 2),
+                   AST_NEW(NUMBER, 3.0), AST_NEW(IDENTIFIER, "x")};
+
+  test_parse(
+      "f(1, 2, 3.0, x) # (function call)", 1,
+      AST_NEW(CALL, AST_NEW(IDENTIFIER, "f"), AST_NEW(TUPLE, 4, params)));
+
+  /*
+   * Type declarations
+   * */
+
+  /* aliasing types */
+  test_parse("type NewType = int8", 1,
+             AST_NEW(TYPE_DECLARATION, "NewType", AST_NEW(IDENTIFIER, "int8")));
+
+  AST *struct_members[] = {
+      AST_NEW(SYMBOL_DECLARATION, "x", "double"),
+      AST_NEW(SYMBOL_DECLARATION, "y", "double"),
+  };
+  test_parse("struct (double x, double y)", 1,
+             AST_NEW(STRUCT, 2, struct_members));
+
+  test_parse("type NewStructType = struct (double x, double y)", 1,
+             AST_NEW(TYPE_DECLARATION, "NewStructType",
+                     AST_NEW(STRUCT, 2, struct_members)));
+
+  /* ptr types */
+  test_parse(
+      "type PtrType = &int8", 1,
+      AST_NEW(TYPE_DECLARATION, "PtrType",
+              AST_NEW(UNOP, TOKEN_AMPERSAND, AST_NEW(IDENTIFIER, "int8"))));
 }
