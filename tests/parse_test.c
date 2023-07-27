@@ -7,49 +7,52 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+static void test_parse(char *input, AST *expected) {
+  AST *ast = parse(input);
+  assert_ast_compare(ast,
+                     AST_NEW(MAIN, expected), // wrap statements in 'main' ast
+                     input);
+}
+
 int main() {
-  char *test_input = "let a = 1 + 2";
-  AST *ast = parse(test_input);
-  AST *expected_ast = AST_NEW(
-      MAIN, ast_statement_list(
-                1, AST_NEW(ASSIGNMENT, "a", NULL,
-                           AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
-                                   AST_NEW(INTEGER, 2)))));
+  /*
+   * symbol declaration + assignment
+   * */
+  test_parse("let a = 1 + 2",
+             ast_statement_list(
+                 1, AST_NEW(ASSIGNMENT, "a", NULL,
+                            AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                                    AST_NEW(INTEGER, 2)))));
 
-  assert_ast_compare(ast, expected_ast, test_input);
-
-  test_input = "let a\n"
-               "a = 1 + 2";
-  ast = parse(test_input);
-  expected_ast = AST_NEW(
-      MAIN,
+  /*
+   * symbol declaration + later assignment
+   * */
+  test_parse(
+      "let a\n"
+      "a = 1 + 2",
       ast_statement_list(2, AST_NEW(SYMBOL_DECLARATION, "a"),
                          AST_NEW(ASSIGNMENT, "a", NULL,
                                  AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
                                          AST_NEW(INTEGER, 2)))));
 
-  assert_ast_compare(ast, expected_ast, test_input);
+  /*
+   * symbol assignment to unop
+   * */
+  test_parse("let a = -1",
+             ast_statement_list(
+                 1, AST_NEW(ASSIGNMENT, "a", NULL,
+                            AST_NEW(UNOP, TOKEN_MINUS, AST_NEW(INTEGER, 1)))));
 
-  test_input = "let a = -1";
-  ast = parse(test_input);
-  expected_ast = AST_NEW(
-      MAIN, ast_statement_list(
-                1, AST_NEW(ASSIGNMENT, "a", NULL,
-                           AST_NEW(UNOP, TOKEN_MINUS, AST_NEW(INTEGER, 1)))));
-
-  assert_ast_compare(ast, expected_ast, test_input);
-
-  test_input = "let a = fn (int a, int b, int c) int {}\n";
-  ast = parse(test_input);
+  /*
+   * simple function declaration
+   * */
   AST *expected_fn_proto =
       ast_fn_prototype(3, AST_NEW(SYMBOL_DECLARATION, "a", "int"),
                        AST_NEW(SYMBOL_DECLARATION, "b", "int"),
                        AST_NEW(SYMBOL_DECLARATION, "c", "int"));
   expected_fn_proto->data.AST_FN_PROTOTYPE.type = "int";
 
-  expected_ast = AST_NEW(
-      MAIN, ast_statement_list(1, AST_NEW(FN_DECLARATION, expected_fn_proto,
-                                          NULL, "a", false)));
-
-  assert_ast_compare(ast, expected_ast, test_input);
+  test_parse("let a = fn (int a, int b, int c) int {}\n",
+             ast_statement_list(1, AST_NEW(FN_DECLARATION, expected_fn_proto,
+                                           NULL, "a", false)));
 }
