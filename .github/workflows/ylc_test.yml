@@ -1,0 +1,25 @@
+name: YLC tests 
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Set up LLVM
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install clang llvm
+        # Additional setup for LLVM if needed
+
+    - name: Build and Test Parser
+      run: |
+        make build/test_parser
