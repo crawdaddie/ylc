@@ -28,6 +28,13 @@ int compare_ast(AST *a, AST *b) {
     return 0;
   }
 
+  case AST_BOOL: {
+    if (a->data.AST_BOOL.value != b->data.AST_BOOL.value) {
+      return 1;
+    }
+    return 0;
+  }
+
   case AST_BINOP: {
     if (a->data.AST_BINOP.op != b->data.AST_BINOP.op) {
       return 1;
@@ -128,6 +135,41 @@ int compare_ast(AST *a, AST *b) {
     }
     if (compare_ast(a->data.AST_ASSIGNMENT.expression,
                     b->data.AST_ASSIGNMENT.expression)) {
+      return 1;
+    }
+    return 0;
+  }
+  case AST_STRING: {
+    if (strcmp(a->data.AST_STRING.value, b->data.AST_STRING.value) != 0 ||
+        a->data.AST_STRING.length != b->data.AST_STRING.length) {
+      return 1;
+    }
+    return 0;
+  }
+  case AST_MEMBER_ACCESS: {
+    if (compare_ast(a->data.AST_MEMBER_ACCESS.object,
+                    b->data.AST_MEMBER_ACCESS.object) != 0) {
+      return 1;
+    }
+    if (strcmp(a->data.AST_MEMBER_ACCESS.member_name,
+               b->data.AST_MEMBER_ACCESS.member_name) != 0) {
+      return 1;
+    }
+    return 0;
+  }
+
+  case AST_MEMBER_ASSIGNMENT: {
+    if (compare_ast(a->data.AST_MEMBER_ASSIGNMENT.object,
+                    b->data.AST_MEMBER_ASSIGNMENT.object) != 0) {
+      return 1;
+    }
+    if (strcmp(a->data.AST_MEMBER_ASSIGNMENT.member_name,
+               b->data.AST_MEMBER_ASSIGNMENT.member_name) != 0) {
+      return 1;
+    }
+
+    if (compare_ast(a->data.AST_MEMBER_ASSIGNMENT.expression,
+                    b->data.AST_MEMBER_ASSIGNMENT.expression) != 0) {
       return 1;
     }
     return 0;

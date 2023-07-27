@@ -326,8 +326,7 @@ AST *parse_struct(bool can_assign) {
   proto->data.AST_STRUCT.members = proto->data.AST_FN_PROTOTYPE.parameters;
   return proto;
 }
-AST *parse_ptr(bool can_assign) {
-}
+AST *parse_ptr(bool can_assign) {}
 
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
