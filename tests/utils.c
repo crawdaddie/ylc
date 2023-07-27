@@ -73,8 +73,8 @@ int compare_ast(AST *a, AST *b) {
     }
 
     for (int i = 0; i < a->data.AST_FN_PROTOTYPE.length; i++) {
-      if (compare_ast(a->data.AST_FN_PROTOTYPE.identifiers[i],
-                      b->data.AST_FN_PROTOTYPE.identifiers[i])) {
+      if (compare_ast(a->data.AST_FN_PROTOTYPE.parameters[i],
+                      b->data.AST_FN_PROTOTYPE.parameters[i])) {
 
         return 1;
       }

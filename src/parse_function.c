@@ -46,7 +46,6 @@ AST *parse_fn_arg() {
   if (!match(TOKEN_IDENTIFIER)) {
     token token = parser.current;
 
-
     fprintf(stderr, "Expected param type found %d\n", token.type);
 
     return NULL;
