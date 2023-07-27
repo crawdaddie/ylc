@@ -1,0 +1,18 @@
+import "./strings.ylc"
+
+import "libs/libyalce_synth.so"
+
+let msleepd = extern fn (double msec) int
+
+let g = fn (int i) int {
+    match i
+    | 100 -> 1
+    | _ -> {
+        msleepd(100.0)
+        println("hi ")
+        g(i + 1)
+    }
+}
+
+
+g(0)

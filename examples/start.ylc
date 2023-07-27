@@ -26,12 +26,13 @@ let g = fn (int i) int {
     | 100 -> 1
     | _ -> {
         msleepd(100.0)
-        #printf("hi ")
+        println("hi ")
         g(i + 1)
     }
 }
 
 
-setup_audio()
+#setup_audio()
+g(0)
 
 

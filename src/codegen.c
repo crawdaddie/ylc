@@ -5,7 +5,9 @@
 #include "codegen_module.h"
 #include "codegen_symbol.h"
 #include "codegen_types.h"
+#include "paths.h"
 #include <dlfcn.h>
+#include <libgen.h>
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/Support.h>
@@ -76,19 +78,6 @@ static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
                         "load_ptr_val");
 }
 
-int hasExtension(const char *str, const char *extension) {
-  size_t strLen = strlen(str);
-  size_t extensionLen = strlen(extension);
-
-  if (strLen >= extensionLen) {
-    const char *endOfStr = str + strLen - extensionLen;
-    if (strcmp(endOfStr, extension) == 0) {
-      return 1; // The string ends with ".so"
-    }
-  }
-
-  return 0; // The string does not end with ".so"
-}
 LLVMValueRef codegen(AST *ast, Context *ctx) {
   switch (ast->tag) {
   case AST_MAIN: {
@@ -96,12 +85,18 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_IMPORT: {
     const char *module_name = ast->data.AST_IMPORT.module_name;
-    if (hasExtension(module_name, ".so")) {
-      void *libHandle = dlopen(ast->data.AST_IMPORT.module_name, RTLD_LAZY);
+    if (has_extension(module_name, ".so")) {
+      // const char lib_path[256];
+      // resolve_path(dirname(ctx->module_path),
+      // ast->data.AST_IMPORT.module_name,
+      //              lib_path);
+
+      void *libHandle = dlopen(module_name, RTLD_LAZY);
+
       if (!libHandle) {
         fprintf(stderr, "Error loading the shared library: %s\n", dlerror());
       }
-      return NULL;
+      return get_int(0, ctx);
     };
 
     // TODO: handle native .ylc source modules

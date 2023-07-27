@@ -53,8 +53,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
 
   case TYPE_GLOBAL_VARIABLE: {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, identifier);
-    LLVMValueRef init = LLVMGetInitializer(global);
-    return init;
+    return LLVMGetInitializer(global);
   }
 
   case TYPE_FN_PARAM: {
