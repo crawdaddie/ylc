@@ -13,9 +13,6 @@ let play_node = extern fn (Node node) Node
 
 let chain = extern fn (int sig_idx, Node dest, Node src) Node
 let msleepd = extern fn (double msec) int
-
-
-
 let sq_synth = fn (double freq, double lpfreq) Node {
     let snd = sq_detune(freq)
     snd = chain(0, lpf(lpfreq, 0.1), snd)
@@ -26,9 +23,9 @@ type CCHandler = fn (int chan, int cc, int val) int
 let register_midi_handler = extern fn (int ch, int cc, CCHandler cb) void
 
 setup_audio()
-
+let j = 23
 let h = fn (int ch, int cc, int val) int {
-  ch + cc + val
+  ch + j
 }
 
 register_midi_handler(0, 2, h)

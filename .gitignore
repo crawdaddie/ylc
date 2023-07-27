@@ -3,4 +3,4 @@ build/*
 examples/*.ll
 examples/*.bc
 examples/*.o
-# experiments/*
+experiments/*
