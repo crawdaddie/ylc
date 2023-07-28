@@ -118,7 +118,7 @@ struct AST {
 
     struct AST_ASSIGNMENT {
       char *identifier;
-      char *type;
+      char *type; // OPTIONAL
       AST *expression;
     } AST_ASSIGNMENT;
 
@@ -128,7 +128,7 @@ struct AST {
 
     struct AST_SYMBOL_DECLARATION {
       char *identifier;
-      char *type;
+      char *type; // OPTIONAL
       AST *expression;
     } AST_SYMBOL_DECLARATION;
 

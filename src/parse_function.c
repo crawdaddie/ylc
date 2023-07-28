@@ -102,11 +102,11 @@ AST *parse_fn_prototype() {
     }
   }
 
-  if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Error: expected return type for function\n");
-    return NULL;
+  if (match(TOKEN_IDENTIFIER)) {
+    proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
+  } else {
+    proto->data.AST_FN_PROTOTYPE.type = NULL;
   }
-  proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
   return proto;
 }
 

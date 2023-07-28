@@ -255,9 +255,9 @@ int main() {
       AST_NEW(SYMBOL_DECLARATION, "x", NULL),
       AST_NEW(SYMBOL_DECLARATION, "y", NULL),
   };
-  test_parse("let h = fn (x, y) int {x + y}", 1,
+  test_parse("let h = fn (x, y) {x + y}", 1,
              AST_NEW(FN_DECLARATION,
-                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3, "int"),
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3, NULL),
                      AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(IDENTIFIER, "y")),
                      "h"));
