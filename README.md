@@ -22,6 +22,9 @@ emit an object file with llc and finally link with clang
 # run tests
 `make build/test_parser`
 
+`make build/test_codegen`
+
+
 # DONE:
 - REPL (`./build/lang -r`)
 - C ffi capability using `extern` keyword
