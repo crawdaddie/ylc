@@ -120,15 +120,17 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
 
   // Get the return type of the function
-  // LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+  LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
   // int is_void = 0;
 
   // Check if the return type is void
-  // if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
-  //   is_void = 1;
-  // }
+  if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
+    // is_void = 1;
+    LLVMBuildRetVoid(ctx->builder);
+  } else {
+    LLVMBuildRet(ctx->builder, body);
+  }
 
-  LLVMBuildRet(ctx->builder, body);
 
   exit_scope(ctx);
 

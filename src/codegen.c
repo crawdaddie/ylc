@@ -181,6 +181,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_ASSIGNMENT: {
     // symbol assignment [ a = x ]
     // also handles immediate declaration + assignment [ let a = x ]
+    printf("cgen sym ass\n");
     return codegen_symbol_assignment(ast, ctx);
   }
 

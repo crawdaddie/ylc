@@ -27,6 +27,18 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
   return 0;
 }
 
+static void dump_ast(AST *ast) {
+  printf("\n\033[1;35m");
+  print_ast(*ast, 0);
+  printf("\033[1;0m\n");
+}
+
+static void dump_module(LLVMModuleRef module) {
+  printf("\n\033[1;36m");
+  LLVMDumpModule(module);
+  printf("\033[1;0m\n");
+}
+
 int init_lang_ctx(Context *ctx) {
   LLVMContextRef context = LLVMGetGlobalContext();
   LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
@@ -60,32 +72,20 @@ int init_lang_ctx(Context *ctx) {
   return 0;
 }
 
-static void dump_ast(AST *ast) {
-  printf("\n\033[1;35m");
-  print_ast(*ast, 0);
-  printf("\033[1;0m\n");
-}
-
-static void dump_module(LLVMModuleRef module) {
-  printf("\n\033[1;36m");
-  LLVMDumpModule(module);
-  printf("\033[1;0m\n");
-}
-
 int reinit_lang_ctx(Context *ctx) {
-  LLVMModuleRef module = LLVMCloneModule(ctx->module);
+  LLVMModuleRef newModule = LLVMCloneModule(ctx->module);
   // LLVMBuilderRef builder = LLVMCreateBuilderInContext(ctx->context);
   LLVMExecutionEngineRef engine;
 
   char *error = NULL;
-  if (LLVMCreateJITCompilerForModule(&engine, module, 2, &error) != 0) {
+  if (LLVMCreateJITCompilerForModule(&engine, newModule, 2, &error) != 0) {
     fprintf(stderr, "Failed to create execution engine: %s\n", error);
     LLVMDisposeMessage(error);
     return 1;
   }
 
   LLVMDisposeModule(ctx->module);
-  ctx->module = module;
+  ctx->module = newModule;
   // ctx->builder = builder;
   ctx->engine = engine;
 
@@ -121,10 +121,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
   if (repl) {
     printf("\033[1;31m"
-         "YLC LANG REPL       \n"
-         "--------------------\n"
-         "version 0.0.0       \n"
-         "\033[1;0m");
+           "YLC LANG REPL       \n"
+           "--------------------\n"
+           "version 0.0.0       \n"
+           "\033[1;0m");
   }
 
   if (path) {

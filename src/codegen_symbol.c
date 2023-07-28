@@ -92,12 +92,17 @@ LLVMValueRef codegen_symbol_declaration(AST *ast, Context *ctx) {
 }
 static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
                                    LLVMTypeRef type, Context *ctx) {
+
+  // Create new global & maybe assign to it
+  printf("decl glob: \n");
+  LLVMDumpValue(value);
+  printf("\n");
+  LLVMDumpType(type);
+  printf("\n");
   SymbolValue sym;
-  // global
   LLVMValueRef global = LLVMAddGlobal(ctx->module, type, identifier);
   sym.type = TYPE_GLOBAL_VARIABLE;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_value = value;
-  // global;
   sym.data.TYPE_GLOBAL_VARIABLE.llvm_type = type;
 
   if (LLVMIsConstant(value)) {
@@ -228,11 +233,13 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   }
 
   // LLVMTypeRef type = LLVMTypeOf(value);
-  LLVMTypeRef type;
+  LLVMTypeRef type = NULL;
 
   if (data.type) {
+    printf("type lookup????\n");
     type = type_lookup(data.type, ctx);
   }
+
   if (!type) {
     type = LLVMTypeOf(value);
   }
