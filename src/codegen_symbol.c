@@ -232,11 +232,9 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
     return NULL;
   }
 
-  // LLVMTypeRef type = LLVMTypeOf(value);
   LLVMTypeRef type = NULL;
 
   if (data.type) {
-    printf("type lookup????\n");
     type = type_lookup(data.type, ctx);
   }
 

@@ -21,3 +21,12 @@ emit an object file with llc and finally link with clang
 
 # run tests
 `make build/test_parser`
+
+# DONE:
+- passing callbacks from ylc to C functions
+
+# TODOs:
+- [ ] assign result of function calls / instructions to global vars 
+- [ ] type-checking / inference before codegen
+- [ ] tuple index addressing
+- [ ] arrays
