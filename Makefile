@@ -52,11 +52,6 @@ build/test_codegen: $(CODEGEN_TEST_OBJ)
 	$(LD) $(LLVM_LINK_FLAGS) $(CODEGEN_TEST_OBJ) -o $@
 	./build/test_codegen
 
-build/test_parser_ci: $(TEST_OBJ)
-	mkdir -p build
-	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) -o $@ -lbsd
-	./build/test_parser_ci
 
 .PHONY: debug-lang
 debug-lang:
