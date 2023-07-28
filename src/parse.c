@@ -62,7 +62,10 @@ static AST *rec_parse(AST *ast) {
   }
 }
 
+static void init_parser_ctx(){};
+
 AST *parse(char *source) {
+  init_parser_ctx();
 
   AST *ast = malloc(sizeof(AST));
   ast->tag = AST_MAIN;

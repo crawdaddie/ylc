@@ -23,6 +23,8 @@ emit an object file with llc and finally link with clang
 `make build/test_parser`
 
 # DONE:
+- REPL (`./build/lang -r`)
+- C ffi capability using `extern` keyword
 - passing callbacks from ylc to C functions
 - closures
 - custom type declarations / type aliases

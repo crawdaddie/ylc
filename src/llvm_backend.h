@@ -20,9 +20,9 @@ typedef struct {
   char *module_path;
 } Context;
 
-int init_lang_ctx(Context *ctx);
+int init_codegen_ctx(Context *ctx);
 
-int reinit_lang_ctx(Context *ctx);
+int reinit_codegen_ctx(Context *ctx);
 
 void enter_scope(Context *ctx);
 void exit_scope(Context *ctx);

@@ -6,6 +6,7 @@
 
 #include "codegen.h"
 #include "llvm_backend.h"
+#include "type_check.h"
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
@@ -39,7 +40,7 @@ static void dump_module(LLVMModuleRef module) {
   printf("\033[1;0m\n");
 }
 
-int init_lang_ctx(Context *ctx) {
+int init_codegen_ctx(Context *ctx) {
   LLVMContextRef context = LLVMGetGlobalContext();
   LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
   LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
@@ -72,7 +73,7 @@ int init_lang_ctx(Context *ctx) {
   return 0;
 }
 
-int reinit_lang_ctx(Context *ctx) {
+int reinit_codegen_ctx(Context *ctx) {
   LLVMModuleRef newModule = LLVMCloneModule(ctx->module);
   // LLVMBuilderRef builder = LLVMCreateBuilderInContext(ctx->context);
   LLVMExecutionEngineRef engine;
@@ -114,7 +115,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
   LLVMInitializeNativeAsmParser();
 
   Context ctx;
-  init_lang_ctx(&ctx);
+  init_codegen_ctx(&ctx);
   SymbolTable symbol_table;
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;
@@ -132,8 +133,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
     char *input = read_file(path);
     AST *ast = parse(input);
     free(input);
-
     ctx.module_path = path;
+    type_check_pass(ast);
     if (output) {
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
@@ -146,7 +147,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       free_ast(ast);
     }
     if (repl) {
-      reinit_lang_ctx(&ctx);
+      reinit_codegen_ctx(&ctx);
     }
   }
 
@@ -162,13 +163,15 @@ int LLVMRuntime(int repl, char *path, char *output) {
       AST *ast = parse(input);
       dump_ast(ast);
 
+      type_check_pass(ast);
+
       LLVMValueRef value = codegen(ast, &ctx);
       LLVMDumpValue(value);
       dump_module(ctx.module);
 
       run_value(ctx.engine, value);
       free_ast(ast);
-      reinit_lang_ctx(&ctx);
+      reinit_codegen_ctx(&ctx);
     }
   }
 

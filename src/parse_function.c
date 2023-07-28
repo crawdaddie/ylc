@@ -42,24 +42,21 @@ void arg_list_push(struct AST_FN_PROTOTYPE *proto, AST *arg) {
     proto->parameters[proto->length - 1] = arg;
   }
 }
+
 AST *parse_fn_arg() {
-  if (!match(TOKEN_IDENTIFIER)) {
-    token token = parser.current;
-
-    fprintf(stderr, "Expected param type found %d\n", token.type);
-
+  char *identifiers[2];
+  int i;
+  for (i = 0; match(TOKEN_IDENTIFIER); i++) {
+    identifiers[i] = strdup(parser.previous.as.vstr);
+  }
+  if (i == 0) {
     return NULL;
   }
-  char *type_expr = strdup(parser.previous.as.vstr);
-  // AST *type_expr = parse_expression();
-
-  if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Expected param name\n");
+  if (i == 1) {
+    return AST_NEW(SYMBOL_DECLARATION, identifiers[0], NULL);
   }
 
-  char *id_str = strdup(parser.previous.as.vstr);
-  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_expr);
-  return param;
+  return AST_NEW(SYMBOL_DECLARATION, identifiers[1], identifiers[0]);
 }
 
 AST *parse_fn_body() {

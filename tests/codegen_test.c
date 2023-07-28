@@ -7,7 +7,7 @@
 
 static LLVMValueRef test_codegen(AST *ast) {
   Context ctx;
-  init_lang_ctx(&ctx);
+  init_codegen_ctx(&ctx);
   SymbolTable symbol_table;
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;

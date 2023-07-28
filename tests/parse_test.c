@@ -250,23 +250,32 @@ int main() {
                      AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(IDENTIFIER, "y")),
                      "h"));
-/*
+
   AST *fn_proto_params3[] = {
-      AST_NEW(SYMBOL_DECLARATION, "x_", "int"),
-      AST_NEW(SYMBOL_DECLARATION, "y_", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "x", NULL),
+      AST_NEW(SYMBOL_DECLARATION, "y", NULL),
   };
-  test_parse(
-      "let h = fn (int x_, int y_) int\n"
-    "{let j = 1\nx_ + y_ + j}", 1,
-      AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3, "int"),
-              ast_statement_list(
-                  2, AST_NEW(ASSIGNMENT, "j", NULL, AST_NEW(INTEGER, 1)),
-                  AST_NEW(BINOP, TOKEN_PLUS,
-                          AST_NEW(BINOP, TOKEN_PLUS,
-                                  AST_NEW(IDENTIFIER, "x_"),
-                                  AST_NEW(IDENTIFIER, "y_")),
-                          AST_NEW(IDENTIFIER, "j"))),
-              "h"));
-  */
+  test_parse("let h = fn (x, y) int {x + y}", 1,
+             AST_NEW(FN_DECLARATION,
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3, "int"),
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(IDENTIFIER, "y")),
+                     "h"));
+  /*
+    AST *fn_proto_params3[] = {
+        AST_NEW(SYMBOL_DECLARATION, "x_", "int"),
+        AST_NEW(SYMBOL_DECLARATION, "y_", "int"),
+    };
+    test_parse(
+        "let h = fn (int x_, int y_) int\n"
+      "{let j = 1\nx_ + y_ + j}", 1,
+        AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3,
+    "int"), ast_statement_list( 2, AST_NEW(ASSIGNMENT, "j", NULL,
+    AST_NEW(INTEGER, 1)), AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(BINOP, TOKEN_PLUS,
+                                    AST_NEW(IDENTIFIER, "x_"),
+                                    AST_NEW(IDENTIFIER, "y_")),
+                            AST_NEW(IDENTIFIER, "j"))),
+                "h"));
+    */
   return test_result;
 }
