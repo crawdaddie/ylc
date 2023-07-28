@@ -24,9 +24,14 @@ emit an object file with llc and finally link with clang
 
 # DONE:
 - passing callbacks from ylc to C functions
+- closures
+- custom type declarations / type aliases
+- structs
 
 # TODOs:
 - [ ] assign result of function calls / instructions to global vars 
 - [ ] type-checking / inference before codegen
 - [ ] tuple dynamic index addressing
 - [ ] arrays
+- [ ] more sophisticated pattern-matching
+- [ ] currying
