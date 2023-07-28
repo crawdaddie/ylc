@@ -28,5 +28,5 @@ emit an object file with llc and finally link with clang
 # TODOs:
 - [ ] assign result of function calls / instructions to global vars 
 - [ ] type-checking / inference before codegen
-- [ ] tuple index addressing
+- [ ] tuple dynamic index addressing
 - [ ] arrays
