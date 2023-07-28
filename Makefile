@@ -48,6 +48,12 @@ build/test_codegen: $(TEST_OBJ)
 	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) codegen_test.o -o $@
 	./build/test_codegen
 
+build/test_typecheck: $(TEST_OBJ)
+	mkdir -p build
+	$(CC) $(LLVM_CC_FLAGS) -c $(TEST_SRC) tests/typecheck_test.c $(INCLUDES)
+	$(LD) $(LLVM_LINK_FLAGS) $(TEST_OBJ) typecheck_test.o -o $@
+	./build/test_typecheck
+
 
 .PHONY: debug-lang
 debug-lang:

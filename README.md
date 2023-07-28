@@ -40,3 +40,6 @@ emit an object file with llc and finally link with clang
 - [ ] arrays
 - [ ] more sophisticated pattern-matching
 - [ ] currying
+
+# REFERENCES
+https://craftinginterpreters.com/a-bytecode-virtual-machine.html
