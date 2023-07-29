@@ -1,7 +1,8 @@
 # ylc
-simple language for learning purposes
+simple language for learning purposes,
+bootstrapped in C (self-hosting probably way out of scope)
 
-using LLVM C API as a backend
+uses LLVM C API as a backend to generate LLVM IR, and to implement a JIT for the REPL
 
 # compile ylc
 `mkdir -p build && make`
@@ -9,6 +10,7 @@ using LLVM C API as a backend
 # run
 - as repl: `./build/lang`
 - with file input: `./build/lang test.ylc`
+- with both: `./build/lang test.ylc -r` (runs the input file before starting the repl in the same environment)
 
 # compile .ylc to executable
 use the ./ylcc script to compile an .ylc source file to executable
@@ -22,11 +24,17 @@ emit an object file with llc and finally link with clang
 # run tests
 `make build/test_parser`
 
+`make build/test_codegen`
+
+
 # DONE:
+- REPL (`./build/lang -r`)
+- C ffi capability using `extern` keyword
 - passing callbacks from ylc to C functions
 - closures
 - custom type declarations / type aliases
 - structs
+- import statements (no namespaces yet, symbols are dumped into the calling module)
 
 # TODOs:
 - [ ] assign result of function calls / instructions to global vars 
@@ -35,3 +43,10 @@ emit an object file with llc and finally link with clang
 - [ ] arrays
 - [ ] more sophisticated pattern-matching
 - [ ] currying
+- [ ] namespaced modules
+
+# REFERENCES
+- https://craftinginterpreters.com/a-bytecode-virtual-machine.html
+- https://github.com/k-mrm/type-inference
+- https://github.com/semahawk/type-inference
+- https://cs3110.github.io/textbook/chapters/interp/inference.html
