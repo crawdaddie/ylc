@@ -2,6 +2,14 @@ src = $(wildcard src/*.c)
 
 obj = $(src:.c=.o)
 
+# Define the source files and object files directories
+SRC_DIR := src
+BUILD_DIR := build
+
+# List all the source files and object files
+SRC := $(wildcard $(SRC_DIR)/*.c)
+OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
+
 CC=clang
 LD=clang
 
@@ -9,49 +17,44 @@ LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 LINK=-lpthread
 
-build/lang: $(obj)
-	$(CC) $(LLVM_CC_FLAGS) -c $(src) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(obj) $(LINK) -o $@ 
+# Default target
+build/lang: $(OBJ)
+	$(LD) $(LLVM_LINK_FLAGS) $(OBJ) $(LINK) -o $@
 
+# Rule to build object files from source files
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(LLVM_CC_FLAGS) -c $< -o $@
+
+# Create the build directory if it doesn't exist
+$(BUILD_DIR):
+	mkdir -p $(BUILD_DIR)
+
+# Clean target
 .PHONY: clean
 clean:
-	rm -f build/src/*.o
-	rm -f build/lang
+	rm -rf $(BUILD_DIR)
 
-.PHONY: wasm
-wasm:
+# Define the test source files and object files directories
+TEST_DIR := tests
+TEST_SRC := $(filter-out $(SRC_DIR)/main.c, $(SRC))
+TEST_SRC += $(TEST_DIR)/utils.c
 
+# List all the test object files
+TEST_OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(TEST_SRC))
+build/test_parser: $(TEST_OBJ) $(BUILD_DIR)/parse_test.o
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	./$@
 
-TEST_DIR = src/test
-.PHONY: lang_test_suite
-lang_test_suite: $(wildcard $(TEST_DIR)/*.test.simple)
-	make build/lang
-	for file in $^ ; do \
-		./test_file.sh $${file} ; \
-  done
-	
-PARSE_TEST_SRC = $(filter-out src/main.c, $(src))
-PARSE_TEST_SRC += tests/utils.c 
-PARSE_TEST_SRC += tests/parse_test.c 
-PARSE_TEST_OBJ = $(PARSE_TEST_SRC:.c=.o)
+build/test_codegen: $(TEST_OBJ) $(BUILD_DIR)/codegen_test.o
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	./$@
 
-build/test_parser: $(PARSE_TEST_OBJ)
-	mkdir -p build
-	$(CC) $(LLVM_CC_FLAGS) -c $(PARSE_TEST_SRC) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(PARSE_TEST_OBJ) -o $@
-	./build/test_parser
+build/test_typecheck: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	./$@
 
-CODEGEN_TEST_SRC = $(filter-out src/main.c, $(src))
-CODEGEN_TEST_SRC += tests/utils.c 
-CODEGEN_TEST_SRC += tests/codegen_test.c 
-CODEGEN_TEST_OBJ = $(CODEGEN_TEST_SRC:.c=.o)
-
-build/test_codegen: $(CODEGEN_TEST_OBJ)
-	mkdir -p build
-	$(CC) $(LLVM_CC_FLAGS) -c $(CODEGEN_TEST_SRC) $(INCLUDES)
-	$(LD) $(LLVM_LINK_FLAGS) $(CODEGEN_TEST_OBJ) -o $@
-	./build/test_codegen
-
+$(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
+	$(CC) $(LLVM_CC_FLAGS) -c $< -o $@
 
 .PHONY: debug-lang
 debug-lang:
@@ -60,10 +63,6 @@ debug-lang:
 .PHONY: repl
 repl:
 	make && ./build/lang
-
-.PHONY: test
-test:
-	make && ./build/lang examples/test.ylc
 
 .PHONY: yalce-synth 
 yalce-synth:
