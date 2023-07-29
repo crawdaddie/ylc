@@ -131,7 +131,6 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
     LLVMBuildRet(ctx->builder, body);
   }
 
-
   exit_scope(ctx);
 
   LLVMPositionBuilderAtEnd(ctx->builder, prevBlock);
@@ -203,8 +202,9 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
     is_void = 1;
   }
-  LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
-                                    func, args, arg_count, is_void ? "" : inst_name("call"));
+  LLVMValueRef val =
+      LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args,
+                     arg_count, is_void ? "" : inst_name("call"));
 
   free(args);
   return val;

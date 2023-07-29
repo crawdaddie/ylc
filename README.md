@@ -17,7 +17,7 @@ m(5)
 
 let printf = extern fn (str input) int
 
-let println = fn (str input) int {
+let println = fn (str input) void {
     printf(input)
     printf("\n")
 }
