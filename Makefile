@@ -15,11 +15,11 @@ LINK=-lpthread
 
 # Default target
 build/lang: $(OBJ)
-	$(LD) $(LLVM_LINK_FLAGS) $(OBJ) $(LINK) -o $@
+	$(LD) $(LLVM_LINK_FLAGS) $(C_FLAGS) $(OBJ) $(LINK) -o $@
 
 # Rule to build object files from source files
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
-	$(CC) $(LLVM_CC_FLAGS) -c $< -o $@
+	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
 
 # Create the build directory if it doesn't exist
 $(BUILD_DIR):
@@ -50,7 +50,7 @@ build/test_typecheck: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
 	./$@
 
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
-	$(CC) $(LLVM_CC_FLAGS) -c $< -o $@
+	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
 # Check if we are running in GitHub Actions CI environment
 #
 
@@ -62,6 +62,10 @@ debug-lang:
 repl:
 	make && ./build/lang
 
+.PHONY: run
+run:
+	make && ./build/lang $(input)
+
 .PHONY: yalce-synth 
 yalce-synth:
 	(cd ~/projects/yalce && make libyalce_synth.so && cp libyalce_synth.so ~/projects/langs/ylc/libs/)
@@ -70,3 +74,13 @@ EXPORT_COMPILER_OPTIONS = -Werror -Wall -Wextra -fPIC
 .PHONY: libffi
 libffi:
 	$(CC) -shared -o libffi.so experiments/libffi.c $(EXPORT_COMPILER_OPTIONS)
+
+.PHONY: test
+test:
+	make build/test_$(t)
+
+.PHONY: tests
+tests:
+	make build/test_codegen
+	make build/test_parser
+	# make build/test_typecheck

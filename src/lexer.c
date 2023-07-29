@@ -575,6 +575,8 @@ static int _NUMBER_MATCHER(const char *input, token *tail) {
   }
   return 0;
 }
+
+/*
 static size_t _strlcpy(char *dst, const char *src, size_t size) {
   size_t src_len = strlen(src);
   size_t copy_len =
@@ -595,12 +597,13 @@ static size_t _strlcpy(char *dst, const char *src, size_t size) {
   return src_len; // Return the length of the source string (not including
                   // null-terminator).
 }
+*/
 
 static int _IDENTIFIER_MATCHER(const char *input, token *tail) {
   int offset = 0;
   if ((offset = seek_identifier(input)) != 0) {
     char *str = malloc((offset + 1) * sizeof(char));
-    _strlcpy(str, input, offset + 1);
+    strlcpy(str, input, offset + 1);
     *tail = create_identifier(str);
     return offset;
   }
