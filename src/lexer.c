@@ -575,11 +575,32 @@ static int _NUMBER_MATCHER(const char *input, token *tail) {
   }
   return 0;
 }
+static size_t _strlcpy(char *dst, const char *src, size_t size) {
+  size_t src_len = strlen(src);
+  size_t copy_len =
+      (size > 0) ? size - 1 : 0; // Ensure space for null-terminator
+
+  if (src_len < copy_len) {
+    // If the source fits completely in the destination buffer,
+    // we can just use memcpy and manually null-terminate.
+    memcpy(dst, src, src_len);
+    dst[src_len] = '\0'; // Null-terminate the destination buffer
+  } else if (copy_len > 0) {
+    // If there's some space in the destination buffer, copy as much as
+    // possible.
+    memcpy(dst, src, copy_len);
+    dst[copy_len] = '\0'; // Null-terminate the destination buffer
+  }
+
+  return src_len; // Return the length of the source string (not including
+                  // null-terminator).
+}
+
 static int _IDENTIFIER_MATCHER(const char *input, token *tail) {
   int offset = 0;
   if ((offset = seek_identifier(input)) != 0) {
     char *str = malloc((offset + 1) * sizeof(char));
-    strlcpy(str, input, offset + 1);
+    _strlcpy(str, input, offset + 1);
     *tail = create_identifier(str);
     return offset;
   }
