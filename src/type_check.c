@@ -19,42 +19,78 @@ static void exit_typecheck_scope(TypeCheckContext *ctx) {
   pop_Astframe(ctx->symbol_table);
 }
 
-void type_check(AST *ast, TypeCheckContext *ctx) {
-  printf("\ntypecheck: \n");
-  print_ast(*ast, 0);
+static TYPES typecheck_ast(AST *ast, TypeCheckContext *ctx) {
+  printf("tcheck %d\n", ast->tag);
   switch (ast->tag) {
   case AST_MAIN: {
-
     enter_typecheck_scope(ctx);
-    type_check(ast->data.AST_MAIN.body, ctx);
+    typecheck_ast(ast->data.AST_MAIN.body, ctx);
     exit_typecheck_scope(ctx);
-    return;
+    return T_VOID;
   }
   case AST_STATEMENT_LIST: {
+    TYPES t;
     for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
-      type_check(ast->data.AST_STATEMENT_LIST.statements[i], ctx);
+      AST *stmt_ast = ast->data.AST_STATEMENT_LIST.statements[i];
+      t = typecheck_ast(stmt_ast, ctx);
     }
-    return;
+    return t;
   }
+  case AST_FN_DECLARATION: {
+    char *name = ast->data.AST_FN_DECLARATION.name;
+    table_Astinsert(ctx->symbol_table, name, ast);
+    enter_typecheck_scope(ctx);
+    typecheck_ast(ast->data.AST_FN_DECLARATION.prototype, ctx);
+    TYPES ret_type = typecheck_ast(ast->data.AST_FN_DECLARATION.body, ctx);
+    // TODO: use any return values in the above step to set the type of
+    // of the function
+    exit_typecheck_scope(ctx);
+
+    return T_COMPOUND;
+  }
+  case AST_FN_PROTOTYPE: {
+    int arg_count = ast->data.AST_FN_PROTOTYPE.length;
+    AST **parameters = ast->data.AST_FN_PROTOTYPE.parameters;
+
+    for (int i = 0; i < arg_count; i++) {
+      AST *param_ast = parameters[i];
+      struct AST_SYMBOL_DECLARATION param_symbol =
+          param_ast->data.AST_SYMBOL_DECLARATION;
+      // insert param into symbol table for current stack
+      table_Astinsert(ctx->symbol_table, param_symbol.identifier, param_ast);
+    }
+    return T_COMPOUND;
+  }
+  case AST_CALL: {
+    char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+    AST *func_ast;
+    if (table_Astlookup(ctx->symbol_table, name, &func_ast) != 0) {
+      fprintf(stderr, "function %s not found in this scope\n", name);
+    }
+    printf("found callable %s\n", name);
+
+    AST *func_prototype_ast = func_ast->data.AST_FN_DECLARATION.prototype;
+
+    AST *parameters = ast->data.AST_CALL.parameters;
+    struct AST_TUPLE parameters_tuple = parameters->data.AST_TUPLE;
+    unsigned int arg_count = parameters_tuple.length;
+
+    if (arg_count < func_prototype_ast->data.AST_FN_PROTOTYPE.length) {
+      // TODO: replace AST with AST for curried func
+    }
+    // TODO: replace AST with casts, eg 1 -> 1.0 if param is double
+
+    return T_VOID;
+  }
+  case AST_BINOP:
+  case AST_ASSIGNMENT:
   case AST_INTEGER:
   case AST_NUMBER:
   case AST_BOOL:
   case AST_STRING:
-  case AST_ADD:
-  case AST_SUBTRACT:
-  case AST_MUL:
-  case AST_DIV:
   case AST_UNOP:
-  case AST_BINOP:
-  case AST_EXPRESSION:
-  case AST_STATEMENT:
-  case AST_CALL_EXPRESSION:
-  case AST_FN_DECLARATION:
-  case AST_ASSIGNMENT:
   case AST_IDENTIFIER:
   case AST_SYMBOL_DECLARATION:
-  case AST_FN_PROTOTYPE:
-  case AST_CALL:
   case AST_TUPLE:
   case AST_IF_ELSE:
   case AST_MATCH:
@@ -63,19 +99,20 @@ void type_check(AST *ast, TypeCheckContext *ctx) {
   case AST_MEMBER_ACCESS:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
-  case AST_IMPORT: {
-    return;
-  }
+  case AST_IMPORT:
   default: {
-    return;
+    printf("default %d\n", ast->tag);
+    return T_VOID;
   }
   }
+
+  return T_VOID;
 }
 
-void type_check_pass(AST *ast) {
+void typecheck(AST *ast) {
   TypeCheckContext ctx;
   AstSymbolTable symbol_table;
   symbol_table.current_frame_index = -1;
   ctx.symbol_table = &symbol_table;
-  type_check(ast, &ctx);
+  typecheck_ast(ast, &ctx);
 }

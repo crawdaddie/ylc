@@ -134,7 +134,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     AST *ast = parse(input);
     free(input);
     ctx.module_path = path;
-    type_check_pass(ast);
+    typecheck(ast);
     if (output) {
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
@@ -163,7 +163,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       AST *ast = parse(input);
       dump_ast(ast);
 
-      type_check_pass(ast);
+      typecheck(ast);
 
       LLVMValueRef value = codegen(ast, &ctx);
       LLVMDumpValue(value);
