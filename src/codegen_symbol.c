@@ -94,11 +94,6 @@ static LLVMValueRef declare_global(char *identifier, LLVMValueRef value,
                                    LLVMTypeRef type, Context *ctx) {
 
   // Create new global & maybe assign to it
-  printf("decl glob: \n");
-  LLVMDumpValue(value);
-  printf("\n");
-  LLVMDumpType(type);
-  printf("\n");
   SymbolValue sym;
   LLVMValueRef global = LLVMAddGlobal(ctx->module, type, identifier);
   sym.type = TYPE_GLOBAL_VARIABLE;

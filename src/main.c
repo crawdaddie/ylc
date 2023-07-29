@@ -71,5 +71,9 @@ int main(int argc, char **argv) {
   char *output = NULL;
   process_opts(argc, argv, &output, &input, &repl);
 
+  if (input == NULL) {
+    repl = 1;
+  }
+
   return LLVMRuntime(repl, input, output);
 }

@@ -11,7 +11,6 @@ let Point x = (
 
 let zero = fn(Point p, double x) Point {
     p.x = x
-#    p
 }
 
 
