@@ -1,7 +1,3 @@
-src = $(wildcard src/*.c)
-
-obj = $(src:.c=.o)
-
 # Define the source files and object files directories
 SRC_DIR := src
 BUILD_DIR := build
@@ -55,6 +51,13 @@ build/test_typecheck: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
 
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(LLVM_CC_FLAGS) -c $< -o $@
+# Check if we are running in GitHub Actions CI environment
+#
+ifeq ($(CI),true)
+    # Add libbsd-dev and link it in compilation steps
+    CC += -I/usr/include/bsd
+    LINK += -lbsd
+endif
 
 .PHONY: debug-lang
 debug-lang:
