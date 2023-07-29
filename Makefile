@@ -38,15 +38,15 @@ TEST_SRC += $(TEST_DIR)/utils.c
 # List all the test object files
 TEST_OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(TEST_SRC))
 build/test_parser: $(TEST_OBJ) $(BUILD_DIR)/parse_test.o
-	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@ $(CI_LINK)
 	./$@
 
 build/test_codegen: $(TEST_OBJ) $(BUILD_DIR)/codegen_test.o
-	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@ $(CI_LINK)
 	./$@
 
 build/test_typecheck: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
-	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@ $(CI_LINK)
 	./$@
 
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
@@ -56,7 +56,7 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 ifeq ($(CI),true)
     # Add libbsd-dev and link it in compilation steps
     CC +=-DLIBBSD_OVERLAY -I/usr/include/bsd
-    LINK += -lbsd
+    CI_LINK = -lbsd
 endif
 
 .PHONY: debug-lang
