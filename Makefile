@@ -55,7 +55,7 @@ $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 #
 ifeq ($(CI),true)
     # Add libbsd-dev and link it in compilation steps
-    CC += -I/usr/include/bsd
+    CC +=-DLIBBSD_OVERLAY -I/usr/include/bsd
     LINK += -lbsd
 endif
 
