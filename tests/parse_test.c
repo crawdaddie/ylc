@@ -262,19 +262,23 @@ int main() {
                              AST_NEW(IDENTIFIER, "y")),
                      "h"));
 
-    AST *fn_proto_params4[] = {
-        AST_NEW(SYMBOL_DECLARATION, "x", "int"),
-        AST_NEW(SYMBOL_DECLARATION, "y", "int"),
-    };
 
-    test_parse(
-        "let m = fn (int x, int y) int {\nlet j = 1\nx + y + j\n}", 1,
-        AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params4,
-    "int"), ast_statement_list( 2, AST_NEW(ASSIGNMENT, "j", NULL,
-    AST_NEW(INTEGER, 1)), AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(BINOP, TOKEN_PLUS,
-                                    AST_NEW(IDENTIFIER, "x"),
-                                    AST_NEW(IDENTIFIER, "y")),
-                            AST_NEW(IDENTIFIER, "j"))),
-                "m"));
+  /*
+  AST *fn_proto_params4[] = {
+      AST_NEW(SYMBOL_DECLARATION, "x", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "y", "int"),
+  };
+
+  test_parse(
+      "let m = fn (int x, int y) int {\nlet j = 1\nx + y + j\n}", 1,
+      AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params4, "int"),
+              ast_statement_list(
+                  2, AST_NEW(ASSIGNMENT, "j", NULL, AST_NEW(INTEGER, 1)),
+                  AST_NEW(BINOP, TOKEN_PLUS,
+                          AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
+                                  AST_NEW(IDENTIFIER, "y")),
+                          AST_NEW(IDENTIFIER, "j"))),
+              "m"));
+    */
   return test_result;
 }

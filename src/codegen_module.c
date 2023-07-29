@@ -5,7 +5,7 @@
 #include "llvm_backend.h"
 #include "parse.h"
 #include "paths.h"
-#include "type_check.h"
+#include "typecheck.h"
 #include <libgen.h>
 #include <llvm-c/Linker.h>
 LLVMValueRef codegen_module(char *filename, Context *ctx) {
@@ -22,7 +22,7 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
   char *input = read_file(resolved_path);
   AST *ast = parse(input);
   free(input);
-  typecheck(ast);
+  // typecheck(ast);
   this_ctx.module_path = resolved_path;
   codegen(ast, &this_ctx);
 

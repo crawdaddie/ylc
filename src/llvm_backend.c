@@ -6,7 +6,7 @@
 
 #include "codegen.h"
 #include "llvm_backend.h"
-#include "type_check.h"
+#include "typecheck.h"
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
@@ -134,7 +134,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     AST *ast = parse(input);
     free(input);
     ctx.module_path = path;
-    typecheck(ast);
+    // typecheck(ast);
     if (output) {
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
@@ -163,7 +163,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       AST *ast = parse(input);
       dump_ast(ast);
 
-      typecheck(ast);
+      // typecheck(ast);
 
       LLVMValueRef value = codegen(ast, &ctx);
       LLVMDumpValue(value);

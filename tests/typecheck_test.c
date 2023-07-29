@@ -3,7 +3,7 @@
 #include "../src/parse.h"
 #include "../src/parse_function.h"
 #include "../src/parse_statement.h"
-#include "../src/type_check.h"
+#include "../src/typecheck.h"
 #include "utils.h"
 #include <stdarg.h>
 #include <stdio.h>
@@ -47,15 +47,24 @@ static AST *typecheck_input(const char *input) {
   return ast;
 }
 
+#define PRINT_TEST_RESULTS                                                     \
+  print_ast(*test, 0);                                                         \
+  free_ast(test);
+
+int test_untyped_function() {
+  int test_result = 0;
+  AST *test = typecheck_input("let h = fn (x, y) {x + 1}");
+  PRINT_TEST_RESULTS
+}
+
+int test_int_casting() {
+  AST *test = typecheck_input("let h = fn (double x) {x + 1}\nh(1)");
+  PRINT_TEST_RESULTS
+}
+
 int main() {
   test_result = 0;
-  AST *test = typecheck_input("let h = fn (x, y) {x + 1}");
-
-  printf("test fn typecheck\n");
-  print_ast(*test, 0);
-
-  test = typecheck_input("let h = fn (double x) {x + 1}\nh(1)");
-  print_ast(*test, 0);
-
+  test_untyped_function();
+  test_int_casting();
   return test_result;
 }

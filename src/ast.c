@@ -222,34 +222,31 @@ void print_ast(AST ast, int indent) {
     break;
   }
 }
+
+static void _free(void *ptr) {
+  if (ptr == NULL) {
+    return;
+  }
+  free(ptr);
+}
+
 void free_ast(AST *ast) {
+  if (ast == NULL) {
+    return;
+  }
   switch (ast->tag) {
   case AST_MAIN:
     free_ast(ast->data.AST_MAIN.body);
     break;
 
-  case AST_INTEGER:
-    free(ast);
-
-    break;
-
-  case AST_NUMBER:
-
-    free(ast);
-    break;
-
   case AST_BINOP: {
     free_ast(ast->data.AST_BINOP.left);
     free_ast(ast->data.AST_BINOP.right);
-    free(ast);
-
     break;
   }
 
   case AST_UNOP: {
     free_ast(ast->data.AST_UNOP.operand);
-    free(ast);
-
     break;
   }
 
@@ -257,35 +254,87 @@ void free_ast(AST *ast) {
     for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
       free_ast(ast->data.AST_STATEMENT_LIST.statements[i]);
     }
-    free(ast);
     break;
   }
 
   case AST_FN_PROTOTYPE: {
-
     for (int i = 0; i < ast->data.AST_FN_PROTOTYPE.length; i++) {
       free_ast(ast->data.AST_FN_PROTOTYPE.parameters[i]);
     }
-    free(ast);
     break;
   }
 
   case AST_SYMBOL_DECLARATION: {
-
     free(ast->data.AST_SYMBOL_DECLARATION.identifier);
-    free(ast);
+    _free(ast->data.AST_SYMBOL_DECLARATION.type);
+    free_ast(ast->data.AST_SYMBOL_DECLARATION.expression);
+
+    break;
   }
 
   case AST_ASSIGNMENT: {
+    free(ast->data.AST_ASSIGNMENT.identifier);
+    _free(ast->data.AST_ASSIGNMENT.type);
     AST *expr = ast->data.AST_ASSIGNMENT.expression;
-    if (expr) {
-      free_ast(expr);
-      free(ast->data.AST_ASSIGNMENT.identifier);
-      free(ast);
+    free_ast(expr);
+    break;
+  }
+
+  case AST_CALL: {
+    free_ast(ast->data.AST_CALL.identifier);
+    free_ast(ast->data.AST_CALL.parameters);
+    break;
+  }
+  case AST_TUPLE: {
+    for (int i = 0; i < ast->data.AST_TUPLE.length; i++) {
+      free_ast(ast->data.AST_TUPLE.members[i]);
     }
     break;
   }
+  case AST_IF_ELSE: {
+    free_ast(ast->data.AST_IF_ELSE.condition);
+    free_ast(ast->data.AST_IF_ELSE.then_body);
+    free_ast(ast->data.AST_IF_ELSE.else_body);
+    break;
   }
+
+  case AST_MATCH: {
+    free_ast(ast->data.AST_MATCH.candidate);
+    for (int i = 0; i < ast->data.AST_MATCH.length; i++) {
+      free_ast(ast->data.AST_MATCH.matches[i]);
+    }
+    free_ast(ast->data.AST_MATCH.result_type);
+    break;
+  }
+  case AST_TYPE_DECLARATION: {
+    free(ast->data.AST_TYPE_DECLARATION.name);
+    free_ast(ast->data.AST_TYPE_DECLARATION.type_expr);
+    break;
+  }
+  case AST_MEMBER_ASSIGNMENT: {
+    free_ast(ast->data.AST_MEMBER_ASSIGNMENT.object);
+    free(ast->data.AST_MEMBER_ASSIGNMENT.member_name);
+    free_ast(ast->data.AST_MEMBER_ASSIGNMENT.expression);
+    break;
+  }
+  case AST_MEMBER_ACCESS: {
+
+    free_ast(ast->data.AST_MEMBER_ACCESS.object);
+    free(ast->data.AST_MEMBER_ACCESS.member_name);
+    break;
+  }
+  case AST_INDEX_ACCESS: {
+
+    free_ast(ast->data.AST_INDEX_ACCESS.object);
+    free_ast(ast->data.AST_INDEX_ACCESS.index_expr);
+    break;
+  }
+  case AST_IMPORT: {
+    free(ast->data.AST_IMPORT.module_name);
+    break;
+  }
+  }
+  free(ast);
 }
 
 AST *ast_new(AST ast) {

@@ -1,7 +1,16 @@
-#ifndef _LANG_TYPECHECK_H
-#define _LANG_TYPECHECK_H
+#ifndef _LANG_TYPE_CHECK_H
+#define _LANG_TYPE_CHECK_H
 #include "ast.h"
 
-void typecheck(AST *ast);
+typedef enum {
+  T_INT,
+  T_NUM,
+  T_STR,
+  T_BOOL,
+  T_COMPOUND,
+  T_PTR,
+  T_VOID,
+} TYPES;
 
-#endif /* ifndef _LANG_STATIC_ANALYSIS_H */
+void typecheck(AST *ast);
+#endif
