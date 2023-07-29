@@ -14,6 +14,22 @@ let m = fn (int val) int {
 }
 
 m(5)
+
+let printf = extern fn (str input) int
+
+let println = fn (str input) int {
+    printf(input)
+    printf("\n")
+}
+
+let fib = fn (int n) int {
+    match n
+    | 0 -> 0
+    | 1 -> 1
+    | _ -> fib(n - 1) + fib(n - 2)
+}
+
+fib(10)
 ```
 
 # compile ylc
