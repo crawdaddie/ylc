@@ -1,8 +1,20 @@
 # ylc
-simple language for learning purposes,
+simple language for learning purposes, originally conceived as an interface for https://github.com/crawdaddie/yalce audio library
 bootstrapped in C (self-hosting probably way out of scope)
 
 uses LLVM C API as a backend to generate LLVM IR, and to implement a JIT for the REPL
+
+# examples
+```javascript
+let m = fn (int val) int {
+  match val -> int
+  | 1 -> 1 
+  | 2 -> 2
+  | _ -> m(val - 2)
+}
+
+m(5)
+```
 
 # compile ylc
 `mkdir -p build && make`
