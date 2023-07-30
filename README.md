@@ -33,7 +33,7 @@ let fib = fn (int n) int {
 fib(10)
 ```
 # dependencies
-- LLVM
+- LLVM (after installing llvm you may need to add the llvm headers & libraries to your CPATH & LIBRARY_PATH)
 
 # compile ylc
 `mkdir -p build && make`
