@@ -1,7 +1,5 @@
-let printf = extern fn (str input) int
+let printf = extern fn (str fmt, ...) int
+let fprintf = printf
 
-let println = fn (str input) int {
-    printf(input)
-    printf("\n")
-}
+
 

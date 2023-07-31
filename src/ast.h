@@ -36,6 +36,7 @@ struct AST {
     AST_MEMBER_ASSIGNMENT,
     AST_INDEX_ACCESS,
     AST_IMPORT,
+    AST_VAR_ARG,
   } tag;
 
   union {

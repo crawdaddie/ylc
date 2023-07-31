@@ -216,6 +216,10 @@ void print_ast(AST ast, int indent) {
     printf("import %s\n", ast.data.AST_IMPORT.module_name);
     break;
   }
+  case AST_VAR_ARG: {
+    printf("<...>");
+    break;
+  }
   default:
     printf("ast node %d\n", ast.tag);
 

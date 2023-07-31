@@ -21,12 +21,15 @@ let sq_synth = fn (double freq, double lpfreq) Node {
 }
 
 type CCHandlerType = fn (int chan, int cc, int val) int
+
 let register_midi_handler = extern fn (int ch, int cc, CCHandlerType cb) void
 
 setup_audio()
-let j = 23
 let h = fn (int ch, int cc, int val) int {
-  ch + j
+  printint(ch)
+  printint(cc)
+  printint(val)
+  1
 }
 
 register_midi_handler(0, 2, h)

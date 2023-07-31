@@ -42,25 +42,6 @@ void arg_list_push(struct AST_FN_PROTOTYPE *proto, AST *arg) {
     proto->parameters[proto->length - 1] = arg;
   }
 }
-AST *parse_fn_arg() {
-  if (!match(TOKEN_IDENTIFIER)) {
-    token token = parser.current;
-
-    fprintf(stderr, "Expected param type found %d\n", token.type);
-
-    return NULL;
-  }
-  char *type_expr = strdup(parser.previous.as.vstr);
-  // AST *type_expr = parse_expression();
-
-  if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Expected param name\n");
-  }
-
-  char *id_str = strdup(parser.previous.as.vstr);
-  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_expr);
-  return param;
-}
 
 AST *parse_fn_body() {
   if (!match(TOKEN_LEFT_BRACE)) {
@@ -89,6 +70,26 @@ AST *parse_fn_body() {
   return statements;
 }
 
+AST *parse_fn_arg() {
+  if (!match(TOKEN_IDENTIFIER)) {
+    token token = parser.current;
+
+    fprintf(stderr, "Expected param type found %d\n", token.type);
+
+    return NULL;
+  }
+  char *type_expr = strdup(parser.previous.as.vstr);
+  // AST *type_expr = parse_expression();
+
+  if (!match(TOKEN_IDENTIFIER)) {
+    fprintf(stderr, "Expected param name\n");
+  }
+
+  char *id_str = strdup(parser.previous.as.vstr);
+  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_expr);
+  return param;
+}
+
 AST *parse_fn_prototype() {
   AST *proto = ast_fn_prototype(0);
   if (!match(TOKEN_LP)) {
@@ -96,8 +97,19 @@ AST *parse_fn_prototype() {
     return NULL;
   };
 
+  AST *arg;
   while (!match(TOKEN_RP)) {
-    AST *arg = parse_fn_arg();
+    if (match(TOKEN_TRIPLE_DOT)) {
+      if (!check(TOKEN_RP)) {
+        fprintf(stderr, "Error: ... var args must be last parameter");
+        advance();
+        return NULL;
+      }
+      arg = malloc(sizeof(AST));
+      arg->tag = AST_VAR_ARG;
+    } else {
+      arg = parse_fn_arg();
+    }
 
     arg_list_push(&proto->data.AST_FN_PROTOTYPE, arg);
     if (check(TOKEN_COMMA)) {

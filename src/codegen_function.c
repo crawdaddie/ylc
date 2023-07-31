@@ -6,8 +6,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static LLVMTypeRef *codegen_function_prototype_args(AST *prot, Context *ctx) {
+static LLVMTypeRef *codegen_function_prototype_args(AST *prot, int *is_var_arg,
+                                                    Context *ctx) {
   int arg_count = prot->data.AST_FN_PROTOTYPE.length;
+  *is_var_arg = 0;
+  if (prot->data.AST_FN_PROTOTYPE.parameters[arg_count - 1]->tag ==
+      AST_VAR_ARG) {
+    arg_count--;
+    *is_var_arg = 1;
+  }
 
   AST **parameters = prot->data.AST_FN_PROTOTYPE.parameters;
 
@@ -59,12 +66,14 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   struct AST_FN_PROTOTYPE data = AST_DATA(ast, FN_PROTOTYPE);
 
   int arg_count = data.length;
-  LLVMTypeRef *prototype = codegen_function_prototype_args(ast, ctx);
+  int is_var_args = 0;
+  LLVMTypeRef *prototype =
+      codegen_function_prototype_args(ast, &is_var_args, ctx);
   LLVMTypeRef ret_type = type_lookup(data.type, ctx);
   *func_return_type = ret_type;
 
   LLVMTypeRef function_type =
-      LLVMFunctionType(ret_type, prototype, arg_count, 0);
+      LLVMFunctionType(ret_type, prototype, arg_count, is_var_args);
 
   *func = LLVMAddFunction(ctx->module, name, function_type);
   *func_type = LLVMTypeOf(*func);
@@ -73,13 +82,18 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
 static LLVMTypeRef codegen_extern_prototype(AST *extern_ast, Context *ctx) {
 
   int arg_count = extern_ast->data.AST_FN_PROTOTYPE.length;
+  int is_var_args = 0;
 
-  LLVMTypeRef *param_types = codegen_function_prototype_args(extern_ast, ctx);
+  LLVMTypeRef *param_types =
+      codegen_function_prototype_args(extern_ast, &is_var_args, ctx);
+  if (is_var_args) {
+    arg_count--;
+  }
 
   LLVMTypeRef ret_type =
       type_lookup(extern_ast->data.AST_FN_PROTOTYPE.type, ctx);
 
-  return LLVMFunctionType(ret_type, param_types, arg_count, 0);
+  return LLVMFunctionType(ret_type, param_types, arg_count, is_var_args);
 }
 
 LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
@@ -161,7 +175,8 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
 }
 
 static LLVMValueRef curry_function(struct AST_TUPLE parameters_tuple,
-                                   LLVMValueRef func, Context *ctx) {
+                                   LLVMValueRef func,
+                                   unsigned int fn_param_count, Context *ctx) {
   fprintf(stderr,
           "NOT YET IMPLEMENTED ERROR: fewer arguments supplied - return a "
           "curried version\n");
@@ -184,8 +199,9 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   struct AST_TUPLE parameters_tuple = parameters->data.AST_TUPLE;
   unsigned int arg_count = parameters_tuple.length;
 
-  if (arg_count < LLVMCountParams(func)) {
-    return curry_function(parameters_tuple, func, ctx);
+  unsigned int fn_param_count = LLVMCountParams(func);
+  if (arg_count < fn_param_count) {
+    return curry_function(parameters_tuple, func, fn_param_count, ctx);
   }
 
   LLVMValueRef *args = malloc(sizeof(LLVMValueRef) * arg_count);

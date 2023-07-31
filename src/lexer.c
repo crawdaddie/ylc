@@ -360,6 +360,10 @@ static int _COMMA_MATCHER(const char *input, token *tail) {
 }
 
 static int _DOT_MATCHER(const char *input, token *tail) {
+  if (strncmp(input, "...", 3) == 0) {
+    *tail = create_symbol_token(TOKEN_TRIPLE_DOT);
+    return 3;
+  }
   if (*input == '.') {
     *tail = create_symbol_token(TOKEN_DOT);
     return 1;
