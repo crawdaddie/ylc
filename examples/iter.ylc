@@ -8,7 +8,7 @@ let g = fn (int i) int {
     | 100 -> 1
     | _ -> {
         msleepd(100.0)
-        println("hi ")
+        printf("hi\n")
         g(i + 1)
     }
 }

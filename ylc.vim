@@ -4,6 +4,8 @@ if !exists("main_syntax")
     finish
   endif
   let main_syntax = 'ylc'
+  set tabstop=2
+  set shiftwidth=2
 elseif exists("b:current_syntax") && b:current_syntax == "ylc"
   finish
 endif
