@@ -1,25 +1,22 @@
 import "./strings.ylc"
-import "libs/libyalce_synth.so"
-import "libffi.so"
+#import "libffi.so"
 
 let randint = extern fn (int max) int
 let randfloat = extern fn (double max) double
 
-let setup_audio = extern fn () int
-setup_audio()
 
 type ThreadCb = fn (int x) int
-
 let create_thread = extern fn (ThreadCb start) int  
 
+
+import "libs/libyalce_synth.so"
+let setup_audio = extern fn () int
+setup_audio()
 let msleepd = extern fn (double msec) int
-
-
 let write_log = extern fn (str fmt, ...) int
 
 
-
-
+import "libffi.so"
 let do_stuff = fn () void {
   let g = fn (int i) int {
     match i

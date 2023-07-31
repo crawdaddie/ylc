@@ -1,9 +1,14 @@
 import "libffi.so"
-type Cb = fn (int val) int
-let perform_cb = extern fn (int ch, int cc, Cb callback) void
+#type Cb = fn (int val) int
+#let perform_cb = extern fn (int ch, int cc, Cb callback) void
 
-let h = fn (int x) int {
-  x + 1
-}
 
-perform_cb(0, 2, h)
+let randint = extern fn (int max) int
+let randfloat = extern fn (double max) double
+
+
+let randint = extern fn (int max) int
+let randfloat = extern fn (double max) double
+type ThreadCb = fn (int x) int
+let create_thread = extern fn (ThreadCb start) int  
+

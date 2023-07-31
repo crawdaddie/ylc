@@ -23,7 +23,14 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
   char *input = read_file(resolved_path);
   AST *ast = parse(input);
   this_ctx.module_path = resolved_path;
+
+  LLVMSetSourceFileName(this_ctx.module, resolved_path, strlen(resolved_path));
   codegen(ast, &this_ctx);
+
+  LLVMDumpModule(this_ctx.module);
+  if (!LLVMLinkModules2(ctx->module, this_ctx.module)) {
+    fprintf(stderr, "Error linking module %s into %s\n", this_ctx.module_path, ctx->module_path);
+  };
 
   for (int i = 0; i < TABLE_SIZE; i++) {
     Symbol *sym = this_ctx.symbol_table->stack[0].entries[i];
@@ -34,7 +41,6 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
       sym = sym->next;
     }
   }
-  LLVMLinkModules2(ctx->module, this_ctx.module);
 
   free(input);
   free_ast(ast);

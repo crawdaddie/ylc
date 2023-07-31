@@ -1,7 +1,8 @@
 import "libs/libyalce_synth.so"
-import "strings.ylc"
 import "libffi.so"
 
+import "strings.ylc"
+import "threads.ylc"
 let randint = extern fn (int max) int
 let randfloat = extern fn (double max) double
 
@@ -30,9 +31,6 @@ let register_midi_handler = extern fn (int ch, int cc, CCHandlerType cb) void
 
 setup_audio()
 
-type ThreadCb = fn (int x) int
-
-let create_thread = extern fn (ThreadCb start, int arg) int  
 
 let msleepd = extern fn (double msec) int
 

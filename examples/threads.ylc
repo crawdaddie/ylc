@@ -1,3 +1,5 @@
+
+import "libffi.so"
 type ThreadCb = fn (int x) int
 
-let pthread_create = extern fn (int thread, int attr_t, ThreadCb start, int args) int  
+let create_thread = extern fn (ThreadCb start, int arg) int  

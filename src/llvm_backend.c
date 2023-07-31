@@ -44,7 +44,8 @@ static void dump_module(LLVMModuleRef module) {
 
 int init_lang_ctx(Context *ctx) {
   LLVMContextRef context = LLVMGetGlobalContext();
-  LLVMModuleRef module = LLVMModuleCreateWithNameInContext("ylc", context);
+  LLVMModuleRef module =
+      LLVMModuleCreateWithNameInContext(inst_name("ylc"), context);
   LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
   LLVMExecutionEngineRef engine;
 
@@ -137,6 +138,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     free(input);
 
     ctx.module_path = path;
+    LLVMSetSourceFileName(ctx.module, path, strlen(path));
     if (output) {
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
