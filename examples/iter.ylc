@@ -1,17 +1,36 @@
 import "./strings.ylc"
 import "libs/libyalce_synth.so"
+import "libffi.so"
+
+let randint = extern fn (int max) int
+let randfloat = extern fn (double max) double
+
+let setup_audio = extern fn () int
+setup_audio()
+
+type ThreadCb = fn (int x) int
+
+let create_thread = extern fn (ThreadCb start) int  
 
 let msleepd = extern fn (double msec) int
 
-let g = fn (int i) int {
+
+let write_log = extern fn (str fmt, ...) int
+
+
+
+
+let do_stuff = fn () void {
+  let g = fn (int i) int {
     match i
     | 100 -> 1
     | _ -> {
-        msleepd(100.0)
-        printf("hi\n")
-        g(i + 1)
+      msleepd(randfloat(500.0) + 1)
+      write_log("hi %d\n", i)
+      g(i + 1)
     }
+  }
+  printf("thread: %d\n",  create_thread(g))
 }
-
-
-g(0)
+do_stuff()
+# g(90)

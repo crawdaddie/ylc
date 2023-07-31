@@ -1,0 +1,10 @@
+import "./strings.ylc"
+
+let g = fn (int x) int {
+  let q = 2 + x
+  printf("q: %d\n", q)
+  x + 1
+}
+printf("%d", g(100))
+
+

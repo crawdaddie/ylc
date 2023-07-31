@@ -1,0 +1,4 @@
+import "libffi.so"
+
+let randint = extern fn (int max) int
+let randfloat = extern fn (double max) double

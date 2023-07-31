@@ -7,16 +7,33 @@ on:
     branches:
       - main
 jobs:
-  test:
-    runs-on: ubuntu-latest
+  setup-llvm:
+    runs-on: macos-13
     steps:
-    - uses: actions/checkout@v2
     - name: Set up LLVM
       run: |
-        sudo apt-get update
-        sudo apt-get -y install clang llvm
-        # Additional setup for LLVM if needed
+        brew install llvm
+  test:
+    runs-on: macos-13
+    needs: setup-llvm
+    steps:
+    - uses: actions/checkout@v2
     - name: Build and Test Parser
       run: |
+        export PATH="/usr/local/opt/llvm/bin:$PATH"
         export CPATH=$(llvm-config --includedir):$CPATH
+        export LDFLAGS="-L/usr/local/opt/llvm/lib"
+        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/test_parser
+    - name: Build and Test Codegen
+      run: |
+        export PATH="/usr/local/opt/llvm/bin:$PATH"
+        export CPATH=$(llvm-config --includedir):$CPATH
+        export LDFLAGS="-L/usr/local/opt/llvm/lib"
+        export CPPFLAGS="-I/usr/local/opt/llvm/include"
+        make build/test_codegen
+  # build:
+  #   runs-on: macos-13
+  #   needs: setup-llvm
+  #   - uses: actions/checkout@v2
+    

@@ -1,0 +1,3 @@
+type ThreadCb = fn (int x) int
+
+let pthread_create = extern fn (int thread, int attr_t, ThreadCb start, int args) int  

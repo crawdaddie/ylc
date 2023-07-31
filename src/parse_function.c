@@ -71,23 +71,19 @@ AST *parse_fn_body() {
 }
 
 AST *parse_fn_arg() {
-  if (!match(TOKEN_IDENTIFIER)) {
-    token token = parser.current;
-
-    fprintf(stderr, "Expected param type found %d\n", token.type);
-
+  char *identifiers[2];
+  int i;
+  for (i = 0; match(TOKEN_IDENTIFIER); i++) {
+    identifiers[i] = strdup(parser.previous.as.vstr);
+  }
+  if (i == 0) {
     return NULL;
   }
-  char *type_expr = strdup(parser.previous.as.vstr);
-  // AST *type_expr = parse_expression();
-
-  if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Expected param name\n");
+  if (i == 1) {
+    return AST_NEW(SYMBOL_DECLARATION, identifiers[0], NULL);
   }
 
-  char *id_str = strdup(parser.previous.as.vstr);
-  AST *param = AST_NEW(SYMBOL_DECLARATION, id_str, type_expr);
-  return param;
+  return AST_NEW(SYMBOL_DECLARATION, identifiers[1], identifiers[0]);
 }
 
 AST *parse_fn_prototype() {
@@ -117,14 +113,37 @@ AST *parse_fn_prototype() {
     }
   }
 
-  if (!match(TOKEN_IDENTIFIER)) {
-    fprintf(stderr, "Error: expected return type for function\n");
-    return NULL;
+  if (match(TOKEN_IDENTIFIER)) {
+    proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
+  } else {
+    proto->data.AST_FN_PROTOTYPE.type = NULL;
   }
-  proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
   return proto;
 }
-
+// AST *parse_fn_prototype() {
+//   AST *proto = ast_fn_prototype(0);
+//   if (!match(TOKEN_LP)) {
+//     fprintf(stderr, "Error: expected ( after fn keyword\n");
+//     return NULL;
+//   };
+//
+//   while (!match(TOKEN_RP)) {
+//     AST *arg = parse_fn_arg();
+//
+//     arg_list_push(&proto->data.AST_FN_PROTOTYPE, arg);
+//     if (check(TOKEN_COMMA)) {
+//       advance();
+//     }
+//   }
+//
+//   if (match(TOKEN_IDENTIFIER)) {
+//     proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
+//   } else {
+//     proto->data.AST_FN_PROTOTYPE.type = NULL;
+//   }
+//   return proto;
+// }
+//
 AST *parse_function(bool can_assign) {
   AST *prototype = parse_fn_prototype();
   if (!prototype) {

@@ -38,9 +38,9 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
   case TOKEN_PLUS:
   case TOKEN_MINUS:
   case TOKEN_STAR:
+  case TOKEN_MODULO:
   case TOKEN_SLASH:
   case TOKEN_EQUALITY:
-  case TOKEN_MODULO:
   case TOKEN_LT:
   case TOKEN_GT:
   case TOKEN_LTE:
@@ -185,7 +185,6 @@ static AST *parse_grouping(bool can_assign) {
 
   if (tuple->data.AST_TUPLE.length == 1) {
     AST *expr = tuple->data.AST_TUPLE.members[0];
-    free_ast(tuple);
     return expr;
   }
 

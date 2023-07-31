@@ -132,6 +132,12 @@ int main() {
       "8 >= 7", 1,
       AST_NEW(BINOP, TOKEN_GTE, AST_NEW(INTEGER, 8), AST_NEW(INTEGER, 7)));
 
+  test_parse("(2 % 9) * 1000", 1,
+             AST_NEW(BINOP, TOKEN_STAR,
+                     AST_NEW(BINOP, TOKEN_MODULO, AST_NEW(INTEGER, 2),
+                             AST_NEW(INTEGER, 9)),
+                     AST_NEW(INTEGER, 1000)));
+
   test_parse("val -> int", 1,
              AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(IDENTIFIER, "val"),
                      AST_NEW(IDENTIFIER, "int")));
@@ -250,23 +256,21 @@ int main() {
                      AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(IDENTIFIER, "y")),
                      "h"));
-/*
-  AST *fn_proto_params3[] = {
-      AST_NEW(SYMBOL_DECLARATION, "x_", "int"),
-      AST_NEW(SYMBOL_DECLARATION, "y_", "int"),
-  };
-  test_parse(
-      "let h = fn (int x_, int y_) int\n"
-    "{let j = 1\nx_ + y_ + j}", 1,
-      AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3, "int"),
-              ast_statement_list(
-                  2, AST_NEW(ASSIGNMENT, "j", NULL, AST_NEW(INTEGER, 1)),
-                  AST_NEW(BINOP, TOKEN_PLUS,
-                          AST_NEW(BINOP, TOKEN_PLUS,
-                                  AST_NEW(IDENTIFIER, "x_"),
-                                  AST_NEW(IDENTIFIER, "y_")),
-                          AST_NEW(IDENTIFIER, "j"))),
-              "h"));
-  */
+  /*
+    AST *fn_proto_params3[] = {
+        AST_NEW(SYMBOL_DECLARATION, "x_", "int"),
+        AST_NEW(SYMBOL_DECLARATION, "y_", "int"),
+    };
+    test_parse(
+        "let h = fn (int x_, int y_) int\n"
+      "{let j = 1\nx_ + y_ + j}", 1,
+        AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3,
+    "int"), ast_statement_list( 2, AST_NEW(ASSIGNMENT, "j", NULL,
+    AST_NEW(INTEGER, 1)), AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(BINOP, TOKEN_PLUS,
+                                    AST_NEW(IDENTIFIER, "x_"),
+                                    AST_NEW(IDENTIFIER, "y_")),
+                            AST_NEW(IDENTIFIER, "j"))),
+                "h"));
+    */
   return test_result;
 }
