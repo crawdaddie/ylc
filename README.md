@@ -78,6 +78,6 @@ emit an object file with llc and finally link with clang
 
 # REFERENCES
 - https://craftinginterpreters.com/a-bytecode-virtual-machine.html
+- http://lucacardelli.name/Papers/BasicTypechecking.pdf
 - https://github.com/k-mrm/type-inference
-- https://github.com/semahawk/type-inference
 - https://cs3110.github.io/textbook/chapters/interp/inference.html
