@@ -7,9 +7,11 @@
 #include "paths.h"
 #include <libgen.h>
 #include <llvm-c/Linker.h>
+
+#include <limits.h>
 LLVMValueRef codegen_module(char *filename, Context *ctx) {
 
-  char resolved_path[256];
+  char resolved_path[PATH_MAX];
   resolve_path(dirname(ctx->module_path), filename, resolved_path);
 
   Context this_ctx;

@@ -4,6 +4,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include <limits.h>
+#include <unistd.h>
+
 #include "codegen.h"
 #include "llvm_backend.h"
 #include <llvm-c/BitWriter.h>
@@ -151,6 +154,14 @@ int LLVMRuntime(int repl, char *path, char *output) {
   }
 
   if (repl) {
+
+    char cwd[PATH_MAX];
+    if (getcwd(cwd, sizeof(cwd)) == NULL) {
+      perror("getcwd() error");
+      return 1;
+    }
+    sprintf(cwd, "%s/_", cwd);
+    ctx.module_path = cwd;
     char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
     for (;;) {
 

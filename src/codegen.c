@@ -79,7 +79,6 @@ static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
 }
 
 LLVMValueRef codegen(AST *ast, Context *ctx) {
-  print_ast(*ast, 0);
   switch (ast->tag) {
   case AST_MAIN: {
     return codegen_main(ast, ctx);
@@ -87,10 +86,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_IMPORT: {
     const char *module_name = ast->data.AST_IMPORT.module_name;
     if (has_extension(module_name, ".so")) {
-      // const char lib_path[256];
-      // resolve_path(dirname(ctx->module_path),
-      // ast->data.AST_IMPORT.module_name,
-      //              lib_path);
 
       void *libHandle = dlopen(module_name, RTLD_LAZY);
 

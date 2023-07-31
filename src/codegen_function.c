@@ -73,6 +73,10 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   LLVMTypeRef ret_type = type_lookup(data.type, ctx);
   *func_return_type = ret_type;
 
+  if (is_var_args) {
+    arg_count--;
+  }
+
   LLVMTypeRef function_type =
       LLVMFunctionType(ret_type, prototype, arg_count, is_var_args);
 
@@ -87,6 +91,7 @@ static LLVMTypeRef codegen_extern_prototype(AST *extern_ast, Context *ctx) {
 
   LLVMTypeRef *param_types =
       codegen_function_prototype_args(extern_ast, &is_var_args, ctx);
+
   if (is_var_args) {
     arg_count--;
   }
