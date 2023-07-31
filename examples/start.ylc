@@ -26,9 +26,6 @@ let register_midi_handler = extern fn (int ch, int cc, CCHandlerType cb) void
 
 setup_audio()
 let h = fn (int ch, int cc, int val) int {
-  printint(ch)
-  printint(cc)
-  printint(val)
   1
 }
 

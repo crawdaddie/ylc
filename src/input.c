@@ -37,11 +37,11 @@ void repl_input(char *input, int bufsize, const char *prompt) {
     prev = c;
     c = getchar();
 
-    if (c == '\\') {
-      input[position] = '\n';
-      position++;
+    if (c == 'n' && prev == '\\') {
+      input[position - 1] = '\n';
       continue;
     }
+
     if (c == EOF || c == '\n') {
       if (prev == '\\') {
         return repl_input(input + position, bufsize, "  ");

@@ -10,8 +10,9 @@ static LLVMTypeRef *codegen_function_prototype_args(AST *prot, int *is_var_arg,
                                                     Context *ctx) {
   int arg_count = prot->data.AST_FN_PROTOTYPE.length;
   *is_var_arg = 0;
-  if (prot->data.AST_FN_PROTOTYPE.parameters[arg_count - 1]->tag ==
-      AST_VAR_ARG) {
+  if (arg_count > 0 &&
+      prot->data.AST_FN_PROTOTYPE.parameters[arg_count - 1]->tag ==
+          AST_VAR_ARG) {
     arg_count--;
     *is_var_arg = 1;
   }

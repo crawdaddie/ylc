@@ -79,6 +79,7 @@ static LLVMValueRef codegen_dynamic_access(LLVMValueRef tuple,
 }
 
 LLVMValueRef codegen(AST *ast, Context *ctx) {
+  print_ast(*ast, 0);
   switch (ast->tag) {
   case AST_MAIN: {
     return codegen_main(ast, ctx);
