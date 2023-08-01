@@ -8,30 +8,46 @@ uses the LLVM C API to compile to native code via a JIT compiler
 
 # examples
 ```javascript
+# functions / pattern matching
 let m = fn (int val) int {
   match val -> int
   | 1 -> 1 
   | 2 -> 2
-  | _ -> m(val - 2)
+  | _ -> -1
 }
 
 m(5)
 
+# extern fn declaration matches printf from <stdio.h>
 let printf = extern fn (str input) int
 
-let println = fn (str input) void {
-    printf(input)
-    printf("\n")
-}
+# randint randfloat declared in .so library loaded at runtime
+import "libffi.so"
+let randint = extern fn (int max) int
+let randfloat = extern fn (double max) double
 
+# recursion (LLVM optimisation pass converts generated code to tail-calls where possible)
 let fib = fn (int n) int {
-    match n
-    | 0 -> 0
-    | 1 -> 1
-    | _ -> fib(n - 1) + fib(n - 2)
+  match n
+  | 0 -> 0
+  | 1 -> 1
+  | _ -> fib(n - 1) + fib(n - 2)
 }
 
 fib(10)
+
+# type declaration
+type Point = struct (
+  double x,
+  double y,
+)
+
+let Point x = (
+  x = 2.0,
+  y = 1.0,
+)
+
+
 ```
 # dependencies
 - LLVM (after installing llvm you may need to add the llvm headers & libraries to your CPATH & LIBRARY_PATH)
