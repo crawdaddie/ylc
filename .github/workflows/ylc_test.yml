@@ -30,3 +30,11 @@ jobs:
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/test_codegen
+
+    - name: Build and Test Symbol Table
+      run: |
+        export PATH="/usr/local/opt/llvm/bin:$PATH"
+        export CPATH=$(llvm-config --includedir):$CPATH
+        export LDFLAGS="-L/usr/local/opt/llvm/lib"
+        export CPPFLAGS="-I/usr/local/opt/llvm/include"
+        make build/test_symbol_table

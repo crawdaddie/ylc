@@ -1,6 +1,7 @@
 #ifndef _LANG_AST_H
 #define _LANG_AST_H
 #include "lexer.h"
+#include "types.h"
 #include <stdbool.h>
 typedef struct AST AST;
 
@@ -187,6 +188,8 @@ struct AST {
     } AST_IMPORT;
 
   } data;
+
+  ttype *type; // optional - filled in during typecheck step
 };
 
 void print_ast(AST ast, int indent);

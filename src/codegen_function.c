@@ -114,6 +114,26 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   declare_extern_function(name, func, func_type, ctx);
   return func;
 }
+static bool function_is_void(LLVMValueRef func) {
+  // Get the return type of the function
+  LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
+
+  // Check if the return type is void
+  return LLVMGetTypeKind(returnType) == LLVMVoidTypeKind;
+}
+
+static void save_named_function(const char *name, LLVMValueRef func,
+                                LLVMTypeRef func_type, Context *ctx) {
+
+  if (name != NULL) {
+    SymbolValue sym;
+
+    sym.type = TYPE_FUNCTION;
+    sym.data.TYPE_FUNCTION.llvm_value = func;
+    sym.data.TYPE_FUNCTION.llvm_type = func_type;
+    table_insert(ctx->symbol_table, name, sym);
+  }
+}
 
 LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef func;
@@ -139,13 +159,8 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
 
   LLVMValueRef body = codegen(ast->data.AST_FN_DECLARATION.body, ctx);
 
-  // Get the return type of the function
-  LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
-  // int is_void = 0;
-
   // Check if the return type is void
-  if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
-    // is_void = 1;
+  if (function_is_void(func)) {
     LLVMBuildRetVoid(ctx->builder);
   } else {
     LLVMBuildRet(ctx->builder, body);
@@ -167,16 +182,8 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   }
 
   LLVMRunFunctionPassManager(ctx->pass_manager, func);
-  if (name != NULL) {
-    // codegen_symbol(name, func, LLVMTypeOf(func), ctx);
-    SymbolValue sym;
+  save_named_function(name, func, func_type, ctx);
 
-    sym.type = TYPE_FUNCTION;
-    sym.data.TYPE_FUNCTION.llvm_value = func;
-    sym.data.TYPE_FUNCTION.llvm_type = func_type;
-    // sym.data.TYPE_FUNCTION.ret_type = ret_type;
-    table_insert(ctx->symbol_table, name, sym);
-  }
   return func;
 }
 
