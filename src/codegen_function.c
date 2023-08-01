@@ -195,8 +195,9 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
   if (func == NULL) {
-    fprintf(stderr, "Error: function %s not found in this scope\n",
-            ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
+    fprintf(stderr, "Error: function %s not found in this scope (%d)\n",
+            ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier,
+            ctx->symbol_table->current_frame_index);
     return NULL;
   }
 

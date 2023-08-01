@@ -25,7 +25,10 @@ Symbol *create_entry(const char *key, SymbolValue value) {
 }
 
 // Function to push a new stack frame onto the symbol table's stack
-void push_frame(SymbolTable *table) { table->current_frame_index++; }
+void push_frame(SymbolTable *table) {
+  table->current_frame_index++;
+  table->stack[table->current_frame_index].allocated_entries = 0;
+}
 
 // Function to pop the top stack frame from the symbol table's stack
 void pop_frame(SymbolTable *table) {
@@ -64,6 +67,7 @@ void table_insert(SymbolTable *table, const char *key, SymbolValue value) {
     }
     entry->next = newSymbol;
   }
+  frame->allocated_entries++;
 }
 
 // Function to lookup a value for a given key in the symbol table

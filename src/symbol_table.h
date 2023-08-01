@@ -90,6 +90,7 @@ typedef struct Symbol {
 // Structure representing a stack frame for a scope
 typedef struct StackFrame {
   Symbol *entries[TABLE_SIZE];
+  int allocated_entries;
 } StackFrame;
 
 // Structure representing the symbol table
