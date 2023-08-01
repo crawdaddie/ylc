@@ -196,6 +196,11 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       return NULL;
     }
     int index = get_member_index(data.member_name, metadata);
+    if (index == -1) {
+      fprintf(stderr, "Error - no member %s in struct %s\n", data.member_name,
+              struct_name);
+      return NULL;
+    }
     return LLVMBuildExtractValue(ctx->builder, value, index, "nth_member");
   }
 
