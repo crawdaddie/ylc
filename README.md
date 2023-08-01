@@ -3,7 +3,8 @@ simple language for learning purposes, originally conceived as an interface for 
 
 bootstrapped in C (self-hosting way out of scope for now)
 
-uses LLVM C API as a backend to generate LLVM IR, and to implement a JIT for the REPL
+uses the LLVM C API to compile to native code via a JIT compiler
+
 
 # examples
 ```javascript
