@@ -189,7 +189,7 @@ struct AST {
 
   } data;
 
-  ttype *type; // optional - filled in during typecheck step
+  ttype type; // optional - filled in during typecheck step
 };
 
 void print_ast(AST ast, int indent);

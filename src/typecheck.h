@@ -3,4 +3,6 @@
 #include "ast.h"
 
 void typecheck(AST *ast);
+
+void print_ttype(ttype type);
 #endif

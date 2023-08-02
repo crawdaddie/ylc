@@ -80,8 +80,8 @@ LLVMValueRef codegen_module(char *filename, Context *ctx) {
                       .entries[i]; // iterate over top-level symbols
 
     while (sym) {
-      printf("copy from %s - key: %s to scope %d\n", resolved_path, sym->key,
-             ctx->symbol_table->current_frame_index);
+      // printf("copy from %s - key: %s to scope %d\n", resolved_path, sym->key,
+      //        ctx->symbol_table->current_frame_index);
 
       table_insert(ctx->symbol_table, sym->key,
                    sym->value); // Copy top-level symbols from loaded module

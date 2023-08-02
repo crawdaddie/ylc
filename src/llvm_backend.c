@@ -9,6 +9,7 @@
 
 #include "codegen.h"
 #include "llvm_backend.h"
+#include "typecheck.h"
 #include <llvm-c/BitWriter.h>
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>

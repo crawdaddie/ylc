@@ -263,14 +263,13 @@ int main() {
     };
     test_parse(
         "let h = fn (int x_, int y_) int\n"
-      "{let j = 1\nx_ + y_ + j}", 1,
+        "{let j = 1\nx_ + y_ + j}",
+        1,
         AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, fn_proto_params3,
     "int"), ast_statement_list( 2, AST_NEW(ASSIGNMENT, "j", NULL,
     AST_NEW(INTEGER, 1)), AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(BINOP, TOKEN_PLUS,
-                                    AST_NEW(IDENTIFIER, "x_"),
-                                    AST_NEW(IDENTIFIER, "y_")),
-                            AST_NEW(IDENTIFIER, "j"))),
-                "h"));
-    */
+    AST_NEW(IDENTIFIER, "x_"), AST_NEW(IDENTIFIER, "y_")), AST_NEW(IDENTIFIER,
+    "j"))), "h"));
+      */
   return test_result;
 }

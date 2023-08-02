@@ -254,7 +254,9 @@ int seek_char(const char *input, char c) {
 int seek_identifier(const char *input) {
   regex_t regex;
   int s = regcomp(&regex, "^[a-zA-Z_][a-zA-Z_0-9]*", 0);
+
   if (s) {
+    fprintf(stderr, "failure compiling regex %d\n", s);
     return 0;
   }
 
@@ -606,6 +608,7 @@ static size_t _strlcpy(char *dst, const char *src, size_t size) {
 static int _IDENTIFIER_MATCHER(const char *input, token *tail) {
   int offset = 0;
   if ((offset = seek_identifier(input)) != 0) {
+
     char *str = malloc((offset + 1) * sizeof(char));
     strlcpy(str, input, offset + 1);
     *tail = create_identifier(str);

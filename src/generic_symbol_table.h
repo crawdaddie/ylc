@@ -42,12 +42,12 @@
           &table->stack[table->current_frame_index];                           \
       for (int i = 0; i < TABLE_SIZE; i++) {                                   \
         entry_type##_Symbol *entry = frame->entries[i];                        \
-        while (entry != NULL) {                                                \
-          entry_type##_Symbol *nextentry_type##_Symbol = entry->next;          \
+        while (entry != NULL && entry != 0x1) {                                \
+          entry_type##_Symbol *nextSymbol = entry->next;                       \
           free(entry->key);                                                    \
           free(entry);                                                         \
           frame->entries[i] = NULL;                                            \
-          entry = nextentry_type##_Symbol;                                     \
+          entry = nextSymbol;                                                  \
         }                                                                      \
       }                                                                        \
       table->current_frame_index--;                                            \
@@ -65,10 +65,14 @@
     if (entry == NULL) {                                                       \
       frame->entries[index] = newSymbol;                                       \
     } else {                                                                   \
-      while (entry->next != NULL) {                                            \
-        entry = entry->next;                                                   \
+      if (strcmp(entry->key, key) == 0) {                                      \
+        entry->value = value;                                                  \
+      } else {                                                                 \
+        while (entry->next != NULL) {                                          \
+          entry = entry->next;                                                 \
+        }                                                                      \
+        entry->next = newSymbol;                                               \
       }                                                                        \
-      entry->next = newSymbol;                                                 \
     }                                                                          \
     frame->allocated_entries++;                                                \
   }                                                                            \

@@ -23,7 +23,7 @@
 
 #define mu_run_test(TEST)                                                      \
   do {                                                                         \
-    fprintf(stderr, "%s\n", #TEST);                                            \
+    fprintf(stderr, "\n# %s\n", #TEST);                                        \
     int rc = TEST();                                                           \
     if (rc) {                                                                  \
       fprintf(stderr, "\n  Test Failure: %s()\n", #TEST);                      \
