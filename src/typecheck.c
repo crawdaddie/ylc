@@ -429,8 +429,11 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       break;
 
     char *lname = eq.left.as.T_VAR.name;
+
+#ifdef _TYPECHECK_DBG
     print_ttype(eq.left);
     printf(" -> ");
+#endif
     ttype right = eq.right;
 
     if (right.tag == T_VAR) {
@@ -455,9 +458,11 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
         }
       }
     }
-
+#ifdef _TYPECHECK_DBG
     print_ttype(right);
     printf("\n");
+
+#endif
 
     ttype existing;
     if (ttype_env_lookup(env, lname, &existing) == 0 &&

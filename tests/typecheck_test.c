@@ -10,6 +10,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#define _TYPECHECK_DBG
+
 /*
  *
  * wrap list of expressions in a full program, ie:
@@ -97,9 +100,9 @@ int test_function_call() {
                               "h(2)");
 
   AST *fn_call = AST_TOP_LEVEL(test, 1);
-  print_ast(*fn_call, 0);
-  print_ttype(fn_call->type);
 
+  mu_assert(fn_call->type.tag == T_INT,
+            "call expr has type of return type of function (Int)");
   free_ast(test);
   return 0;
 }
@@ -205,7 +208,6 @@ int test_fn_with_unop() {
   mu_assert(fn_h->type.as.T_FN.members[0].tag == T_BOOL &&
                 fn_h->type.as.T_FN.members[1].tag == T_BOOL,
             "function has type (Bool -> Bool)");
-
   AST *x_arg = AST_TOP_LEVEL(test, 0)
                    ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
                    .parameters[0];
