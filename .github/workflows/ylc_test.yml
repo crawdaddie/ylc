@@ -21,7 +21,7 @@ jobs:
         export CPATH=$(llvm-config --includedir):$CPATH
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
-        make build/test_parser
+        make build/parse_test
 
     - name: Build and Test Codegen
       run: |
@@ -29,7 +29,7 @@ jobs:
         export CPATH=$(llvm-config --includedir):$CPATH
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
-        make build/test_codegen
+        make build/codegen_test
 
     - name: Build and Test Symbol Table
       run: |
@@ -37,7 +37,7 @@ jobs:
         export CPATH=$(llvm-config --includedir):$CPATH
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
-        make build/test_symbol_table
+        make build/symbol_table_test
 
     - name: Build and Test Typechecker 
       run: |
@@ -45,4 +45,4 @@ jobs:
         export CPATH=$(llvm-config --includedir):$CPATH
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
-        make build/test_typecheck
+        make build/typecheck_test
