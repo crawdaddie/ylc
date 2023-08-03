@@ -202,4 +202,5 @@ AST *ast_new(AST ast);
   ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
 
 #define AST_DATA(ast, TYPE) (struct AST_##TYPE)(ast->data.AST_##TYPE)
+#define FN_PROTOTYPE(fn_decl_ast) fn_decl_ast->data.AST_FN_DECLARATION.prototype
 #endif /* end of include guard: _LANG_AST_H */

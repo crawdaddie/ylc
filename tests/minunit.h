@@ -28,7 +28,6 @@
     if (rc) {                                                                  \
       fprintf(stderr, "\n  Test Failure: %s()\n", #TEST);                      \
       test_result = 1;                                                         \
-      return rc;                                                               \
     }                                                                          \
   } while (0)
 

@@ -64,21 +64,27 @@ int test_untyped_function() {
   AST *test = typecheck_input("let h = fn (x) {\n"
                               "  x + 1\n"
                               "}");
-  // print_ast(*test, 0);
 
   ttype x_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(0)->type;
-  mu_assert(x_type.tag == T_VAR,
+  mu_assert(x_type.tag == T_INT,
             "type of parameter x is added to AST node for x");
 
-  // ttype y_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(1)->type;
-  // mu_assert(y_type.tag == T_VAR,
-  //           "type of parameter y is added to AST node for x");
+  AST *binop = AST_TOP_LEVEL(test, 0)->data.AST_FN_DECLARATION.body;
 
-  ttype int_type =
-      AST_TOP_LEVEL(test, 0)
-          ->data.AST_FN_DECLARATION.body->data.AST_BINOP.right->type;
+  ttype int_type = binop->data.AST_BINOP.right->type;
+  ttype var_type = binop->data.AST_BINOP.left->type;
 
   mu_assert(int_type.tag == T_INT, "type of AST node for 1 is Int");
+  mu_assert(var_type.tag == T_INT, "type of AST node for 1 is Int");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_INT &&
+                fn_h->type.as.T_FN.members[1].tag == T_INT,
+            "function has type (Int -> Int)");
 
   free_ast(test);
   return 0;
@@ -94,13 +100,26 @@ int test_fn_with_conditionals() {
                               "  }\n"
                               "}");
 
-  // print_ast(*test, 0);
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_INT &&
+                fn_h->type.as.T_FN.members[1].tag == T_INT,
+            "function has type (Int -> Int)");
+
   AST *x_arg = AST_TOP_LEVEL(test, 0)
                    ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
                    .parameters[0];
-  print_ast(*x_arg, 0);
-  print_ttype(x_arg->type);
-  mu_assert(true, "");
+
+  mu_assert(x_arg->type.tag == T_INT, "param x has type Int");
+
+  AST *x_ref = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.body->data.AST_IF_ELSE.condition
+                   ->data.AST_BINOP.left;
+
+  mu_assert(x_ref->type.tag == T_INT, "reference to x has type Int");
   free_ast(test);
   return 0;
 }
@@ -112,8 +131,26 @@ int test_fn_with_conditionals2() {
                               "  }\n"
                               "}");
 
-  print_ast(*test, 0);
-  mu_assert(true, "");
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_INT &&
+                fn_h->type.as.T_FN.members[1].tag == T_INT,
+            "function has type (Int -> Int)");
+
+  AST *x_arg = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+                   .parameters[0];
+
+  mu_assert(x_arg->type.tag == T_INT, "param x has type Int");
+
+  AST *x_ref = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.body->data.AST_IF_ELSE.condition
+                   ->data.AST_BINOP.left;
+
+  mu_assert(x_ref->type.tag == T_INT, "reference to x has type Int");
   free_ast(test);
   return 0;
 }
@@ -131,10 +168,10 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  // mu_run_test(test_untyped_function);
+  mu_run_test(test_untyped_function);
   // mu_run_test(test_simple_expr);
   mu_run_test(test_fn_with_conditionals);
-  // mu_run_test(test_fn_with_conditionals2);
+  mu_run_test(test_fn_with_conditionals2);
   // mu_run_test(test_int_casting);
   return test_result;
 }

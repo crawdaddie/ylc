@@ -213,7 +213,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     // insert param into symbol table for current stack
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
     ast->type = tvar(_tname());
-    printf("[%s -> %s]\n", name, ast->type.as.T_VAR.name);
+    // printf("[%s -> %s]\n", name, ast->type.as.T_VAR.name);
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
@@ -378,8 +378,8 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       break;
 
     char *lname = eq.left.as.T_VAR.name;
-    print_ttype(eq.left);
-    printf(" -> ");
+    // print_ttype(eq.left);
+    // printf(" -> ");
     ttype right = eq.right;
 
     if (right.tag == T_VAR) {
@@ -388,25 +388,32 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
         rname = right.as.T_VAR.name;
       }
     } else if (right.tag == T_FN) {
+      AST *prototype_ast = FN_PROTOTYPE(eq.ast);
       for (int i = 0; i < right.as.T_FN.length; i++) {
+
         ttype fn_member = right.as.T_FN.members[i];
         ttype lookedup_member;
+
         if (ttype_env_lookup(env, fn_member.as.T_VAR.name, &lookedup_member) ==
             0) {
           right.as.T_FN.members[i] = lookedup_member;
+          if (i < right.as.T_FN.length - 1) {
+            prototype_ast->data.AST_FN_PROTOTYPE.parameters[i]->type =
+                lookedup_member;
+          }
         }
       }
     }
 
-    print_ttype(right);
+    // print_ttype(right);
     ttype_env_insert(env, lname, right);
     eq.ast->type.tag = right.tag;
     eq.ast->type.as = right.as;
-    printf("   ");
-    print_ast(*eq.ast, 0);
-    print_ttype(eq.ast->type);
-
-    printf("\n");
+    // printf("   ");
+    // print_ast(*eq.ast, 0);
+    // print_ttype(eq.ast->type);
+    //
+    // printf("\n");
 
   } while (0);
 
@@ -426,11 +433,12 @@ void typecheck(AST *ast) {
   t_counter = 0;
 
   typecheck_ast(ast, &ctx);
-  for (int i = 0; i < ctx.type_equations.length; i++) {
-    print_type_equation(ctx.type_equations.equations[i]);
-  }
-  printf("unify:-----\n");
+  // for (int i = 0; i < ctx.type_equations.length; i++) {
+  //   print_type_equation(ctx.type_equations.equations[i]);
+  // }
+  // printf("unify:-----\n");
 
   TypeEnv env;
   unify(&ctx.type_equations, &env);
+  ast->type.tag = T_FN;
 }
