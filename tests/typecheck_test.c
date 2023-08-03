@@ -155,6 +155,20 @@ int test_fn_with_conditionals2() {
   return 0;
 }
 
+int test_fn_with_match_expr() {
+
+  AST *test = typecheck_input("let m = fn (val) {\n"
+                              "  match val\n"
+                              "  | 1 -> 1 \n"
+                              "  | 2 -> 2\n"
+                              "  | _ -> 10\n"
+                              "}");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  free_ast(test);
+  return 0;
+}
+
 int test_simple_expr() {
   AST *test = typecheck_input("x + 1");
   mu_assert(true, "");
@@ -172,6 +186,8 @@ int all_tests() {
   // mu_run_test(test_simple_expr);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
+  // mu_run_test(test_fn_with_match_expr);
+
   // mu_run_test(test_int_casting);
   return test_result;
 }

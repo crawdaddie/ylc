@@ -150,8 +150,6 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     char *name = ast->data.AST_FN_DECLARATION.name;
     AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
-    ast_table_insert(ctx->symbol_table, name, prototype_ast);
-
     enter_ttype_scope(ctx);
     // process prototype & body within new scope
     typecheck_ast(prototype_ast, ctx);
@@ -159,6 +157,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     exit_ttype_scope(ctx);
 
     ast->type = tvar(_tname());
+    ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
   case AST_FN_PROTOTYPE: {
@@ -176,7 +175,11 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
   case AST_CALL: {
     char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
     AST *func_ast;
-    ttype func_type;
+    if (ast_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
+      fprintf(stderr, "Error [typecheck]: function %s not found in scope\n",
+              name);
+      break;
+    };
 
     AST *func_prototype_ast = func_ast->data.AST_FN_DECLARATION.prototype;
 
@@ -189,6 +192,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     }
     // TODO: replace AST with casts, eg 1 -> 1.0 if param is double
 
+    ast->type = func_ast->type;
     break;
   }
   case AST_IDENTIFIER: {
@@ -227,6 +231,15 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     ast->type = tvar(_tname());
     break;
   }
+  case AST_MATCH: {
+    typecheck_ast(ast->data.AST_MATCH.candidate, ctx);
+    for (int i = 0; i < ast->data.AST_MATCH.length; i++) {
+      typecheck_ast(ast->data.AST_MATCH.matches[i], ctx);
+    }
+
+    ast->type = tvar(_tname());
+    break;
+  }
   case AST_INTEGER:
     ast->type = tint();
     break;
@@ -243,7 +256,6 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
   case AST_ASSIGNMENT:
   case AST_UNOP:
   case AST_TUPLE:
-  case AST_MATCH:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
@@ -297,6 +309,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
                          (TypeEquation){ast->type, tbool(), ast});
       break;
     }
+    if (op == TOKEN_PIPE) {
+      printf("push type equation for matcher expr\n");
+      break;
+    }
 
     push_type_equation(&ctx->type_equations,
                        (TypeEquation){ast->type, left->type, ast});
@@ -337,6 +353,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     }
     break;
   }
+  case AST_MATCH: {
+    // push_type_equation
+    break;
+  }
   case AST_MAIN:
   case AST_UNOP:
   case AST_EXPRESSION:
@@ -349,7 +369,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_FN_PROTOTYPE:
   case AST_CALL:
   case AST_TUPLE:
-  case AST_MATCH:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
@@ -378,8 +397,8 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       break;
 
     char *lname = eq.left.as.T_VAR.name;
-    // print_ttype(eq.left);
-    // printf(" -> ");
+    print_ttype(eq.left);
+    printf(" -> ");
     ttype right = eq.right;
 
     if (right.tag == T_VAR) {
@@ -405,15 +424,12 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       }
     }
 
-    // print_ttype(right);
+    print_ttype(right);
+    printf("\n");
+
     ttype_env_insert(env, lname, right);
     eq.ast->type.tag = right.tag;
     eq.ast->type.as = right.as;
-    // printf("   ");
-    // print_ast(*eq.ast, 0);
-    // print_ttype(eq.ast->type);
-    //
-    // printf("\n");
 
   } while (0);
 
@@ -429,14 +445,15 @@ void typecheck(AST *ast) {
   ast_SymbolTable symbol_table;
   symbol_table.current_frame_index = 0;
   ctx.symbol_table = &symbol_table;
-  ctx.type_equations.equations = malloc(sizeof(TypeEquation) * MAX_TEQ_LIST);
   t_counter = 0;
 
+  ctx.type_equations.equations = calloc(sizeof(TypeEquation), MAX_TEQ_LIST);
+  ctx.type_equations.length = 0;
   typecheck_ast(ast, &ctx);
+
   // for (int i = 0; i < ctx.type_equations.length; i++) {
   //   print_type_equation(ctx.type_equations.equations[i]);
   // }
-  // printf("unify:-----\n");
 
   TypeEnv env;
   unify(&ctx.type_equations, &env);

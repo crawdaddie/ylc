@@ -38,3 +38,11 @@ jobs:
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/test_symbol_table
+
+    - name: Build and Test Typechecker 
+      run: |
+        export PATH="/usr/local/opt/llvm/bin:$PATH"
+        export CPATH=$(llvm-config --includedir):$CPATH
+        export LDFLAGS="-L/usr/local/opt/llvm/lib"
+        export CPPFLAGS="-I/usr/local/opt/llvm/include"
+        make build/test_typecheck

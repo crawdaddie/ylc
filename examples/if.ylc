@@ -1,4 +1,4 @@
-let a = fn(int input) int {
+let a = fn(input) {
   if (input == 1) {
     1
   } else {

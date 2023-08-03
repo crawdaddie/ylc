@@ -137,6 +137,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     char *input = read_file(path);
     AST *ast = parse(input);
     free(input);
+    typecheck(ast);
 
     ctx.module_path = path;
     LLVMSetSourceFileName(ctx.module, path, strlen(path));
@@ -174,6 +175,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
       printf("\033[1;0m");
 
       AST *ast = parse(input);
+
+      typecheck(ast);
       dump_ast(ast);
 
       LLVMValueRef value = codegen(ast, &ctx);
