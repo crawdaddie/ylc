@@ -486,6 +486,7 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
   }
 }
 int typecheck(AST *ast) {
+  _typecheck_error_flag = 0;
   TypeCheckContext ctx;
   ast_SymbolTable symbol_table;
   symbol_table.current_frame_index = 0;
@@ -495,13 +496,11 @@ int typecheck(AST *ast) {
   ctx.type_equations.equations = calloc(sizeof(TypeEquation), MAX_TEQ_LIST);
   ctx.type_equations.length = 0;
   typecheck_ast(ast, &ctx);
-  if (_typecheck_error_flag)
+
+  if (_typecheck_error_flag) {
     return 1;
-  /*
-    for (int i = 0; i < ctx.type_equations.length; i++) {
-      print_type_equation(ctx.type_equations.equations[i]);
-    }
-  */
+  }
+
   TypeEnv env;
   unify(&ctx.type_equations, &env);
 

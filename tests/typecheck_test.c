@@ -42,10 +42,11 @@ static AST *wrap_ast(int length, ...) {
   va_end(args);
   return AST_NEW(MAIN, statements);
 }
-
+static int tc_error_flag = 0;
 static AST *typecheck_input(const char *input) {
+  tc_error_flag = 0;
   AST *ast = parse(input);
-  typecheck(ast);
+  tc_error_flag = typecheck(ast);
   return ast;
 }
 
@@ -185,6 +186,7 @@ int test_fn_with_type_error() {
                               "  }\n"
                               "}");
 
+  mu_assert(tc_error_flag == 1, "emits error when typechecking 'if (x + 1)'");
   free_ast(test);
   return 0;
 }
@@ -203,6 +205,7 @@ int test_fn_with_unop() {
   mu_assert(fn_h->type.as.T_FN.members[0].tag == T_BOOL &&
                 fn_h->type.as.T_FN.members[1].tag == T_BOOL,
             "function has type (Bool -> Bool)");
+
   AST *x_arg = AST_TOP_LEVEL(test, 0)
                    ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
                    .parameters[0];
@@ -241,14 +244,14 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  // mu_run_test(test_simple_exprs);
-  // mu_run_test(test_untyped_function);
-  // mu_run_test(test_function_call);
+  mu_run_test(test_simple_exprs);
+  mu_run_test(test_untyped_function);
+  mu_run_test(test_function_call);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
 
   mu_run_test(test_fn_with_type_error);
-  // mu_run_test(test_fn_with_unop);
+  mu_run_test(test_fn_with_unop);
   // mu_run_test(test_fn_with_match_expr);
 
   // mu_run_test(test_int_casting);

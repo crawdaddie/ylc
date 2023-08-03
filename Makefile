@@ -37,19 +37,19 @@ TEST_SRC += $(TEST_DIR)/utils.c
 
 # List all the test object files
 TEST_OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(TEST_SRC))
-build/test_parser: $(TEST_OBJ) $(BUILD_DIR)/parse_test.o
+build/parse_test: $(TEST_OBJ) $(BUILD_DIR)/parse_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
-build/test_codegen: $(TEST_OBJ) $(BUILD_DIR)/codegen_test.o
+build/codegen_test: $(TEST_OBJ) $(BUILD_DIR)/codegen_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
-build/test_typecheck: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
+build/typecheck_test: $(TEST_OBJ) $(BUILD_DIR)/typecheck_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
-build/test_symbol_table: $(TEST_OBJ) $(BUILD_DIR)/symbol_table_test.o
+build/symbol_table_test: $(TEST_OBJ) $(BUILD_DIR)/symbol_table_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
@@ -79,12 +79,11 @@ EXPORT_COMPILER_OPTIONS = -Werror -Wall -Wextra -fPIC
 libffi:
 	$(CC) -shared -o libffi.so experiments/libffi.c $(EXPORT_COMPILER_OPTIONS)
 
-.PHONY: test
-test:
-	make build/test_$(t)
 
 .PHONY: tests
 tests:
-	make build/test_codegen
-	make build/test_parser
-	# make build/test_typecheck
+	make clean
+	make build/parse_test
+	make build/codegen_test
+	make build/symbol_table_test
+	make build/typecheck_test

@@ -156,17 +156,14 @@ int main() {
              AST_NEW(IF_ELSE,
                      AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(INTEGER, 1)),
-                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
-                                                   AST_NEW(INTEGER, 2))),
-                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
-                                                   AST_NEW(INTEGER, 3)))));
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 3))));
 
   test_parse("if (x == 1) {x = 2}", 1,
              AST_NEW(IF_ELSE,
                      AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(INTEGER, 1)),
-                     ast_statement_list(1, AST_NEW(ASSIGNMENT, "x", NULL,
-                                                   AST_NEW(INTEGER, 2))),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
                      NULL));
 
   /*
@@ -253,6 +250,17 @@ int main() {
   test_parse("let h = fn (int x, int y) int {x + y}", 1,
              AST_NEW(FN_DECLARATION,
                      AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2, "int"),
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(IDENTIFIER, "y")),
+                     "h"));
+
+  AST *fn_proto_params3[] = {
+      AST_NEW(SYMBOL_DECLARATION, "x", NULL),
+      AST_NEW(SYMBOL_DECLARATION, "y", NULL),
+  };
+  test_parse("let h = fn (x, y) {x + y} # without optional type annotations", 1,
+             AST_NEW(FN_DECLARATION,
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2, NULL),
                      AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
                              AST_NEW(IDENTIFIER, "y")),
                      "h"));
