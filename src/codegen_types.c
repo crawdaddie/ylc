@@ -1,9 +1,27 @@
 #include "codegen_types.h"
 #include "codegen.h"
 #include "codegen_function.h"
+#include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+LLVMTypeRef inferred_type_lookup(ttype type, Context *ctx) {
+  // TODO: make this more smart / quick
+  switch (type.tag) {
+  case T_INT:
+    return LLVMInt32TypeInContext(ctx->context);
+  case T_NUM:
+    return LLVMDoubleTypeInContext(ctx->context);
+  case T_STR:
+    return LLVMPointerType(LLVMInt8Type(), 0);
+  case T_BOOL:
+    return LLVMInt1Type();
+  case T_VOID:
+    return LLVMVoidTypeInContext(ctx->context);
+  }
+  return NULL;
+}
 
 LLVMTypeRef type_lookup(char *type, Context *ctx) {
   // TODO: make this more smart / quick

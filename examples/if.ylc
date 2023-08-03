@@ -7,7 +7,7 @@ let a = fn(input) {
 }
 
 
-a(1)
+#a(1)
 
 
 

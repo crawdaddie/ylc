@@ -149,6 +149,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       dump_ast(ast);
       LLVMValueRef value = codegen(ast, &ctx);
       dump_module(ctx.module);
+      print_last_entered_type(ast);
       run_value(ctx.engine, value);
       free_ast(ast);
     }
@@ -184,6 +185,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       if (value)
         dump_module(ctx.module);
 
+      print_last_entered_type(ast);
       run_value(ctx.engine, value);
       free_ast(ast);
       reinit_lang_ctx(&ctx);

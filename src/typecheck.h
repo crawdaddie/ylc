@@ -2,7 +2,8 @@
 #define _LANG_TYPE_CHECK_H
 #include "ast.h"
 
-void typecheck(AST *ast);
+int typecheck(AST *ast);
 
 void print_ttype(ttype type);
+void print_last_entered_type(AST *ast);
 #endif

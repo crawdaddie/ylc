@@ -423,4 +423,12 @@ static AST *parse_precedence(Precedence precedence) {
   return expr;
 };
 
-AST *parse_expression() { return parse_precedence(PREC_ASSIGNMENT); }
+AST *parse_expression() {
+  const char *src_offset = get_scanner_current() - 5;
+  line_info linfo = get_line_info();
+  AST *ast = parse_precedence(PREC_ASSIGNMENT);
+  ast->src_offset = src_offset;
+  ast->line_info = linfo;
+
+  return ast;
+}

@@ -59,7 +59,6 @@ static AST *typecheck_input(const char *input) {
 #define AST_FN_PARAM(i)                                                        \
   data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.parameters[i]
 
-#define AST_FN_BODY(i)
 int test_untyped_function() {
   AST *test = typecheck_input("let h = fn (x) {\n"
                               "  x + 1\n"
@@ -85,6 +84,20 @@ int test_untyped_function() {
   mu_assert(fn_h->type.as.T_FN.members[0].tag == T_INT &&
                 fn_h->type.as.T_FN.members[1].tag == T_INT,
             "function has type (Int -> Int)");
+
+  free_ast(test);
+  return 0;
+}
+
+int test_function_call() {
+  AST *test = typecheck_input("let h = fn (x) {\n"
+                              "  x + 1\n"
+                              "}\n"
+                              "h(2)");
+
+  AST *fn_call = AST_TOP_LEVEL(test, 1);
+  print_ast(*fn_call, 0);
+  print_ttype(fn_call->type);
 
   free_ast(test);
   return 0;
@@ -120,9 +133,18 @@ int test_fn_with_conditionals() {
                    ->data.AST_BINOP.left;
 
   mu_assert(x_ref->type.tag == T_INT, "reference to x has type Int");
+
+  AST *condition =
+      AST_TOP_LEVEL(test, 0)
+          ->data.AST_FN_DECLARATION.body->data.AST_IF_ELSE.condition;
+
+  mu_assert(condition->type.tag == T_BOOL,
+            "condition expr in If / Else has type Bool");
+
   free_ast(test);
   return 0;
 }
+
 int test_fn_with_conditionals2() {
 
   AST *test = typecheck_input("let _h = fn (x) {\n"
@@ -155,6 +177,42 @@ int test_fn_with_conditionals2() {
   return 0;
 }
 
+int test_fn_with_type_error() {
+
+  AST *test = typecheck_input("let _h = fn (x) {\n"
+                              "  if (x + 1) {\n"
+                              "     x + 1\n"
+                              "  }\n"
+                              "}");
+
+  free_ast(test);
+  return 0;
+}
+
+int test_fn_with_unop() {
+
+  AST *test = typecheck_input("let _h = fn (x) {\n"
+                              "  !x\n"
+                              "}");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_BOOL &&
+                fn_h->type.as.T_FN.members[1].tag == T_BOOL,
+            "function has type (Bool -> Bool)");
+  AST *x_arg = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+                   .parameters[0];
+
+  mu_assert(x_arg->type.tag == T_BOOL, "param x has type Bool");
+
+  free_ast(test);
+  return 0;
+}
+
 int test_fn_with_match_expr() {
 
   AST *test = typecheck_input("let m = fn (val) {\n"
@@ -169,9 +227,10 @@ int test_fn_with_match_expr() {
   return 0;
 }
 
-int test_simple_expr() {
-  AST *test = typecheck_input("x + 1");
-  mu_assert(true, "");
+int test_simple_exprs() {
+  AST *test = typecheck_input("let x\nx + 1.0");
+  // mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM,
+  //           "let x has type Num (double)");
   return 0;
 }
 
@@ -182,10 +241,14 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  mu_run_test(test_untyped_function);
-  // mu_run_test(test_simple_expr);
+  // mu_run_test(test_simple_exprs);
+  // mu_run_test(test_untyped_function);
+  // mu_run_test(test_function_call);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
+
+  mu_run_test(test_fn_with_type_error);
+  // mu_run_test(test_fn_with_unop);
   // mu_run_test(test_fn_with_match_expr);
 
   // mu_run_test(test_int_casting);

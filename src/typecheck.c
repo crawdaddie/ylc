@@ -9,6 +9,7 @@
 typedef AST *ast;
 INIT_SYM_TABLE(ast);
 
+static int _typecheck_error_flag = 0;
 typedef struct {
   ttype left;
   ttype right;
@@ -78,7 +79,7 @@ typedef struct {
   TypeEquationsList type_equations;
 } TypeCheckContext;
 
-static int MAX_TEQ_LIST = 100;
+static int MAX_TEQ_LIST = 32;
 void push_type_equation(TypeEquationsList *list, TypeEquation equation) {
 
   list->length++;
@@ -104,6 +105,9 @@ static ttype tnum() { return (ttype){T_NUM}; }
 static ttype tstr() { return (ttype){T_STR}; }
 static ttype tbool() { return (ttype){T_BOOL}; }
 static ttype tvar(char *name) { return (ttype){T_VAR, {.T_VAR = {name}}}; }
+
+static char *_tname();
+static ttype _tvar() { return (ttype){T_VAR, {.T_VAR = {_tname()}}}; }
 static ttype tfn(ttype *param_types, int length) {
   return (ttype){T_FN,
                  {.T_FN = {
@@ -125,6 +129,8 @@ static bool is_boolean_binop(token_type op) {
   return op == TOKEN_EQUALITY || op == TOKEN_LT || op == TOKEN_GT ||
          op == TOKEN_LTE || op == TOKEN_GTE;
 }
+
+static bool is_boolean_unop(token_type op) { return op == TOKEN_BANG; }
 
 static void generate_equations(AST *ast, TypeCheckContext *ctx);
 
@@ -156,7 +162,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     typecheck_ast(ast->data.AST_FN_DECLARATION.body, ctx);
     exit_ttype_scope(ctx);
 
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
@@ -169,7 +175,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
       typecheck_ast(param_ast, ctx);
     }
     // ast->type = tfn();
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
     break;
   }
   case AST_CALL: {
@@ -192,7 +198,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     }
     // TODO: replace AST with casts, eg 1 -> 1.0 if param is double
 
-    ast->type = func_ast->type;
+    ast->type = _tvar();
     break;
   }
   case AST_IDENTIFIER: {
@@ -210,14 +216,19 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
   case AST_BINOP: {
     typecheck_ast(ast->data.AST_BINOP.left, ctx);
     typecheck_ast(ast->data.AST_BINOP.right, ctx);
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
+    break;
+  }
+
+  case AST_UNOP: {
+    typecheck_ast(ast->data.AST_UNOP.operand, ctx);
+    ast->type = _tvar();
     break;
   }
   case AST_SYMBOL_DECLARATION: {
     // insert param into symbol table for current stack
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
-    ast->type = tvar(_tname());
-    // printf("[%s -> %s]\n", name, ast->type.as.T_VAR.name);
+    ast->type = _tvar();
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
@@ -228,7 +239,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
       typecheck_ast(ast->data.AST_IF_ELSE.else_body, ctx);
     }
 
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
     break;
   }
   case AST_MATCH: {
@@ -237,7 +248,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
       typecheck_ast(ast->data.AST_MATCH.matches[i], ctx);
     }
 
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
     break;
   }
   case AST_INTEGER:
@@ -254,7 +265,6 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     break;
   }
   case AST_ASSIGNMENT:
-  case AST_UNOP:
   case AST_TUPLE:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
@@ -263,7 +273,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
   case AST_INDEX_ACCESS:
   case AST_IMPORT:
   default: {
-    ast->type = tvar(_tname());
+    ast->type = _tvar();
   }
   }
   generate_equations(ast, ctx);
@@ -357,8 +367,34 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     // push_type_equation
     break;
   }
+  case AST_CALL: {
+
+    // push_type_equation(&ctx->type_equations, {ast->type, });
+    break;
+  }
+  case AST_UNOP: {
+
+    token_type op = ast->data.AST_UNOP.op;
+    AST *operand = ast->data.AST_UNOP.operand;
+
+    if (is_boolean_unop(op)) {
+      push_type_equation(&ctx->type_equations,
+                         (TypeEquation){operand->type, tbool(), operand});
+
+      push_type_equation(&ctx->type_equations,
+                         (TypeEquation){ast->type, tbool(), ast});
+      break;
+    }
+    // if (op == TOKEN_PIPE) {
+    //   printf("push type equation for matcher expr\n");
+    //   break;
+    // }
+    //
+    // push_type_equation(&ctx->type_equations,
+    //                    (TypeEquation){ast->type, left->type, ast});
+    break;
+  }
   case AST_MAIN:
-  case AST_UNOP:
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_STATEMENT_LIST:
@@ -367,7 +403,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_IDENTIFIER:
   case AST_SYMBOL_DECLARATION:
   case AST_FN_PROTOTYPE:
-  case AST_CALL:
   case AST_TUPLE:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
@@ -382,9 +417,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 }
 
 // TYPE UNIFICATION
-bool occurs() {}
-void apply_substitution() {}
-void unify_one() {}
 
 INIT_SYM_TABLE(ttype);
 typedef ttype_StackFrame TypeEnv;
@@ -427,9 +459,22 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
     print_ttype(right);
     printf("\n");
 
+    ttype existing;
+    if (ttype_env_lookup(env, lname, &existing) == 0 &&
+        existing.tag != right.tag) {
+      printf("\033[1;31m");
+      printf("Error: type error at %s", eq.ast->src_offset);
+      printf(" found ");
+      print_ttype(existing);
+      printf(" - expected ");
+      print_ttype(right);
+      printf("\033[1;0m");
+      printf("\n");
+      _typecheck_error_flag = 1;
+    }
     ttype_env_insert(env, lname, right);
-    eq.ast->type.tag = right.tag;
-    eq.ast->type.as = right.as;
+
+    eq.ast->type = right;
 
   } while (0);
 
@@ -440,7 +485,7 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
     unify(list, env);
   }
 }
-void typecheck(AST *ast) {
+int typecheck(AST *ast) {
   TypeCheckContext ctx;
   ast_SymbolTable symbol_table;
   symbol_table.current_frame_index = 0;
@@ -450,12 +495,29 @@ void typecheck(AST *ast) {
   ctx.type_equations.equations = calloc(sizeof(TypeEquation), MAX_TEQ_LIST);
   ctx.type_equations.length = 0;
   typecheck_ast(ast, &ctx);
-
-  // for (int i = 0; i < ctx.type_equations.length; i++) {
-  //   print_type_equation(ctx.type_equations.equations[i]);
-  // }
-
+  if (_typecheck_error_flag)
+    return 1;
+  /*
+    for (int i = 0; i < ctx.type_equations.length; i++) {
+      print_type_equation(ctx.type_equations.equations[i]);
+    }
+  */
   TypeEnv env;
   unify(&ctx.type_equations, &env);
-  ast->type.tag = T_FN;
+
+  for (int i = 0; i < TABLE_SIZE; i++) {
+    // TODO: wtf?? if I do typecheck twice, it seems the same stack slots are
+    // reused, sometimes there are values left over :(
+    env.entries[i] = NULL;
+  }
+  // free(ctx.type_equations.equations);
+
+  return _typecheck_error_flag;
+}
+
+void print_last_entered_type(AST *ast) {
+  int last = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length - 1;
+  ttype last_type_expr =
+      ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.statements[last]->type;
+  print_ttype(last_type_expr);
 }

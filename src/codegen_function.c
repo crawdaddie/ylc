@@ -28,7 +28,11 @@ static LLVMTypeRef *codegen_function_prototype_args(AST *prot, int *is_var_arg,
         param_ast->data.AST_SYMBOL_DECLARATION;
 
     char *type_str = param_symbol.type;
-    params[i] = type_lookup(type_str, ctx);
+    if (!type_str) {
+      params[i] = inferred_type_lookup(param_ast->type, ctx);
+    } else {
+      params[i] = type_lookup(type_str, ctx);
+    }
   }
   return params;
 }
@@ -70,15 +74,18 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   int is_var_args = 0;
   LLVMTypeRef *prototype =
       codegen_function_prototype_args(ast, &is_var_args, ctx);
-  LLVMTypeRef ret_type = type_lookup(data.type, ctx);
-  *func_return_type = ret_type;
+
+  if (!func_return_type) {
+    LLVMTypeRef ret_type = type_lookup(data.type, ctx);
+    *func_return_type = ret_type;
+  }
 
   if (is_var_args) {
     arg_count--;
   }
 
   LLVMTypeRef function_type =
-      LLVMFunctionType(ret_type, prototype, arg_count, is_var_args);
+      LLVMFunctionType(*func_return_type, prototype, arg_count, is_var_args);
 
   *func = LLVMAddFunction(ctx->module, name, function_type);
   *func_type = LLVMTypeOf(*func);
@@ -138,10 +145,14 @@ static void save_named_function(const char *name, LLVMValueRef func,
 LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef func;
   LLVMTypeRef func_type;
-  LLVMTypeRef ret_type;
+  LLVMTypeRef ret_type = NULL;
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
+  if (ast->type.tag == T_FN) {
+    ret_type = inferred_type_lookup(
+        ast->type.as.T_FN.members[ast->type.as.T_FN.length - 1], ctx);
+  }
   codegen_prototype(prototype_ast, ctx, &func, &func_type, &ret_type,
                     strdup(name));
 

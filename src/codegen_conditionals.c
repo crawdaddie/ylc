@@ -79,6 +79,7 @@ LLVMValueRef codegen_if_else(AST *ast, Context *ctx) {
   LLVMPositionBuilderAtEnd(ctx->builder, else_block);
 
   LLVMValueRef else_value;
+
   if (ast->data.AST_IF_ELSE.else_body != NULL) {
     enter_scope(ctx);
     else_value = codegen(ast->data.AST_IF_ELSE.else_body, ctx);

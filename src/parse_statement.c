@@ -112,29 +112,41 @@ static AST *import_module() {
  *TOKEN_RETURN
  **/
 AST *parse_statement() {
+  char *src_offset = get_scanner_current();
+  line_info linfo = get_line_info();
+  AST *ast;
   if (!match(TOKEN_NL)) {
     token token = parser.current;
     switch (token.type) {
     case TOKEN_LET: {
-      return let_statement();
+      ast = let_statement();
+      break;
     }
     // case TOKEN_ASSIGNMENT: {
     //   return assignment_statement();
     // }
     case TOKEN_RETURN: {
-      return return_statement();
+      ast = return_statement();
+      break;
     }
     case TOKEN_TYPE: {
-      return type_declaration();
+      ast = type_declaration();
+      break;
     }
 
     case TOKEN_IMPORT: {
-      return import_module();
+      ast = import_module();
+      break;
     }
     default: {
-      return parse_expression();
+      ast = parse_expression();
+      break;
     }
     }
+
+    ast->src_offset = src_offset;
+    ast->line_info = linfo;
+    return ast;
   }
   return NULL;
 }

@@ -190,6 +190,8 @@ struct AST {
   } data;
 
   ttype type; // optional - filled in during typecheck step
+  line_info line_info;
+  char *src_offset;
 };
 
 void print_ast(AST ast, int indent);
