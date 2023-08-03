@@ -66,6 +66,9 @@ AST *parse_fn_body() {
     free_ast(statements);
     return NULL;
   }
+  if (statements->data.AST_STATEMENT_LIST.length == 1) {
+    return statements->data.AST_STATEMENT_LIST.statements[0];
+  }
 
   return statements;
 }
@@ -120,30 +123,7 @@ AST *parse_fn_prototype() {
   }
   return proto;
 }
-// AST *parse_fn_prototype() {
-//   AST *proto = ast_fn_prototype(0);
-//   if (!match(TOKEN_LP)) {
-//     fprintf(stderr, "Error: expected ( after fn keyword\n");
-//     return NULL;
-//   };
-//
-//   while (!match(TOKEN_RP)) {
-//     AST *arg = parse_fn_arg();
-//
-//     arg_list_push(&proto->data.AST_FN_PROTOTYPE, arg);
-//     if (check(TOKEN_COMMA)) {
-//       advance();
-//     }
-//   }
-//
-//   if (match(TOKEN_IDENTIFIER)) {
-//     proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
-//   } else {
-//     proto->data.AST_FN_PROTOTYPE.type = NULL;
-//   }
-//   return proto;
-// }
-//
+
 AST *parse_function(bool can_assign) {
   AST *prototype = parse_fn_prototype();
   if (!prototype) {

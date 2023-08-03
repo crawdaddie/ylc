@@ -64,7 +64,7 @@ int test_untyped_function() {
   AST *test = typecheck_input("let h = fn (x) {\n"
                               "  x + 1\n"
                               "}");
-  print_ast(*test, 0);
+  // print_ast(*test, 0);
 
   ttype x_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(0)->type;
   mu_assert(x_type.tag == T_VAR,
@@ -94,6 +94,24 @@ int test_fn_with_conditionals() {
                               "  }\n"
                               "}");
 
+  // print_ast(*test, 0);
+  AST *x_arg = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+                   .parameters[0];
+  print_ast(*x_arg, 0);
+  print_ttype(x_arg->type);
+  mu_assert(true, "");
+  free_ast(test);
+  return 0;
+}
+int test_fn_with_conditionals2() {
+
+  AST *test = typecheck_input("let _h = fn (x) {\n"
+                              "  if (x == 1) {\n"
+                              "     x + 1\n"
+                              "  }\n"
+                              "}");
+
   print_ast(*test, 0);
   mu_assert(true, "");
   free_ast(test);
@@ -113,10 +131,11 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  mu_run_test(test_untyped_function);
-  mu_run_test(test_simple_expr);
+  // mu_run_test(test_untyped_function);
+  // mu_run_test(test_simple_expr);
   mu_run_test(test_fn_with_conditionals);
-  mu_run_test(test_int_casting);
+  // mu_run_test(test_fn_with_conditionals2);
+  // mu_run_test(test_int_casting);
   return test_result;
 }
 

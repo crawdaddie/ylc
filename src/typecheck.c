@@ -45,7 +45,7 @@ void print_ttype(ttype type) {
   }
   case T_FN: {
     int length = type.as.T_FN.length;
-    printf("Fn (");
+    printf("(");
     for (int i = 0; i < length; i++) {
       print_ttype(type.as.T_FN.members[i]);
       if (i < length - 1)
@@ -62,7 +62,7 @@ static void print_type_equation(TypeEquation type_equation) {
   print_ttype(type_equation.left);
   printf(" :: ");
   print_ttype(type_equation.right);
-  printf(" [ ");
+  printf("\t\t[ ");
   print_ast(*type_equation.ast, 0);
   printf(" ]");
   printf("\n");
@@ -72,6 +72,7 @@ typedef struct {
   TypeEquation *equations;
   int length;
 } TypeEquationsList;
+
 typedef struct {
   ast_SymbolTable *symbol_table;
   TypeEquationsList type_equations;
@@ -117,120 +118,18 @@ static char *_tname() {
   t_counter++;
   char *result =
       (char *)malloc(32 * sizeof(char)); // Assuming a large enough buffer size
-  sprintf(result, "t_%d", t_counter);
+  sprintf(result, "'t%d", t_counter);
   return result;
 }
 static bool is_boolean_binop(token_type op) {
   return op == TOKEN_EQUALITY || op == TOKEN_LT || op == TOKEN_GT ||
          op == TOKEN_LTE || op == TOKEN_GTE;
 }
-static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
-  switch (ast->tag) {
-
-  case AST_INTEGER: {
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){ast->type, tint(), ast});
-    break;
-  }
-  case AST_NUMBER: {
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){ast->type, tnum(), ast});
-    break;
-  }
-  case AST_BOOL: {
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){ast->type, tbool(), ast});
-    break;
-  }
-  case AST_STRING: {
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){ast->type, tstr(), ast});
-    break;
-  }
-  case AST_BINOP: {
-    token_type op = ast->data.AST_BINOP.op;
-    AST *left = ast->data.AST_BINOP.left;
-    AST *right = ast->data.AST_BINOP.right;
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){left->type, right->type, ast});
-
-    // for now, operands in binops need to be the same type
-    // TODO: allow a type-casting hierarchy eg (+ 1 1.0) is allowed and treated
-    // as a float
-
-    if (is_boolean_binop(op)) {
-      push_type_equation(&ctx->type_equations,
-                         (TypeEquation){ast->type, tbool(), ast});
-      break;
-    }
-
-    push_type_equation(&ctx->type_equations,
-                       (TypeEquation){ast->type, tint(), ast});
-    break;
-  }
-  case AST_FN_DECLARATION: {
-    AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-    int length = prototype_ast->data.AST_FN_PROTOTYPE.length + 1;
-
-    ttype *fn_members = malloc(sizeof(ttype) * length);
-
-    for (int i = 0; i < length - 1; i++) {
-      AST *param_ast = prototype_ast->data.AST_FN_PROTOTYPE.parameters[i];
-      fn_members[i] = param_ast->type;
-    }
-    fn_members[length - 1] = ast->data.AST_FN_DECLARATION.body->type;
-
-    TypeEquation eq = {ast->type, tfn(fn_members, length), ast};
-    print_type_equation(eq);
-    push_type_equation(&ctx->type_equations, eq);
-
-    break;
-  }
-  // case AST_IF_ELSE: {
-  //   push_type_equation(
-  //       &ctx->type_equations,
-  //       (TypeEquation){ast->data.AST_IF_ELSE.condition->type, tbool(), ast});
-  //
-  //   push_type_equation(
-  //       &ctx->type_equations,
-  //       (TypeEquation){ast->type, ast->data.AST_IF_ELSE.then_body->type});
-  //
-  //   if (ast->data.AST_IF_ELSE.else_body != NULL) {
-  //     push_type_equation(
-  //         &ctx->type_equations,
-  //         (TypeEquation){ast->type, ast->data.AST_IF_ELSE.else_body->type});
-  //   }
-  //   break;
-  // }
-  case AST_MAIN:
-  case AST_UNOP:
-  case AST_EXPRESSION:
-  case AST_STATEMENT:
-  case AST_STATEMENT_LIST:
-  case AST_CALL_EXPRESSION:
-  case AST_ASSIGNMENT:
-  case AST_IDENTIFIER:
-  case AST_SYMBOL_DECLARATION:
-  case AST_FN_PROTOTYPE:
-  case AST_CALL:
-  case AST_TUPLE:
-  case AST_MATCH:
-  case AST_STRUCT:
-  case AST_TYPE_DECLARATION:
-  case AST_MEMBER_ACCESS:
-  case AST_MEMBER_ASSIGNMENT:
-  case AST_INDEX_ACCESS:
-  case AST_IMPORT:
-  case AST_VAR_ARG:
-  default:
-    break;
-  }
-}
+static void generate_equations(AST *ast, TypeCheckContext *ctx);
 
 static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
 
-  // printf("start tcheck for node %d\n", ast->tag);
   switch (ast->tag) {
   case AST_MAIN: {
     typecheck_ast(ast->data.AST_MAIN.body, ctx);
@@ -241,9 +140,9 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     for (int i = 0; i < ast->data.AST_STATEMENT_LIST.length; i++) {
       AST *stmt_ast = ast->data.AST_STATEMENT_LIST.statements[i];
       typecheck_ast(stmt_ast, ctx);
-      // t = stmt_ast->type;
+      t = stmt_ast->type;
     }
-    // ast->type = t;
+    ast->type = t;
     break;
   }
 
@@ -298,7 +197,6 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     AST *typed_identifier_ast;
     if (ast_table_lookup(ctx->symbol_table, name, &typed_identifier_ast) != 0) {
       fprintf(stderr, "identifier %s not found in this scope\n", name);
-      // ast->type = tvar(name);
     } else {
       ast->type = typed_identifier_ast->type;
     };
@@ -315,14 +213,14 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     // insert param into symbol table for current stack
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
     ast->type = tvar(_tname());
+    printf("[%s -> %s]\n", name, ast->type.as.T_VAR.name);
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
   case AST_IF_ELSE: {
     typecheck_ast(ast->data.AST_IF_ELSE.condition, ctx);
     typecheck_ast(ast->data.AST_IF_ELSE.then_body, ctx);
-
-    if (ast->data.AST_IF_ELSE.else_body != NULL) {
+    if (ast->data.AST_IF_ELSE.else_body) {
       typecheck_ast(ast->data.AST_IF_ELSE.else_body, ctx);
     }
 
@@ -356,18 +254,183 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     ast->type = tvar(_tname());
   }
   }
-  // printf("finish tcheck for node %d\n", ast->tag);
   generate_equations(ast, ctx);
 }
 
+static void generate_equations(AST *ast, TypeCheckContext *ctx) {
+
+  switch (ast->tag) {
+
+  case AST_INTEGER: {
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->type, tint(), ast});
+    break;
+  }
+  case AST_NUMBER: {
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->type, tnum(), ast});
+    break;
+  }
+  case AST_BOOL: {
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->type, tbool(), ast});
+    break;
+  }
+  case AST_STRING: {
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->type, tstr(), ast});
+    break;
+  }
+  case AST_BINOP: {
+    token_type op = ast->data.AST_BINOP.op;
+    AST *left = ast->data.AST_BINOP.left;
+    AST *right = ast->data.AST_BINOP.right;
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){left->type, right->type, left});
+
+    // for now, operands in binops need to be the same type
+    // TODO: allow a type-casting hierarchy eg (+ 1 1.0) is allowed and treated
+    // as a float
+
+    if (is_boolean_binop(op)) {
+      push_type_equation(&ctx->type_equations,
+                         (TypeEquation){ast->type, tbool(), ast});
+      break;
+    }
+
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->type, left->type, ast});
+    break;
+  }
+  case AST_FN_DECLARATION: {
+    AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
+    int length = prototype_ast->data.AST_FN_PROTOTYPE.length + 1;
+
+    ttype *fn_members = malloc(sizeof(ttype) * length);
+
+    for (int i = 0; i < length - 1; i++) {
+      AST *param_ast = prototype_ast->data.AST_FN_PROTOTYPE.parameters[i];
+      fn_members[i] = param_ast->type;
+    }
+    fn_members[length - 1] = ast->data.AST_FN_DECLARATION.body->type;
+
+    TypeEquation eq = (TypeEquation){ast->type, tfn(fn_members, length), ast};
+
+    push_type_equation(&ctx->type_equations, eq);
+
+    break;
+  }
+  case AST_IF_ELSE: {
+    push_type_equation(&ctx->type_equations,
+                       (TypeEquation){ast->data.AST_IF_ELSE.condition->type,
+                                      tbool(),
+                                      ast->data.AST_IF_ELSE.condition});
+
+    push_type_equation(
+        &ctx->type_equations,
+        (TypeEquation){ast->type, ast->data.AST_IF_ELSE.then_body->type, ast});
+
+    if (ast->data.AST_IF_ELSE.else_body) {
+      // push_type_equation(&ctx->type_equations,
+      //                    (TypeEquation){ast->data.AST_IF_ELSE.else_body->type,
+      //                                   ast->data.AST_IF_ELSE.then_body->type});
+    }
+    break;
+  }
+  case AST_MAIN:
+  case AST_UNOP:
+  case AST_EXPRESSION:
+  case AST_STATEMENT:
+  case AST_STATEMENT_LIST:
+  case AST_CALL_EXPRESSION:
+  case AST_ASSIGNMENT:
+  case AST_IDENTIFIER:
+  case AST_SYMBOL_DECLARATION:
+  case AST_FN_PROTOTYPE:
+  case AST_CALL:
+  case AST_TUPLE:
+  case AST_MATCH:
+  case AST_STRUCT:
+  case AST_TYPE_DECLARATION:
+  case AST_MEMBER_ACCESS:
+  case AST_MEMBER_ASSIGNMENT:
+  case AST_INDEX_ACCESS:
+  case AST_IMPORT:
+  case AST_VAR_ARG:
+  default:
+    break;
+  }
+}
+
+// TYPE UNIFICATION
+bool occurs() {}
+void apply_substitution() {}
+void unify_one() {}
+
+INIT_SYM_TABLE(ttype);
+typedef ttype_StackFrame TypeEnv;
+
+void unify(TypeEquationsList *list, TypeEnv *env) {
+
+  TypeEquation eq = *list->equations;
+  do {
+    if (eq.left.tag != T_VAR)
+      break;
+
+    char *lname = eq.left.as.T_VAR.name;
+    print_ttype(eq.left);
+    printf(" -> ");
+    ttype right = eq.right;
+
+    if (right.tag == T_VAR) {
+      char *rname = right.as.T_VAR.name;
+      while (right.tag == T_VAR && ttype_env_lookup(env, rname, &right) == 0) {
+        rname = right.as.T_VAR.name;
+      }
+    } else if (right.tag == T_FN) {
+      for (int i = 0; i < right.as.T_FN.length; i++) {
+        ttype fn_member = right.as.T_FN.members[i];
+        ttype lookedup_member;
+        if (ttype_env_lookup(env, fn_member.as.T_VAR.name, &lookedup_member) ==
+            0) {
+          right.as.T_FN.members[i] = lookedup_member;
+        }
+      }
+    }
+
+    print_ttype(right);
+    ttype_env_insert(env, lname, right);
+    eq.ast->type.tag = right.tag;
+    eq.ast->type.as = right.as;
+    printf("   ");
+    print_ast(*eq.ast, 0);
+    print_ttype(eq.ast->type);
+
+    printf("\n");
+
+  } while (0);
+
+  if (list->equations !=
+      list->equations + (list->length - 1) * sizeof(TypeEquation)) {
+    list->equations++;
+    list->length--;
+    unify(list, env);
+  }
+}
 void typecheck(AST *ast) {
   TypeCheckContext ctx;
   ast_SymbolTable symbol_table;
   symbol_table.current_frame_index = 0;
   ctx.symbol_table = &symbol_table;
   ctx.type_equations.equations = malloc(sizeof(TypeEquation) * MAX_TEQ_LIST);
+  t_counter = 0;
+
   typecheck_ast(ast, &ctx);
   for (int i = 0; i < ctx.type_equations.length; i++) {
     print_type_equation(ctx.type_equations.equations[i]);
   }
+  printf("unify:-----\n");
+
+  TypeEnv env;
+  unify(&ctx.type_equations, &env);
 }
