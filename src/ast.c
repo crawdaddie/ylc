@@ -124,7 +124,7 @@ void print_ast(AST ast, int indent) {
     printf("(%s ",
            ast.data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
     print_ast(*ast.data.AST_CALL.parameters, 0);
-    printf(")\n");
+    printf(")");
     break;
   }
 

@@ -8,6 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 INIT_SYM_TABLE(ast);
+#define _TYPECHECK_DBG
 
 static int _typecheck_error_flag = 0;
 typedef struct {
@@ -176,6 +177,9 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
 
     AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
     ast->type = _tvar();
+    printf("fn type: ");
+    print_ttype(ast->type);
+    printf("\n");
     ast_table_insert(ctx->symbol_table, name, ast);
 
     enter_ttype_scope(ctx);
@@ -210,6 +214,9 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     }
 
     ast->type = _tvar();
+    printf("type of call: ");
+    print_ttype(ast->type);
+    printf("\n");
     break;
   }
   case AST_IDENTIFIER: {
@@ -220,6 +227,10 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
 
       if (strcmp(name, "_") == 0) {
         ast->type = _tvar(); // placeholder var
+                             //
+        printf("type of _ ");
+        print_ttype(ast->type);
+        printf("\n");
         break;
       }
       fprintf(stderr, "Error [typecheck]: identifier %s not found in scope\n",
@@ -401,11 +412,17 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     fn_param_types[arg_len] = ast->type;
 
     ttype implied_fn_type = tfn(fn_param_types, arg_len + 1);
+
     push_type_equation(&ctx->type_equations, (TypeEquation){
                                                  fn_type_var,
                                                  implied_fn_type,
                                                  ast,
                                              });
+    // push_type_equation(&ctx->type_equations, (TypeEquation){
+    //
+    //
+    //     ast
+    //   });
     break;
   }
   case AST_IF_ELSE: {
@@ -433,17 +450,18 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
           (TypeEquation){
               ast->type,
               ast->data.AST_MATCH.matches[i]->data.AST_BINOP.right->type,
-              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.right,
+              ast,
           });
 
       push_type_equation(
           &ctx->type_equations,
           (TypeEquation){
-              ast->data.AST_MATCH.candidate->type,
               ast->data.AST_MATCH.matches[i]->data.AST_BINOP.left->type,
-              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.left,
+              ast->data.AST_MATCH.candidate->type,
+              ast->data.AST_MATCH.candidate,
           });
     }
+
     break;
   }
   case AST_UNOP: {
@@ -551,20 +569,28 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
                ttype_env_lookup(env, ret_name, &ret_type) == 0) {
           ret_name = right.as.T_VAR.name;
         }
-        eq.ast->type = ret_type;
-        break;
+        // printf("found ret type: ");
+        // print_ttype(ret_type);
+        // printf("\n");
+        // eq.ast->type = ret_type;
+        // break;
+        right = ret_type;
       }
     }
 #ifdef _TYPECHECK_DBG
     print_ttype(right);
-    printf("\n");
+    printf("  [");
+    print_ast(*eq.ast, 0);
+
+    printf(" ]\n");
 #endif
 
     ttype existing;
     if (ttype_env_lookup(env, lname, &existing) == 0 &&
         existing.tag != right.tag) {
       printf("\033[1;31m");
-      printf("Error: type error at %s", eq.ast->src_offset);
+      printf("Error [typecheck]: type error at [%s] %s ", lname,
+             eq.ast->src_offset);
       printf(" found ");
       print_ttype(existing);
       printf(" - expected ");
@@ -573,6 +599,7 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       printf("\n");
       _typecheck_error_flag = 1;
     }
+
     ttype_env_insert(env, lname, right);
 
     eq.ast->type = right;
@@ -601,15 +628,16 @@ int typecheck(AST *ast) {
     return 1;
   }
 
-  // #ifdef _TYPECHECK_DBG
+#ifdef _TYPECHECK_DBG
   printf("type equations\n-----\n");
   for (int i = 0; i < ctx.type_equations.length; i++) {
     print_type_equation(ctx.type_equations.equations[i]);
   }
-  // #endif
+#endif
 
   TypeEnv env;
 
+  printf("type unification\n--------\n");
   unify(&ctx.type_equations, &env);
 
   for (int i = 0; i < TABLE_SIZE; i++) {

@@ -1,9 +1,9 @@
-let m = fn (int val) int {
-  match val -> int
+let m = fn (val) {
+  match val
   | 1 -> 1 
   | 2 -> 2
   | _ -> m(val - 2)
 }
 
-m(5)
+#m(5)
 
