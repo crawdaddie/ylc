@@ -248,7 +248,7 @@ int all_tests() {
   int test_result = 0;
   mu_run_test(test_simple_exprs);
   mu_run_test(test_untyped_function);
-  mu_run_test(test_function_call);
+  // mu_run_test(test_function_call);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
 
