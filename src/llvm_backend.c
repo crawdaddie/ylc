@@ -137,16 +137,18 @@ int LLVMRuntime(int repl, char *path, char *output) {
     char *input = read_file(path);
     AST *ast = parse(input);
     free(input);
-    typecheck(ast);
 
     ctx.module_path = path;
     LLVMSetSourceFileName(ctx.module, path, strlen(path));
     if (output) {
+      typecheck(ast);
       LLVMValueRef value = codegen(ast, &ctx);
       dump_ir(&ctx, output);
       free_ast(ast);
     } else {
       dump_ast(ast);
+
+      typecheck(ast);
       LLVMValueRef value = codegen(ast, &ctx);
       dump_module(ctx.module);
       print_last_entered_type(ast);

@@ -135,6 +135,8 @@ static bool is_boolean_unop(token_type op) { return op == TOKEN_BANG; }
 static void generate_equations(AST *ast, TypeCheckContext *ctx);
 
 static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
+  // printf("tcheck %d\n", ast->tag);
+  // print_ast(*ast, 0);
 
   switch (ast->tag) {
   case AST_MAIN: {
@@ -152,20 +154,6 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     break;
   }
 
-  case AST_FN_DECLARATION: {
-    char *name = ast->data.AST_FN_DECLARATION.name;
-    AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-
-    enter_ttype_scope(ctx);
-    // process prototype & body within new scope
-    typecheck_ast(prototype_ast, ctx);
-    typecheck_ast(ast->data.AST_FN_DECLARATION.body, ctx);
-    exit_ttype_scope(ctx);
-
-    ast->type = _tvar();
-    ast_table_insert(ctx->symbol_table, name, ast);
-    break;
-  }
   case AST_FN_PROTOTYPE: {
     int arg_count = ast->data.AST_FN_PROTOTYPE.length;
     AST **parameters = ast->data.AST_FN_PROTOTYPE.parameters;
@@ -176,6 +164,27 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     }
     // ast->type = tfn();
     ast->type = _tvar();
+    break;
+  }
+  case AST_FN_DECLARATION: {
+    char *name = ast->data.AST_FN_DECLARATION.name;
+
+    if (name != NULL && ast->data.AST_FN_DECLARATION.is_extern) {
+      ast->type = _tvar();
+      ast_table_insert(ctx->symbol_table, name, ast);
+      return;
+    }
+
+    AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
+    ast->type = _tvar();
+    ast_table_insert(ctx->symbol_table, name, ast);
+
+    enter_ttype_scope(ctx);
+    // process prototype & body within new scope
+    typecheck_ast(prototype_ast, ctx);
+    typecheck_ast(ast->data.AST_FN_DECLARATION.body, ctx);
+    exit_ttype_scope(ctx);
+
     break;
   }
   case AST_CALL: {
@@ -197,6 +206,9 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
       // TODO: replace AST with AST for curried func
     }
     // TODO: replace AST with casts, eg 1 -> 1.0 if param is double
+    for (int i = 0; i < arg_count; i++) {
+      typecheck_ast(parameters_tuple.members[i], ctx);
+    }
 
     ast->type = _tvar();
     break;
@@ -230,6 +242,7 @@ static void typecheck_ast(AST *ast, TypeCheckContext *ctx) {
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
     ast->type = _tvar();
     ast_table_insert(ctx->symbol_table, name, ast);
+
     break;
   }
   case AST_IF_ELSE: {
@@ -320,7 +333,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       break;
     }
     if (op == TOKEN_PIPE) {
-      printf("push type equation for matcher expr\n");
+      // printf("push type equation for matcher expr\n");
       break;
     }
 
@@ -329,6 +342,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     break;
   }
   case AST_FN_DECLARATION: {
+
     AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
     int length = prototype_ast->data.AST_FN_PROTOTYPE.length + 1;
 
@@ -344,6 +358,40 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     push_type_equation(&ctx->type_equations, eq);
 
+    break;
+  }
+  case AST_CALL: {
+    char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+
+    AST *func_ast;
+    if (ast_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
+      fprintf(stderr, "Error [typecheck]: function %s not found in scope\n",
+              name);
+      break;
+    };
+
+    ttype fn_type_var = func_ast->type;
+
+    AST *params_ast = ast->data.AST_CALL.parameters;
+    int arg_len = params_ast->data.AST_TUPLE.length;
+    ttype *fn_param_types = malloc(sizeof(ttype) * (arg_len + 1));
+
+    for (int i = 0; i < arg_len; i++) {
+      AST *param_ast = params_ast->data.AST_TUPLE.members[i];
+      fn_param_types[i] = param_ast->type;
+    }
+
+    fn_param_types[arg_len] = ast->type;
+
+    // printf("call type: ");
+    // print_ttype(tfn(fn_param_types, arg_len + 1));
+    // printf("\n");
+    ttype implied_fn_type = tfn(fn_param_types, arg_len + 1);
+    push_type_equation(&ctx->type_equations, (TypeEquation){
+                                                 fn_type_var,
+                                                 implied_fn_type,
+                                                 ast,
+                                             });
     break;
   }
   case AST_IF_ELSE: {
@@ -367,11 +415,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     // push_type_equation
     break;
   }
-  case AST_CALL: {
-
-    // push_type_equation(&ctx->type_equations, {ast->type, });
-    break;
-  }
   case AST_UNOP: {
 
     token_type op = ast->data.AST_UNOP.op;
@@ -386,12 +429,14 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       break;
     }
     // if (op == TOKEN_PIPE) {
-    //   printf("push type equation for matcher expr\n");
-    //   break;
+    //   printf("push type equation for
+    //   matcher expr\n"); break;
     // }
     //
     // push_type_equation(&ctx->type_equations,
-    //                    (TypeEquation){ast->type, left->type, ast});
+    //                    (TypeEquation){ast->type,
+    //                    left->type,
+    //                    ast});
     break;
   }
   case AST_MAIN:
@@ -424,6 +469,7 @@ typedef ttype_StackFrame TypeEnv;
 void unify(TypeEquationsList *list, TypeEnv *env) {
 
   TypeEquation eq = *list->equations;
+
   do {
     if (eq.left.tag != T_VAR)
       break;
@@ -434,6 +480,7 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
     print_ttype(eq.left);
     printf(" -> ");
 #endif
+
     ttype right = eq.right;
 
     if (right.tag == T_VAR) {
@@ -441,9 +488,13 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
       while (right.tag == T_VAR && ttype_env_lookup(env, rname, &right) == 0) {
         rname = right.as.T_VAR.name;
       }
-    } else if (right.tag == T_FN) {
+    } else if (right.tag == T_FN && eq.ast->tag == AST_FN_DECLARATION) {
+
       AST *prototype_ast = FN_PROTOTYPE(eq.ast);
+
       for (int i = 0; i < right.as.T_FN.length; i++) {
+        // iterate over fn arg types - if arg is 'tn and found in the env
+        // [lookedup_member] we can substitute 'tn for whatever's found in the
 
         ttype fn_member = right.as.T_FN.members[i];
         ttype lookedup_member;
@@ -451,11 +502,25 @@ void unify(TypeEquationsList *list, TypeEnv *env) {
         if (ttype_env_lookup(env, fn_member.as.T_VAR.name, &lookedup_member) ==
             0) {
           right.as.T_FN.members[i] = lookedup_member;
+
           if (i < right.as.T_FN.length - 1) {
             prototype_ast->data.AST_FN_PROTOTYPE.parameters[i]->type =
                 lookedup_member;
           }
         }
+      }
+    } else if (right.tag == T_FN && eq.ast->tag == AST_CALL) {
+      ttype lookedup_fn;
+      if (ttype_env_lookup(env, lname, &lookedup_fn) == 0) {
+        int fn_len = lookedup_fn.as.T_FN.length;
+        ttype ret_type = lookedup_fn.as.T_FN.members[fn_len - 1];
+        char *ret_name = ret_type.as.T_VAR.name;
+        while (ret_type.tag == T_VAR &&
+               ttype_env_lookup(env, ret_name, &ret_type) == 0) {
+          ret_name = right.as.T_VAR.name;
+        }
+        eq.ast->type = ret_type;
+        break;
       }
     }
 #ifdef _TYPECHECK_DBG
@@ -506,12 +571,22 @@ int typecheck(AST *ast) {
     return 1;
   }
 
+#ifdef _TYPECHECK_DBG
+  printf("type equations\n-----\n");
+  for (int i = 0; i < ctx.type_equations.length; i++) {
+    print_type_equation(ctx.type_equations.equations[i]);
+  }
+#endif
+
   TypeEnv env;
+
   unify(&ctx.type_equations, &env);
 
   for (int i = 0; i < TABLE_SIZE; i++) {
-    // TODO: wtf?? if I do typecheck twice, it seems the same stack slots are
-    // reused, sometimes there are values left over :(
+    // TODO: wtf?? if I do typecheck
+    // twice, it seems the same stack
+    // slots are reused, sometimes there
+    // are values left over :(
     env.entries[i] = NULL;
   }
   // free(ctx.type_equations.equations);

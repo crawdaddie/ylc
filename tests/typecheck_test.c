@@ -49,6 +49,7 @@ static int tc_error_flag = 0;
 static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
+
   tc_error_flag = typecheck(ast);
   return ast;
 }
@@ -93,7 +94,7 @@ int test_untyped_function() {
   return 0;
 }
 
-int test_function_call() {
+int test_fn_call() {
   AST *test = typecheck_input("let h = fn (x) {\n"
                               "  x + 1\n"
                               "}\n"
@@ -101,6 +102,7 @@ int test_function_call() {
 
   AST *fn_call = AST_TOP_LEVEL(test, 1);
 
+  print_ttype(fn_call->type);
   mu_assert(fn_call->type.tag == T_INT,
             "call expr has type of return type of function (Int)");
   free_ast(test);
@@ -248,7 +250,7 @@ int all_tests() {
   int test_result = 0;
   mu_run_test(test_simple_exprs);
   mu_run_test(test_untyped_function);
-  // mu_run_test(test_function_call);
+  mu_run_test(test_fn_call);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
 
