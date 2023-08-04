@@ -427,17 +427,23 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_MATCH: {
     // push_type_equation
-    push_type_equation(
-        &ctx->type_equations,
-        (TypeEquation){
-            ast->type,
-            ast->data.AST_MATCH.matches[0]->data.AST_BINOP.right->type, ast});
+    for (int i = 0; i < ast->data.AST_MATCH.length; i++) {
+      push_type_equation(
+          &ctx->type_equations,
+          (TypeEquation){
+              ast->type,
+              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.right->type,
+              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.right,
+          });
 
-    push_type_equation(
-        &ctx->type_equations,
-        (TypeEquation){
-            ast->data.AST_MATCH.candidate->type,
-            ast->data.AST_MATCH.matches[0]->data.AST_BINOP.left->type, ast});
+      push_type_equation(
+          &ctx->type_equations,
+          (TypeEquation){
+              ast->data.AST_MATCH.candidate->type,
+              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.left->type,
+              ast->data.AST_MATCH.matches[i]->data.AST_BINOP.left,
+          });
+    }
     break;
   }
   case AST_UNOP: {
@@ -595,14 +601,12 @@ int typecheck(AST *ast) {
     return 1;
   }
 
-#ifdef _TYPECHECK_DBG
-
+  // #ifdef _TYPECHECK_DBG
   printf("type equations\n-----\n");
   for (int i = 0; i < ctx.type_equations.length; i++) {
     print_type_equation(ctx.type_equations.equations[i]);
   }
-
-#endif
+  // #endif
 
   TypeEnv env;
 
