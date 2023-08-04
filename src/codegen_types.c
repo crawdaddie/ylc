@@ -137,7 +137,8 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
   case AST_FN_PROTOTYPE: {
     LLVMValueRef func;
     LLVMTypeRef func_type;
-    LLVMTypeRef ret_type;
+    LLVMTypeRef ret_type = NULL;
+
     codegen_prototype(ast, ctx, &func, &func_type, &ret_type, "typedef_func");
     return LLVMPointerType(func_type, 0);
   }

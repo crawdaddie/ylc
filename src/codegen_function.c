@@ -2,6 +2,7 @@
 #include "codegen.h"
 #include "codegen_symbol.h"
 #include "codegen_types.h"
+#include "typecheck.h"
 #include <llvm-c/Analysis.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -47,6 +48,9 @@ static void store_parameters(AST *prot, Context *ctx) {
         param_ast->data.AST_SYMBOL_DECLARATION;
 
     char *type_str = param_symbol.type;
+    if (type_str == NULL) {
+      // TODO: fallback to inferred type
+    }
 
     // insert param into symbol table for current stack
     table_insert(ctx->symbol_table, param_symbol.identifier,
@@ -75,7 +79,7 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
   LLVMTypeRef *prototype =
       codegen_function_prototype_args(ast, &is_var_args, ctx);
 
-  if (!func_return_type) {
+  if (*func_return_type == NULL) {
     LLVMTypeRef ret_type = type_lookup(data.type, ctx);
     *func_return_type = ret_type;
   }
@@ -86,7 +90,6 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
 
   LLVMTypeRef function_type =
       LLVMFunctionType(*func_return_type, prototype, arg_count, is_var_args);
-
   *func = LLVMAddFunction(ctx->module, name, function_type);
   *func_type = LLVMTypeOf(*func);
 }
@@ -145,14 +148,19 @@ static void save_named_function(const char *name, LLVMValueRef func,
 LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
   LLVMValueRef func;
   LLVMTypeRef func_type;
-  LLVMTypeRef ret_type = NULL;
+  LLVMTypeRef ret_type;
 
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
 
-  if (ast->type.tag == T_FN) {
+  if (ast->type.tag == T_FN &&
+      prototype_ast->data.AST_FN_PROTOTYPE.type == NULL) {
     ret_type = inferred_type_lookup(
         ast->type.as.T_FN.members[ast->type.as.T_FN.length - 1], ctx);
+    print_ttype(ast->type);
+  } else {
+    ret_type = NULL;
   }
+
   codegen_prototype(prototype_ast, ctx, &func, &func_type, &ret_type,
                     strdup(name));
 

@@ -150,6 +150,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
       typecheck(ast);
       LLVMValueRef value = codegen(ast, &ctx);
+
       dump_module(ctx.module);
       print_last_entered_type(ast);
       run_value(ctx.engine, value);

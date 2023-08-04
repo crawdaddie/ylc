@@ -7,8 +7,6 @@ let randint = extern fn (int max) int
 let randfloat = extern fn (double max) double
 
 
-let randint = extern fn (int max) int
-let randfloat = extern fn (double max) double
 type ThreadCb = fn (int x) int
 let create_thread = extern fn (ThreadCb start) int  
 

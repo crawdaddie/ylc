@@ -156,6 +156,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     if (data.name != NULL && data.is_extern) {
       return codegen_extern_function(ast, ctx);
     }
+
     return codegen_named_function(ast, ctx, data.name);
   }
 
@@ -231,6 +232,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_TYPE_DECLARATION: {
     struct AST_TYPE_DECLARATION data = AST_DATA(ast, TYPE_DECLARATION);
     LLVMTypeRef type = codegen_type(data.type_expr, data.name, ctx);
+
     type_symbol_table *type_metadata = NULL;
 
     if (data.type_expr->tag == AST_STRUCT) {
@@ -242,10 +244,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
 
     if (table_lookup(ctx->symbol_table, data.name, &v) != 0) {
       table_insert(ctx->symbol_table, data.name, v);
-      return NULL;
+    } else {
     }
-
-    return NULL;
+    break;
   }
   case AST_INDEX_ACCESS: {
     struct AST_INDEX_ACCESS data = AST_DATA(ast, INDEX_ACCESS);

@@ -230,6 +230,9 @@ int test_fn_with_match_expr() {
                               "}");
 
   AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_INT &&
+                fn_h->type.as.T_FN.members[1].tag == T_INT,
+            "function with matcher inside has type (Int -> Int)");
   free_ast(test);
   return 0;
 }
@@ -253,10 +256,9 @@ int all_tests() {
   mu_run_test(test_fn_call);
   mu_run_test(test_fn_with_conditionals);
   mu_run_test(test_fn_with_conditionals2);
-
   mu_run_test(test_fn_with_type_error);
   mu_run_test(test_fn_with_unop);
-  // mu_run_test(test_fn_with_match_expr);
+  mu_run_test(test_fn_with_match_expr);
 
   // mu_run_test(test_int_casting);
   return test_result;
