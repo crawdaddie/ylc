@@ -8,6 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 INIT_SYM_TABLE(ast);
+#define _TYPECHECK_DBG
 
 static int _typecheck_error_flag = 0;
 typedef struct {
@@ -204,7 +205,14 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
         ast->type; // type of call must be return type
     ttype *implied_fn_type = malloc(sizeof(ttype));
     *implied_fn_type = tfn(fn_type_list, fn_type_len);
+
     push_type_equation(&ctx->type_equations, &func_ast->type, implied_fn_type);
+
+    printf("call type eq\n");
+    print_ast(*ast, 0);
+    print_ttype(func_ast->type);
+    print_ttype(*implied_fn_type);
+    printf("\n");
 
     break;
   }
@@ -414,6 +422,8 @@ void unify_variable(ttype *left, ttype *right, TypeEnv *env) {
  * Unify two types left and left, with substitution environment.
  **/
 void unify(ttype *left, ttype *right, TypeEnv *env) {
+  // print_type_equation((TypeEquation){left, right});
+
   if (left == right) {
     return;
   }
@@ -423,12 +433,16 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
     if (ttype_env_lookup(env, left->as.T_VAR.name, &lookup) == 0) {
       unify(&lookup, right, env);
     }
-    return add_type_to_env(env, left, right);
+    add_type_to_env(env, left, right);
   }
 
   if (left->tag == T_VAR && right->tag == T_FN) {
+    ttype existing_func_lookup;
+    if (ttype_env_lookup(env, left->as.T_VAR.name, &existing_func_lookup) ==
+        0) {
+      unify(right, &existing_func_lookup, env);
+    }
     for (int i = 0; i < right->as.T_FN.length; i++) {
-
       ttype *fn_member = right->as.T_FN.members + i;
       ttype *fn_member_lookup = fn_member;
 
@@ -460,18 +474,27 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
     }
 
     for (int i = 0; i < left->as.T_FN.length; i++) {
+      ttype *l_fn_mem = left->as.T_FN.members + i;
+      ttype *r_fn_mem = right->as.T_FN.members + i;
+
+      ttype mem_lookup;
+
+      if (l_fn_mem->tag == T_VAR &&
+          ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+        add_type_to_env(env, l_fn_mem, r_fn_mem);
+      }
+
       left->as.T_FN.members[i] = right->as.T_FN.members[i];
+      unify(l_fn_mem, r_fn_mem, env);
     }
 
-    for (int i = 0; i < left->as.T_FN.length; i++) {
-      unify(left->as.T_FN.members + i, right->as.T_FN.members + i, env);
-    }
     return;
   }
 }
 
 void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
   TypeEquation eq = *equations;
+
 #ifdef _TYPECHECK_DBG
   print_type_equation(eq);
 #endif
@@ -487,6 +510,7 @@ void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
     unify_equations(equations + 1, len - 1, env);
   }
 }
+
 void update_expression_types(AST *ast, TypeEnv *env) {
   if (ast == NULL) {
     return;
@@ -578,11 +602,10 @@ int typecheck(AST *ast) {
   for (int i = 0; i < ctx.type_equations.length; i++) {
     print_type_equation(ctx.type_equations.equations[i]);
   }
+  printf("--------------\ntype unifications\n");
 #endif
 
   TypeEnv env;
-  //
-  // printf("type unification\n--------\n");
   TypeEquation *eqs =
       ctx.type_equations.equations; // new pointer to eqs we can manipulate
   unify_equations(eqs, ctx.type_equations.length, &env);
@@ -597,7 +620,7 @@ int typecheck(AST *ast) {
   }
   free(ctx.type_equations.equations); // free original pointer to eqs
 
-  // printf("----\n");
+  printf("----\n");
   return _typecheck_error_flag;
 }
 
