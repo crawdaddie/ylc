@@ -55,8 +55,6 @@ build/symbol_table_test: $(TEST_OBJ) $(BUILD_DIR)/symbol_table_test.o
 
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
-# Check if we are running in GitHub Actions CI environment
-#
 
 .PHONY: debug-lang
 debug-lang:

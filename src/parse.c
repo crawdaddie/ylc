@@ -63,7 +63,7 @@ static AST *rec_parse(AST *ast) {
   }
 }
 
-AST *parse(char *source) {
+AST *parse(const char *source) {
   t_counter = 0;
 
   AST *ast = malloc(sizeof(AST));

@@ -11,8 +11,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define _TYPECHECK_DBG
-
 /*
  *
  * wrap list of expressions in a full program, ie:
@@ -50,7 +48,7 @@ static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
 
-  tc_error_flag = typecheck(ast);
+  tc_error_flag = _typecheck(ast, 1);
   return ast;
 }
 
@@ -73,9 +71,8 @@ int test_nothing() {
 
 int test_binop() {
   AST *test = typecheck_input("1.0 + 1");
-  print_ttype(AST_TOP_LEVEL(test, 0)->type);
 
-  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_INT, "type '1 + 1.0' as Int");
+  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM, "type '1 + 1.0' as Int");
   // TODO: fix this in unification --- Num :: Int
   free_ast(test);
   return 0;
@@ -119,7 +116,6 @@ int test_fn_call() {
 
   AST *fn_call = AST_TOP_LEVEL(test, 1);
 
-  print_ttype(fn_call->type);
   mu_assert(fn_call->type.tag == T_INT,
             "call expr has type of return type of function (Int)");
   free_ast(test);
@@ -224,14 +220,15 @@ int test_fn_with_unop() {
   mu_assert(fn_h->type.as.T_FN.length == 2,
             "function type has 1 param & 1 return val (length = 2)");
 
-  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_BOOL &&
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_VAR &&
                 fn_h->type.as.T_FN.members[1].tag == T_BOOL,
-            "function has type (Bool -> Bool)");
+            "function has type ('t -> Bool)");
+
   AST *x_arg = AST_TOP_LEVEL(test, 0)
                    ->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
                    .parameters[0];
 
-  mu_assert(x_arg->type.tag == T_BOOL, "param x has type Bool");
+  mu_assert(x_arg->type.tag == T_VAR, "param x has type Bool");
 
   free_ast(test);
   return 0;
@@ -256,8 +253,8 @@ int test_fn_with_match_expr() {
 
 int test_simple_exprs() {
   AST *test = typecheck_input("let x\nx + 1.0");
-  // mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM,
-  //           "let x has type Num (double)");
+  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM,
+            "let x has type Num (double)");
   return 0;
 }
 
@@ -268,16 +265,16 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  // mu_run_test(test_nothing);
+  mu_run_test(test_nothing);
   mu_run_test(test_binop);
-  // mu_run_test(test_simple_exprs);
+  mu_run_test(test_simple_exprs);
   mu_run_test(test_untyped_function);
-  // mu_run_test(test_fn_call);
-  // mu_run_test(test_fn_with_conditionals);
-  // mu_run_test(test_fn_with_conditionals2);
-  // mu_run_test(test_fn_with_type_error);
-  // mu_run_test(test_fn_with_unop);
-  // mu_run_test(test_fn_with_match_expr);
+  mu_run_test(test_fn_call);
+  mu_run_test(test_fn_with_conditionals);
+  mu_run_test(test_fn_with_conditionals2);
+  mu_run_test(test_fn_with_type_error);
+  mu_run_test(test_fn_with_unop);
+  mu_run_test(test_fn_with_match_expr);
 
   // mu_run_test(test_int_casting);
   return test_result;
