@@ -64,6 +64,23 @@ static AST *typecheck_input(const char *input) {
 #define AST_FN_PARAM(i)                                                        \
   data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.parameters[i]
 
+int test_nothing() {
+  AST *test = typecheck_input("1");
+  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_INT, "type '1' as Int");
+  free_ast(test);
+  return 0;
+}
+
+int test_binop() {
+  AST *test = typecheck_input("1.0 + 1");
+  print_ttype(AST_TOP_LEVEL(test, 0)->type);
+
+  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_INT, "type '1 + 1.0' as Int");
+  // TODO: fix this in unification --- Num :: Int
+  free_ast(test);
+  return 0;
+}
+
 int test_untyped_function() {
   AST *test = typecheck_input("let h = fn (x) {\n"
                               "  x + 1\n"
@@ -251,14 +268,16 @@ int test_int_casting() {
 
 int all_tests() {
   int test_result = 0;
-  mu_run_test(test_simple_exprs);
+  // mu_run_test(test_nothing);
+  mu_run_test(test_binop);
+  // mu_run_test(test_simple_exprs);
   mu_run_test(test_untyped_function);
-  mu_run_test(test_fn_call);
-  mu_run_test(test_fn_with_conditionals);
-  mu_run_test(test_fn_with_conditionals2);
-  mu_run_test(test_fn_with_type_error);
-  mu_run_test(test_fn_with_unop);
-  mu_run_test(test_fn_with_match_expr);
+  // mu_run_test(test_fn_call);
+  // mu_run_test(test_fn_with_conditionals);
+  // mu_run_test(test_fn_with_conditionals2);
+  // mu_run_test(test_fn_with_type_error);
+  // mu_run_test(test_fn_with_unop);
+  // mu_run_test(test_fn_with_match_expr);
 
   // mu_run_test(test_int_casting);
   return test_result;

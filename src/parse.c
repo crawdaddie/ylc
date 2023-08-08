@@ -3,6 +3,7 @@
 #include "lexer.h"
 #include "parse_expression.h"
 #include "parse_statement.h"
+#include "types.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -63,6 +64,7 @@ static AST *rec_parse(AST *ast) {
 }
 
 AST *parse(char *source) {
+  t_counter = 0;
 
   AST *ast = malloc(sizeof(AST));
   ast->tag = AST_MAIN;

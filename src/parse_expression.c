@@ -3,6 +3,7 @@
 #include "parse.h"
 #include "parse_function.h"
 #include "parse_statement.h"
+#include "types.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -51,6 +52,7 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     binop->data.AST_BINOP.op = op_type;
     binop->data.AST_BINOP.right = right;
     binop->data.AST_BINOP.left = prev_expr;
+    binop->type = _tvar();
     return binop;
   }
   case TOKEN_DOT: {
@@ -77,21 +79,29 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
 
 static AST *number(bool can_assign) {
   token token = parser.previous;
-  return AST_NEW(NUMBER, token.as.vfloat);
+  AST *num = AST_NEW(NUMBER, token.as.vfloat);
+  num->type = (ttype){T_NUM};
+  return num;
 }
 
 static AST *integer(bool can_assign) {
   token token = parser.previous;
-  return AST_NEW(INTEGER, token.as.vint);
+
+  AST *num = AST_NEW(INTEGER, token.as.vint);
+  num->type = (ttype){T_INT};
+  return num;
 }
 static AST *parse_string(bool can_assign) {
   token token = parser.previous;
   AST *str = AST_NEW(STRING, strdup(token.as.vstr), strlen(token.as.vstr));
+  str->type = (ttype){T_STR};
   return str;
 }
 static AST *parse_literal(bool can_assign) {
   token token = parser.previous;
-  return AST_NEW(BOOL, token.type == TOKEN_TRUE);
+  AST *b = AST_NEW(BOOL, token.type == TOKEN_TRUE);
+  b->type = (ttype){T_BOOL};
+  return b;
 }
 
 AST *ast_tuple(int length, ...) {
@@ -118,6 +128,7 @@ AST *ast_tuple(int length, ...) {
 
   va_end(args);
 
+  tuple->type = (ttype){T_COMPOUND};
   return tuple;
 }
 
@@ -323,6 +334,7 @@ AST *parse_struct(bool can_assign) {
   proto->tag = AST_STRUCT;
   proto->data.AST_STRUCT.length = proto->data.AST_FN_PROTOTYPE.length;
   proto->data.AST_STRUCT.members = proto->data.AST_FN_PROTOTYPE.parameters;
+  proto->type = (ttype){T_COMPOUND};
   return proto;
 }
 AST *parse_ptr(bool can_assign) {}

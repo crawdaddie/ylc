@@ -54,11 +54,28 @@
     }                                                                          \
   }                                                                            \
                                                                                \
-  void entry_type##_table_insert(entry_type##_SymbolTable *table,              \
-                                 const char *key, entry_type value) {          \
+  int entry_type##_env_lookup_idx(entry_type##_StackFrame *frame,              \
+                                  const char *key, unsigned int index,         \
+                                  entry_type *value) {                         \
+    entry_type##_Symbol *entry = frame->entries[index];                        \
+    while (entry != NULL) {                                                    \
+      if (strcmp(entry->key, key) == 0) {                                      \
+        *value = entry->value;                                                 \
+        return 0;                                                              \
+      }                                                                        \
+      entry = entry->next;                                                     \
+    }                                                                          \
+    return 1;                                                                  \
+  }                                                                            \
+  int entry_type##_env_lookup(entry_type##_StackFrame *frame, const char *key, \
+                              entry_type *value) {                             \
     unsigned int index = hash(key);                                            \
-    entry_type##_StackFrame *frame =                                           \
-        &table->stack[table->current_frame_index];                             \
+    return entry_type##_env_lookup_idx(frame, key, index, value);              \
+  }                                                                            \
+                                                                               \
+  void entry_type##_env_insert(entry_type##_StackFrame *frame,                 \
+                               const char *key, entry_type value) {            \
+    unsigned int index = hash(key);                                            \
     entry_type##_Symbol *entry = frame->entries[index];                        \
     entry_type##_Symbol *newSymbol = entry_type##_create_entry(key, value);    \
                                                                                \
@@ -75,6 +92,13 @@
       }                                                                        \
     }                                                                          \
     frame->allocated_entries++;                                                \
+  }                                                                            \
+                                                                               \
+  void entry_type##_table_insert(entry_type##_SymbolTable *table,              \
+                                 const char *key, entry_type value) {          \
+    entry_type##_StackFrame *frame =                                           \
+        &table->stack[table->current_frame_index];                             \
+    entry_type##_env_insert(frame, key, value);                                \
   }                                                                            \
                                                                                \
   int entry_type##_table_lookup(entry_type##_SymbolTable *table,               \
@@ -95,40 +119,6 @@
     }                                                                          \
                                                                                \
     return 1;                                                                  \
-  }                                                                            \
-  int entry_type##_env_lookup(entry_type##_StackFrame *frame, const char *key, \
-                              entry_type *value) {                             \
-    unsigned int index = hash(key);                                            \
-    entry_type##_Symbol *entry = frame->entries[index];                        \
-    while (entry != NULL) {                                                    \
-      if (strcmp(entry->key, key) == 0) {                                      \
-        *value = entry->value;                                                 \
-        return 0;                                                              \
-      }                                                                        \
-      entry = entry->next;                                                     \
-    }                                                                          \
-                                                                               \
-    return 1;                                                                  \
-  }                                                                            \
-  void entry_type##_env_insert(entry_type##_StackFrame *frame,                 \
-                               const char *key, entry_type value) {            \
-    unsigned int index = hash(key);                                            \
-    entry_type##_Symbol *entry = frame->entries[index];                        \
-    entry_type##_Symbol *newSymbol = entry_type##_create_entry(key, value);    \
-                                                                               \
-    if (entry == NULL) {                                                       \
-      frame->entries[index] = newSymbol;                                       \
-    } else {                                                                   \
-      if (strcmp(entry->key, key) == 0) {                                      \
-        entry->value = value;                                                  \
-      } else {                                                                 \
-        while (entry->next != NULL) {                                          \
-          entry = entry->next;                                                 \
-        }                                                                      \
-        entry->next = newSymbol;                                               \
-      }                                                                        \
-    }                                                                          \
-    frame->allocated_entries++;                                                \
   }                                                                            \
                                                                                \
   void init_##entry_type##_symbol_table(entry_type##_SymbolTable *table) {     \

@@ -15,6 +15,7 @@
 
 typedef enum {
   T_VAR,      // 'x
+  T_INT8,     // int8 - alias char
   T_INT,      // int
   T_NUM,      // double
   T_STR,      // str
@@ -29,7 +30,7 @@ typedef struct ttype {
   ttype_tag tag;
   union {
     struct T_VAR {
-      char *name;
+      char name[16];
     } T_VAR;
     struct T_FN {
       int length; // length = num params + 1
@@ -39,4 +40,15 @@ typedef struct ttype {
 
   } as;
 } ttype;
+
+ttype _tvar();
+ttype tfn(ttype *param_types, int length);
+char *_tname();
+ttype tvar(char *name);
+ttype tvoid();
+ttype tint();
+ttype tnum();
+ttype tbool();
+ttype tstr();
+extern int t_counter;
 #endif

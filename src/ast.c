@@ -1,5 +1,6 @@
 #include "ast.h"
 #include "lexer.h"
+#include "types.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -345,5 +346,6 @@ AST *ast_new(AST ast) {
   AST *ptr = malloc(sizeof(AST));
   if (ptr)
     *ptr = ast;
+  ptr->type = _tvar();
   return ptr;
 }
