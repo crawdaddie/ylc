@@ -1,12 +1,12 @@
-import "./strings.ylc"
+#import "./strings.ylc"
+#
+#let println = fn (str input) void {
+#  printf(input)
+#  printf("\n")
+#}
 
-let println = fn (str input) void {
-  printf(input)
-  printf("\n")
-}
-
-let fib = fn (int n) int {
-  fprintf("fmt: %d\n", n)
+let fib = fn (int n) {
+  #fprintf("fmt: %d\n", n)
   match n
   | 0 -> 0
   | 1 -> 1

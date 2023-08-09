@@ -1,7 +1,8 @@
+# extremely inefficient % 2 func
 let m = fn (val) {
   match val
   | 1 -> 1 
-  | 2 -> 2
+  | 2 -> 0 
   | _ -> m(val - 2)
 }
 

@@ -8,6 +8,8 @@
 #include <stdlib.h>
 typedef AST *ast;
 
+// #define _TYPECHECK_DBG
+
 INIT_SYM_TABLE(ast);
 
 static int _typecheck_error_flag = 0;
@@ -475,15 +477,78 @@ void unify_variable(ttype *left, ttype *right, TypeEnv *env) {
   }
   return add_type_to_env(env, left, right);
 }
+bool types_equal(ttype *l, ttype *r) {
+  if (l == r) {
+    return true;
+  }
+
+  if (l->tag == T_VAR && l->tag == T_VAR &&
+      strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+    return true;
+  }
+
+  return false;
+}
+void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
+
+  if (left->as.T_FN.length != right->as.T_FN.length) {
+    return;
+  }
+
+  for (int i = 0; i < left->as.T_FN.length; i++) {
+    ttype *l_fn_mem = left->as.T_FN.members + i;
+    ttype *r_fn_mem = right->as.T_FN.members + i;
+    if (types_equal(l_fn_mem, r_fn_mem)) {
+      continue;
+    }
+
+    ttype mem_lookup;
+
+    if (l_fn_mem->tag == T_VAR &&
+        ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+      add_type_to_env(env, l_fn_mem, r_fn_mem);
+    }
+
+    left->as.T_FN.members[i] = right->as.T_FN.members[i];
+    unify(l_fn_mem, r_fn_mem, env);
+  }
+
+  return;
+}
+
+void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
+
+  if (left->as.T_COMPOUND.length != right->as.T_FN.length) {
+    return;
+  }
+
+  for (int i = 0; i < left->as.T_COMPOUND.length; i++) {
+    ttype *l_fn_mem = left->as.T_COMPOUND.members + i;
+    ttype *r_fn_mem = right->as.T_COMPOUND.members + i;
+
+    ttype mem_lookup;
+    if (l_fn_mem->tag == T_VAR &&
+        ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+
+      add_type_to_env(env, l_fn_mem, r_fn_mem);
+    }
+
+    left->as.T_COMPOUND.members[i] = right->as.T_FN.members[i];
+    unify(l_fn_mem, r_fn_mem, env);
+  }
+
+  return;
+}
 
 /*
  * Unify two types left and left, with substitution environment.
  **/
 void unify(ttype *left, ttype *right, TypeEnv *env) {
 
-  if (left == right) {
+  if (left == right || types_equal(left, right)) {
     return;
   }
+
   if (left->tag != T_VAR && right->tag != T_VAR && left->tag != right->tag) {
     fprintf(stderr,
             "Error [typecheck] type contradiction type tag %d != type tag %d\n",
@@ -549,56 +614,22 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (right->tag == T_VAR) {
+
+    ttype lookup;
+    if (ttype_env_lookup(env, right->as.T_VAR.name, &lookup) == 0) {
+      unify(&lookup, left, env);
+    }
     return unify_variable(right, left, env);
   }
 
   if (left->tag == T_FN && right->tag == T_FN) {
-
-    if (left->as.T_FN.length != right->as.T_FN.length) {
-      return;
-    }
-
-    for (int i = 0; i < left->as.T_FN.length; i++) {
-      ttype *l_fn_mem = left->as.T_FN.members + i;
-      ttype *r_fn_mem = right->as.T_FN.members + i;
-
-      ttype mem_lookup;
-
-      if (l_fn_mem->tag == T_VAR &&
-          ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
-        add_type_to_env(env, l_fn_mem, r_fn_mem);
-      }
-
-      left->as.T_FN.members[i] = right->as.T_FN.members[i];
-      unify(l_fn_mem, r_fn_mem, env);
-    }
-
-    return;
+    unify_functions(left, right, env);
   }
-  /*
+  return;
+
   if (left->tag == T_COMPOUND && right->tag == T_COMPOUND) {
-
-    if (left->as.T_COMPOUND.length != right->as.T_COMPOUND.length) {
-      return;
-    }
-
-    for (int i = 0; i < left->as.T_COMPOUND.length; i++) {
-      ttype *l_fn_mem = left->as.T_COMPOUND.members + i;
-      ttype *r_fn_mem = right->as.T_COMPOUND.members + i;
-
-      ttype mem_lookup;
-
-      if (l_fn_mem->tag == T_VAR &&
-          ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
-        add_type_to_env(env, l_fn_mem, r_fn_mem);
-      }
-
-      left->as.T_COMPOUND.members[i] = right->as.T_COMPOUND.members[i];
-      unify(l_fn_mem, r_fn_mem, env);
-    }
-    return;
+    // return unify_tuples(left, right, env);
   }
-*/
 }
 
 void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {

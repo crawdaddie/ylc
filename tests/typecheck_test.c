@@ -296,7 +296,7 @@ int test_partially_explicitly_typed_fn() {
 
   ttype x_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(0)->type;
   mu_assert(x_type.tag == T_NUM,
-            "type of parameter x is added to AST node for x");
+            "type of parameter x (Num) is added to AST node for x");
 
   AST *binop = AST_TOP_LEVEL(test, 0)->data.AST_FN_DECLARATION.body;
   print_ttype(binop->type);
@@ -312,15 +312,34 @@ int test_partially_explicitly_typed_fn() {
   mu_assert(var_type.tag == T_NUM, "type of reference to x is Num");
 
   AST *fn_h = AST_TOP_LEVEL(test, 0);
+
   mu_assert(fn_h->type.tag == T_FN, "function type is populated");
   mu_assert(fn_h->type.as.T_FN.length == 2,
             "function type has 1 param & 1 return val (length = 2)");
 
   mu_assert(fn_h->type.as.T_FN.members[0].tag == T_NUM &&
                 fn_h->type.as.T_FN.members[1].tag == T_NUM,
-            "function has type (Int -> Int)");
+            "function has type (Num -> Num)");
 
   free_ast(test);
+  return 0;
+}
+int test_fib_fn() {
+
+  AST *test = typecheck_input("let fib = fn (n) {\n"
+                              "  match n\n"
+                              "  | 0 -> 0\n"
+                              "  | 1 -> 1\n"
+                              "  | _ -> fib(n - 1) + fib(n - 2)\n"
+                              "}");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  ttype fn_type = fn_h->type;
+  mu_assert(fn_type.tag == T_FN, "fib is a fn");
+  mu_assert(fn_type.as.T_FN.members[0].tag == T_INT &&
+                fn_type.as.T_FN.members[1].tag == T_INT,
+            "fib (Int -> Int)");
+
   return 0;
 }
 
@@ -337,6 +356,7 @@ int all_tests() {
   mu_run_test(test_fn_with_unop);
   mu_run_test(test_fn_with_match_expr);
   mu_run_test(test_generic_fn);
+  mu_run_test(test_fib_fn);
   // mu_run_test(test_partially_explicitly_typed_fn);
 
   // mu_run_test(test_int_casting);
