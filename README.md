@@ -16,7 +16,7 @@ let m = fn (val) {
 
 m(5)
 
-let printf = extern fn (str input) int
+let printf = extern fn (str input) int # extern functions must be explicitly typed
 
 let println = fn (input) void {
     printf(input)
