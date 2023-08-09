@@ -169,16 +169,16 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       push_type_equation(&ctx->type_equations, &ast->type, &tbl);
       break;
     }
+
     if (op == TOKEN_PIPE) {
       push_type_equation(&ctx->type_equations, &ast->type, &right->type);
       break;
     }
-
     // for now, operands in binops need to be the same type
     // TODO: allow a type-casting hierarchy eg (+ 1 1.0) is allowed and treated
     // as a float
 
-    push_type_equation(&ctx->type_equations, &ast->type, &right->type);
+    push_type_equation(&ctx->type_equations, &ast->type, &left->type);
     break;
   }
   case AST_FN_DECLARATION: {
@@ -302,6 +302,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     AST *sym_ast;
 
     if (ast_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
+      // printf("\nfound %s %d\n", name, sym_ast->type.tag);
+      // print_ttype(sym_ast->type);
       push_type_equation(&ctx->type_equations, &ast->type, &sym_ast->type);
     } else {
       fprintf(stderr, "Error [typecheck]: symbol %s not found in this scope\n",
@@ -314,8 +316,16 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_SYMBOL_DECLARATION: {
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
+    if (ast->data.AST_SYMBOL_DECLARATION.type != NULL) {
+      char *type = ast->data.AST_SYMBOL_DECLARATION.type;
+      // TODO: use explicitly-typed declarations here
+      if (strcmp(type, "double") == 0) {
+        ast->type.tag = T_NUM;
+      } else if (strcmp(type, "int") == 0) {
+        ast->type.tag = T_INT;
+      }
+    }
     ast_table_insert(ctx->symbol_table, name, ast);
-    // TODO: use explicitly-typed declarations here
     break;
   }
   case AST_ASSIGNMENT: {
@@ -717,10 +727,11 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   return;
 }
 
-int _typecheck(AST *ast, int cleanup) {
+int typecheck(AST *ast) {
   _typecheck_error_flag = 0;
   TypeCheckContext ctx;
-  ast_SymbolTable symbol_table;
+
+  ast_SymbolTable symbol_table = {}; // init to zero
   symbol_table.current_frame_index = 0;
   ctx.symbol_table = &symbol_table;
 
@@ -732,7 +743,7 @@ int _typecheck(AST *ast, int cleanup) {
     return 1;
   }
 
-  TypeEnv env;
+  TypeEnv env = {};
   TypeEquation *eqs =
       ctx.type_equations.equations; // new pointer to eqs we can manipulate
   unify_equations(eqs, ctx.type_equations.length, &env);
@@ -747,51 +758,17 @@ int _typecheck(AST *ast, int cleanup) {
     return 1;
   }
 
-  if (cleanup) {
-    for (int i = 0; i < TABLE_SIZE; i++) {
-      // TODO: wtf?? if I do typecheck
-      // twice, it seems the same stack
-      // slots are reused, sometimes there
-      // are values left over :(
-      env.entries[i] = NULL;
-    }
-
-    for (int i = 0; i < STACK_SIZE; i++) {
-      for (int j = 0; j < TABLE_SIZE; j++) {
-
-        // TODO: wtf??
-        ctx.symbol_table->stack[i].entries[j] = NULL;
-      }
-    }
-  }
-
   free(ctx.type_equations.equations); // free original pointer to eqs
 
   return _typecheck_error_flag;
 }
 
-int typecheck(AST *ast) { return _typecheck(ast, 0); }
+// int typecheck(AST *ast) { return _typecheck(ast, 0); }
 
 void print_last_entered_type(AST *ast) {
   int last = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length - 1;
   ttype last_type_expr =
       ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.statements[last]->type;
-
-  // if (last_type_expr.tag == T_FN) {
-  //   int len = last_type_expr.as.T_FN.length;
-  //   int c = 0;
-  //   printf("(");
-  //   for (int i = 0; i < len; i++) {
-  //     ttype component = last_type_expr.as.T_FN.members[i];
-  //     if (component.tag == T_VAR) {
-  //       printf("'%c", 'a' + c++);
-  //     } else {
-  //       print_ttype(component);
-  //     }
-  //     if (i < len - 1)
-  //       printf(" -> ");
-  //   }
-  // }
 
   print_ttype(last_type_expr);
 }

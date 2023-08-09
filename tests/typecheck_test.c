@@ -48,7 +48,7 @@ static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
 
-  tc_error_flag = _typecheck(ast, 1);
+  tc_error_flag = typecheck(ast);
   return ast;
 }
 
@@ -72,7 +72,7 @@ int test_nothing() {
 int test_binop() {
   AST *test = typecheck_input("1.0 + 1");
 
-  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM, "type '1 + 1.0' as Int");
+  mu_assert(AST_TOP_LEVEL(test, 0)->type.tag == T_NUM, "type '1 + 1.0' as Num");
   // TODO: fix this in unification --- Num :: Int
   free_ast(test);
   return 0;
@@ -289,6 +289,41 @@ int test_generic_fn() {
   return 0;
 }
 
+int test_partially_explicitly_typed_fn() {
+  AST *test = typecheck_input("let h = fn (double x) {\n"
+                              "  x + 1\n"
+                              "}");
+
+  ttype x_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(0)->type;
+  mu_assert(x_type.tag == T_NUM,
+            "type of parameter x is added to AST node for x");
+
+  AST *binop = AST_TOP_LEVEL(test, 0)->data.AST_FN_DECLARATION.body;
+  print_ttype(binop->type);
+
+  mu_assert(binop->type.tag == T_NUM,
+            "binop type is num because of x(num) + 1(int)");
+
+  ttype int_type = binop->data.AST_BINOP.right->type;
+  ttype var_type = binop->data.AST_BINOP.left->type;
+
+  mu_assert(int_type.tag == T_INT, "type of AST node for 1 is Int");
+
+  mu_assert(var_type.tag == T_NUM, "type of reference to x is Num");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_NUM &&
+                fn_h->type.as.T_FN.members[1].tag == T_NUM,
+            "function has type (Int -> Int)");
+
+  free_ast(test);
+  return 0;
+}
+
 int all_tests() {
   int test_result = 0;
   mu_run_test(test_nothing);
@@ -302,6 +337,7 @@ int all_tests() {
   mu_run_test(test_fn_with_unop);
   mu_run_test(test_fn_with_match_expr);
   mu_run_test(test_generic_fn);
+  // mu_run_test(test_partially_explicitly_typed_fn);
 
   // mu_run_test(test_int_casting);
   return test_result;
