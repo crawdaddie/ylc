@@ -125,11 +125,12 @@ static bool is_boolean_binop(token_type op) {
 
 static bool is_boolean_unop(token_type op) { return op == TOKEN_BANG; }
 bool is_numeric_type(ttype t) { return t.tag >= T_INT8 && t.tag <= T_NUM; }
-ttype_tag max_type(ttype_tag ltag, ttype_tag rtag) {
-  if (ltag >= rtag) {
-    return ltag;
+
+ttype *max_type(ttype *l, ttype *r) {
+  if (l->tag >= r->tag) {
+    return l;
   }
-  return rtag;
+  return r;
 }
 
 /*
@@ -141,15 +142,17 @@ ttype_tag max_type(ttype_tag ltag, ttype_tag rtag) {
  * in the expression 'l + 'r, the value with type 'l will be treated as
  * a float
  **/
-static void coerce_numeric_types(ttype *left, ttype *right) {
-  if (!(is_numeric_type(*left) && is_numeric_type(*right))) {
-    return;
-  }
+// static void coerce_numeric_types(ttype *left, ttype *right) {
+//   printf("%d <= %d %d <= %d\n", T_INT8, left->tag, right->tag, T_NUM);
+//
+//   if ((is_numeric_type(*left) && is_numeric_type(*right))) {
+//     printf("coerce type\n");
+//     // ttype_tag max_tag = max_type(left->tag, right->tag);
+//     left->tag = max_tag;
+//     right->tag = max_tag;
+//   }
+// }
 
-  ttype_tag max_tag = max_type(left->tag, right->tag);
-  left->tag = max_tag;
-  right->tag = max_tag;
-}
 static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   if (ast == NULL) {
     return;
@@ -161,11 +164,15 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     token_type op = ast->data.AST_BINOP.op;
     AST *left = ast->data.AST_BINOP.left;
     AST *right = ast->data.AST_BINOP.right;
+
     generate_equations(left, ctx);
     generate_equations(right, ctx);
 
-    coerce_numeric_types(&left->type, &right->type);
-    push_type_equation(&ctx->type_equations, &left->type, &right->type);
+    if (left->type.tag == T_VAR) {
+      push_type_equation(&ctx->type_equations, &left->type, &right->type);
+    } else if (right->type.tag == T_VAR) {
+      push_type_equation(&ctx->type_equations, &right->type, &left->type);
+    }
 
     if (is_boolean_binop(op)) {
       push_type_equation(&ctx->type_equations, &ast->type, &tbl);
@@ -179,8 +186,20 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     // for now, operands in binops need to be the same type
     // TODO: allow a type-casting hierarchy eg (+ 1 1.0) is allowed and treated
     // as a float
+    if (is_numeric_type(left->type) && is_numeric_type(right->type)) {
+      // printf("numeric types\n");
+      // print_ttype(left->type);
+      // print_ttype(right->type);
+      // print_ttype(ast->type);
+      // print_type_equation(
+      //     (TypeEquation){&ast->type, max_type(&left->type, &right->type)});
+      push_type_equation(&ctx->type_equations, &ast->type,
+                         max_type(&left->type, &right->type));
 
-    push_type_equation(&ctx->type_equations, &ast->type, &left->type);
+    } else {
+      push_type_equation(&ctx->type_equations, &ast->type, &left->type);
+    }
+
     break;
   }
   case AST_FN_DECLARATION: {
@@ -548,6 +567,18 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   if (left == right || types_equal(left, right)) {
     return;
   }
+  // coerce numeric types??
+  ttype lookup;
+  if (left->tag == T_VAR &&
+      ttype_env_lookup(env, left->as.T_VAR.name, &lookup) == 0) {
+
+    if (is_numeric_type(lookup) && is_numeric_type(*right) &&
+        right->tag <= lookup.tag) {
+      // ignore implicit rules that cast Float down to Int /
+      // Int8
+      return;
+    }
+  }
 
   if (left->tag != T_VAR && right->tag != T_VAR && left->tag != right->tag) {
     fprintf(stderr,
@@ -559,7 +590,6 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (left->tag == T_VAR && right->tag != T_VAR && right->tag != T_FN) {
-
     ttype lookup;
     if (ttype_env_lookup(env, left->as.T_VAR.name, &lookup) == 0) {
       unify(&lookup, right, env);
@@ -605,7 +635,6 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (left->tag == T_VAR) {
-
     ttype lookup;
     if (ttype_env_lookup(env, left->as.T_VAR.name, &lookup) == 0) {
       unify(&lookup, right, env);
@@ -614,7 +643,6 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (right->tag == T_VAR) {
-
     ttype lookup;
     if (ttype_env_lookup(env, right->as.T_VAR.name, &lookup) == 0) {
       unify(&lookup, left, env);
@@ -628,7 +656,7 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   return;
 
   if (left->tag == T_COMPOUND && right->tag == T_COMPOUND) {
-    // return unify_tuples(left, right, env);
+    return unify_tuples(left, right, env);
   }
 }
 
@@ -753,6 +781,9 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   if (ast->type.tag == T_VAR &&
       ttype_env_lookup(env, ast->type.as.T_VAR.name, &lookup) == 0) {
     ast->type = lookup;
+    // printf("update expr\n");
+    // print_ast(*ast, 0);
+    // print_ttype(ast->type);
   }
 
   return;

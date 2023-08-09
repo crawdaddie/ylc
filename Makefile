@@ -85,3 +85,12 @@ tests:
 	make build/codegen_test
 	make build/symbol_table_test
 	make build/typecheck_test
+
+.PHONY: e2e
+e2e:
+	make clean
+	make
+	build/lang examples/if.ylc
+	build/lang examples/fib.ylc
+	build/lang examples/match.ylc
+	build/lang examples/match_rec.ylc
