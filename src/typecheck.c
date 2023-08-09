@@ -61,11 +61,11 @@ void print_ttype(ttype type) {
     break;
   }
 
-  case T_COMPOUND: {
-    int length = type.as.T_COMPOUND.length;
+  case T_TUPLE: {
+    int length = type.as.T_TUPLE.length;
     printf("(");
     for (int i = 0; i < length; i++) {
-      print_ttype(type.as.T_COMPOUND.members[i]);
+      print_ttype(type.as.T_TUPLE.members[i]);
       if (i < length - 1)
         printf(" * ");
     }
@@ -394,10 +394,12 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     break;
   }
+  case AST_TYPE_DECLARATION: {
+    break;
+  }
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_STRUCT:
-  case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
@@ -537,13 +539,13 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
 
 void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
 
-  if (left->as.T_COMPOUND.length != right->as.T_FN.length) {
+  if (left->as.T_TUPLE.length != right->as.T_FN.length) {
     return;
   }
 
-  for (int i = 0; i < left->as.T_COMPOUND.length; i++) {
-    ttype *l_fn_mem = left->as.T_COMPOUND.members + i;
-    ttype *r_fn_mem = right->as.T_COMPOUND.members + i;
+  for (int i = 0; i < left->as.T_TUPLE.length; i++) {
+    ttype *l_fn_mem = left->as.T_TUPLE.members + i;
+    ttype *r_fn_mem = right->as.T_TUPLE.members + i;
 
     ttype mem_lookup;
     if (l_fn_mem->tag == T_VAR &&
@@ -552,7 +554,7 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
       add_type_to_env(env, l_fn_mem, r_fn_mem);
     }
 
-    left->as.T_COMPOUND.members[i] = right->as.T_FN.members[i];
+    left->as.T_TUPLE.members[i] = right->as.T_FN.members[i];
     unify(l_fn_mem, r_fn_mem, env);
   }
 
@@ -615,22 +617,22 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
     }
   }
 
-  if (left->tag == T_VAR && right->tag == T_COMPOUND) {
+  if (left->tag == T_VAR && right->tag == T_TUPLE) {
     ttype existing_tuple;
 
     if (ttype_env_lookup(env, left->as.T_VAR.name, &existing_tuple) == 0) {
       unify(right, &existing_tuple, env);
     }
 
-    for (int i = 0; i < right->as.T_COMPOUND.length; i++) {
-      ttype *tuple_member = right->as.T_COMPOUND.members + i;
+    for (int i = 0; i < right->as.T_TUPLE.length; i++) {
+      ttype *tuple_member = right->as.T_TUPLE.members + i;
       ttype *tuple_member_lookup = tuple_member;
 
       while (tuple_member_lookup->tag == T_VAR &&
              ttype_env_lookup(env, tuple_member_lookup->as.T_VAR.name,
                               tuple_member_lookup) == 0) {
       }
-      right->as.T_COMPOUND.members[i] = *tuple_member_lookup;
+      right->as.T_TUPLE.members[i] = *tuple_member_lookup;
     }
   }
 
@@ -655,7 +657,7 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
   return;
 
-  if (left->tag == T_COMPOUND && right->tag == T_COMPOUND) {
+  if (left->tag == T_TUPLE && right->tag == T_TUPLE) {
     return unify_tuples(left, right, env);
   }
 }

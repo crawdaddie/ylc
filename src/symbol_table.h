@@ -1,5 +1,6 @@
 #ifndef _LANG_SYM_TABLE_H
 #define _LANG_SYM_TABLE_H
+#include "types.h"
 #include <llvm-c/Core.h>
 #include <stdbool.h>
 
@@ -38,37 +39,44 @@ typedef struct SymbolValue {
     struct TYPE_VARIABLE {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
+      ttype type;
     } TYPE_VARIABLE;
 
     struct TYPE_GLOBAL_VARIABLE {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
+      ttype type;
     } TYPE_GLOBAL_VARIABLE;
 
     struct TYPE_FUNCTION {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
       LLVMTypeRef ret_type;
+      ttype type;
     } TYPE_FUNCTION;
 
     struct TYPE_RECURSIVE_REF {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
+      ttype type;
     } TYPE_RECURSIVE_REF;
 
     struct TYPE_FN_PARAM {
       int arg_idx;
-      LLVMTypeRef type;
+      LLVMTypeRef llvm_type;
+      ttype type;
     } TYPE_FN_PARAM;
 
     struct TYPE_EXTERN_FN {
       LLVMValueRef llvm_value;
       LLVMTypeRef llvm_type;
+      ttype type;
     } TYPE_EXTERN_FN;
 
     struct TYPE_TYPE_DECLARATION {
       LLVMTypeRef llvm_type;
       type_symbol_table *type_metadata;
+      ttype type;
     } TYPE_TYPE_DECLARATION;
   } data;
 } SymbolValue;

@@ -53,6 +53,10 @@ build/symbol_table_test: $(TEST_OBJ) $(BUILD_DIR)/symbol_table_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
+build/type_expressions_test: $(TEST_OBJ) $(BUILD_DIR)/type_expressions_test.o
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	./$@
+
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
 
@@ -85,6 +89,7 @@ tests:
 	make build/codegen_test
 	make build/symbol_table_test
 	make build/typecheck_test
+	make build/type_expressions_test
 
 .PHONY: e2e
 e2e:
