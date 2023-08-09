@@ -7,8 +7,8 @@ uses LLVM C API as a backend to generate LLVM IR, and to implement a JIT for the
 
 # examples
 ```javascript
-let m = fn (int val) int {
-  match val -> int
+let m = fn (val) {
+  match val
   | 1 -> 1 
   | 2 -> 2
   | _ -> m(val - 2)
@@ -18,12 +18,12 @@ m(5)
 
 let printf = extern fn (str input) int
 
-let println = fn (str input) void {
+let println = fn (input) void {
     printf(input)
     printf("\n")
 }
 
-let fib = fn (int n) int {
+let fib = fn (n) {
     match n
     | 0 -> 0
     | 1 -> 1
@@ -66,10 +66,10 @@ emit an object file with llc and finally link with clang
 - custom type declarations / type aliases
 - structs
 - import statements (no namespaces yet, symbols are dumped into the calling module)
+- simple type-checking / inference before codegen
 
 # TODOs:
 - [ ] assign result of function calls / instructions to global vars 
-- [ ] type-checking / inference before codegen
 - [ ] tuple dynamic index addressing
 - [ ] arrays
 - [ ] more sophisticated pattern-matching

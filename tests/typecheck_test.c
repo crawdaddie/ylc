@@ -263,6 +263,32 @@ int test_int_casting() {
   return 0;
 }
 
+int test_generic_fn() {
+  AST *test = typecheck_input("let m = fn (x, y, z, a, b, c) {\n"
+                              "  (x, y, z, a, b, c, 2)\n"
+                              "}");
+  ttype fn_type = AST_TOP_LEVEL(test, 0)->type;
+
+  mu_assert(fn_type.tag == T_FN, "generic fn has fn type");
+  mu_assert(fn_type.as.T_FN.length == 7, "fn type has 7 members");
+  ttype ret_tuple_type = fn_type.as.T_FN.members[6];
+  mu_assert(ret_tuple_type.tag == T_COMPOUND, "return has tuple type");
+  int all_equal = 1;
+  for (int i = 0; i < 6; i++) {
+    if (strcmp(ret_tuple_type.as.T_COMPOUND.members[0].as.T_VAR.name,
+               fn_type.as.T_FN.members[0].as.T_VAR.name) != 0) {
+      all_equal = 0;
+    }
+  }
+
+  mu_assert(
+      all_equal == 1,
+      "return type of generic function is derived from types of arguments");
+  mu_assert(ret_tuple_type.as.T_COMPOUND.members[6].tag == T_INT,
+            "Final member of tuple is int");
+  return 0;
+}
+
 int all_tests() {
   int test_result = 0;
   mu_run_test(test_nothing);
@@ -275,6 +301,7 @@ int all_tests() {
   mu_run_test(test_fn_with_type_error);
   mu_run_test(test_fn_with_unop);
   mu_run_test(test_fn_with_match_expr);
+  mu_run_test(test_generic_fn);
 
   // mu_run_test(test_int_casting);
   return test_result;

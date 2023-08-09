@@ -1,5 +1,6 @@
 #ifndef _LANG_TYPES_H
 #define _LANG_TYPES_H
+#include <stdbool.h>
 /*
  * type expression
  * t ::= | 'x
@@ -38,11 +39,18 @@ typedef struct ttype {
       struct ttype *members;
     } T_FN;
 
+    struct T_COMPOUND {
+      int length; // length = num params + 1
+      // ie: param_t1 -> param_t2 -> param_t3 -> return_type
+      struct ttype *members;
+    } T_COMPOUND;
+
   } as;
 } ttype;
 
 ttype _tvar();
 ttype tfn(ttype *param_types, int length);
+ttype ttuple(ttype *member_types, int length);
 char *_tname();
 ttype tvar(char *name);
 ttype tvoid();
@@ -50,5 +58,8 @@ ttype tint();
 ttype tnum();
 ttype tbool();
 ttype tstr();
+
+bool is_generic_type(ttype t);
+
 extern int t_counter;
 #endif

@@ -80,7 +80,9 @@ void codegen_prototype(AST *ast, Context *ctx, LLVMValueRef *func,
       codegen_function_prototype_args(ast, &is_var_args, ctx);
 
   if (*func_return_type == NULL) {
+
     LLVMTypeRef ret_type = type_lookup(data.type, ctx);
+
     *func_return_type = ret_type;
   }
 
@@ -154,9 +156,25 @@ LLVMValueRef codegen_named_function(AST *ast, Context *ctx, char *name) {
 
   if (ast->type.tag == T_FN &&
       prototype_ast->data.AST_FN_PROTOTYPE.type == NULL) {
+
+    if (is_generic_type(ast->type)) {
+      fprintf(stderr, "Error: could not derive type of generic function %s\n",
+              name);
+      print_ttype(ast->type);
+      return NULL;
+
+      // TODO: if function is generic (ie 't1 -> 't2 ... -> 'tR) then
+      // need to try to return some generic LLVM value, maybe a pointer?
+      // when calling generic func then we know it's generic & can derive the
+      // return type from the args?
+      // if we return a pointer from a generic function then we can dereference?
+      // print_ttype(ast->type);
+      // printf("\nis generic fn ?? %s\n",
+      //        is_generic_type(ast->type) ? "yes" : "no");
+    }
+
     ret_type = inferred_type_lookup(
         ast->type.as.T_FN.members[ast->type.as.T_FN.length - 1], ctx);
-    print_ttype(ast->type);
   } else {
     ret_type = NULL;
   }

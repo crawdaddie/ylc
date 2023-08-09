@@ -6,7 +6,6 @@
 #include "types.h"
 #include <stdio.h>
 #include <stdlib.h>
-
 typedef AST *ast;
 
 INIT_SYM_TABLE(ast);
@@ -55,6 +54,18 @@ void print_ttype(ttype type) {
       print_ttype(type.as.T_FN.members[i]);
       if (i < length - 1)
         printf(" -> ");
+    }
+    printf(")");
+    break;
+  }
+
+  case T_COMPOUND: {
+    int length = type.as.T_COMPOUND.length;
+    printf("(");
+    for (int i = 0; i < length; i++) {
+      print_ttype(type.as.T_COMPOUND.members[i]);
+      if (i < length - 1)
+        printf(" * ");
     }
     printf(")");
     break;
@@ -205,6 +216,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     }
     break;
   }
+
   case AST_CALL: {
 
     char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
@@ -336,9 +348,23 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ast->type = t;
     break;
   }
+  case AST_TUPLE: {
+    int len = ast->data.AST_TUPLE.length;
+    ttype *member_types = malloc(sizeof(ttype) * len);
+    ttype *tuple_type = malloc(sizeof(ttype));
+
+    for (int i = 0; i < len; i++) {
+      AST *member_ast = ast->data.AST_TUPLE.members[i];
+      generate_equations(member_ast, ctx);
+      member_types[i] = member_ast->type;
+    }
+    *tuple_type = ttuple(member_types, len);
+    push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
+
+    break;
+  }
   case AST_EXPRESSION:
   case AST_STATEMENT:
-  case AST_TUPLE:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
@@ -484,6 +510,25 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
     }
   }
 
+  if (left->tag == T_VAR && right->tag == T_COMPOUND) {
+    ttype existing_tuple;
+
+    if (ttype_env_lookup(env, left->as.T_VAR.name, &existing_tuple) == 0) {
+      unify(right, &existing_tuple, env);
+    }
+
+    for (int i = 0; i < right->as.T_COMPOUND.length; i++) {
+      ttype *tuple_member = right->as.T_COMPOUND.members + i;
+      ttype *tuple_member_lookup = tuple_member;
+
+      while (tuple_member_lookup->tag == T_VAR &&
+             ttype_env_lookup(env, tuple_member_lookup->as.T_VAR.name,
+                              tuple_member_lookup) == 0) {
+      }
+      right->as.T_COMPOUND.members[i] = *tuple_member_lookup;
+    }
+  }
+
   if (left->tag == T_VAR) {
 
     ttype lookup;
@@ -520,6 +565,30 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
 
     return;
   }
+  /*
+  if (left->tag == T_COMPOUND && right->tag == T_COMPOUND) {
+
+    if (left->as.T_COMPOUND.length != right->as.T_COMPOUND.length) {
+      return;
+    }
+
+    for (int i = 0; i < left->as.T_COMPOUND.length; i++) {
+      ttype *l_fn_mem = left->as.T_COMPOUND.members + i;
+      ttype *r_fn_mem = right->as.T_COMPOUND.members + i;
+
+      ttype mem_lookup;
+
+      if (l_fn_mem->tag == T_VAR &&
+          ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+        add_type_to_env(env, l_fn_mem, r_fn_mem);
+      }
+
+      left->as.T_COMPOUND.members[i] = right->as.T_COMPOUND.members[i];
+      unify(l_fn_mem, r_fn_mem, env);
+    }
+    return;
+  }
+*/
 }
 
 void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
@@ -604,6 +673,7 @@ void update_expression_types(AST *ast, TypeEnv *env) {
     for (int i = 0; i < ast->data.AST_TUPLE.length; i++) {
       update_expression_types(ast->data.AST_TUPLE.members[i], env);
     }
+
     break;
   }
   case AST_ASSIGNMENT: {
@@ -706,5 +776,22 @@ void print_last_entered_type(AST *ast) {
   int last = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length - 1;
   ttype last_type_expr =
       ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.statements[last]->type;
+
+  // if (last_type_expr.tag == T_FN) {
+  //   int len = last_type_expr.as.T_FN.length;
+  //   int c = 0;
+  //   printf("(");
+  //   for (int i = 0; i < len; i++) {
+  //     ttype component = last_type_expr.as.T_FN.members[i];
+  //     if (component.tag == T_VAR) {
+  //       printf("'%c", 'a' + c++);
+  //     } else {
+  //       print_ttype(component);
+  //     }
+  //     if (i < len - 1)
+  //       printf(" -> ");
+  //   }
+  // }
+
   print_ttype(last_type_expr);
 }

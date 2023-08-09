@@ -19,6 +19,18 @@ LLVMTypeRef inferred_type_lookup(ttype type, Context *ctx) {
     return LLVMInt1Type();
   case T_VOID:
     return LLVMVoidTypeInContext(ctx->context);
+    // case T_COMPOUND: {
+    //   int len = type.as.T_COMPOUND.length;
+    //
+    //   LLVMTypeRef *types = malloc(sizeof(LLVMTypeRef) * len);
+    //   for (int i = 0; i < len; i++) {
+    //     types[i] =
+    //         type_lookup(data.members[i]->data.AST_IDENTIFIER.identifier,
+    //         ctx);
+    //   }
+    //
+    //   return LLVMStructType(types, data.length, true);
+    // }
   }
   return NULL;
 }
@@ -119,6 +131,7 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
       types[i] =
           type_lookup(data.members[i]->data.AST_IDENTIFIER.identifier, ctx);
     }
+
     return LLVMStructType(types, data.length, true);
   }
   case AST_UNOP: {

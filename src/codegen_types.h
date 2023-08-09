@@ -6,6 +6,7 @@ void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx);
 
 LLVMTypeRef type_lookup(char *type, Context *ctx);
 LLVMTypeRef inferred_type_lookup(ttype type, Context *ctx);
+bool is_generic_type();
 
 LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx);
 type_symbol_table *compute_type_metadata(AST *type_expr);
