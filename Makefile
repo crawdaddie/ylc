@@ -100,3 +100,7 @@ e2e:
 	build/lang examples/match.ylc
 	build/lang examples/match_rec.ylc
 	build/lang examples/rec.ylc
+
+.PHONY: clang-tidy
+clang-tidy:
+	clang-tidy --header-filter=src/*.h $(SRC)
