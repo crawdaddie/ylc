@@ -8,7 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(ast);
 
@@ -81,10 +81,10 @@ static void print_type_equation(TypeEquation type_equation) {
   printf("\n");
 }
 
-static ttype tbl = {T_BOOL};
-static ttype tstring = {T_STR};
-static ttype ti = {T_INT};
-static ttype tn = {T_NUM};
+static ttype Bool = {T_BOOL};
+static ttype Str = {T_STR};
+static ttype Int = {T_INT};
+static ttype Num = {T_NUM};
 
 typedef struct {
   TypeEquation *equations;
@@ -132,6 +132,51 @@ ttype *max_type(ttype *l, ttype *r) {
   }
   return r;
 }
+static ttype lookup_explicit_type(char *type_identifier,
+                                  TypeCheckContext *ctx) {
+
+  if (strcmp(type_identifier, "double") == 0) {
+    return Num;
+  }
+  if (strcmp(type_identifier, "int") == 0) {
+    return Int;
+  }
+  AST *sym;
+  if (ast_table_lookup(ctx->symbol_table, type_identifier, &sym) == 0) {
+    return sym->type;
+  }
+}
+
+static ttype *compute_type_expression(AST *ast, TypeCheckContext *ctx) {
+  switch (ast->tag) {
+
+  case AST_TUPLE: {
+    int len = ast->data.AST_TUPLE.length;
+    ttype *member_types = malloc(sizeof(ttype) * len);
+    ttype *tuple_type = malloc(sizeof(ttype));
+
+    for (int i = 0; i < len; i++) {
+      AST *member_ast = ast->data.AST_TUPLE.members[i];
+      ttype t =
+          lookup_explicit_type(member_ast->data.AST_IDENTIFIER.identifier, ctx);
+
+      member_types[i] = t;
+    }
+    *tuple_type = ttuple(member_types, len);
+    return tuple_type;
+  }
+  }
+}
+
+void assign_explicit_type(AST *ast, char *type_identifier,
+                          TypeCheckContext *ctx) {
+  if (type_identifier == NULL) {
+    return;
+  }
+
+  ttype explicit_type = lookup_explicit_type(type_identifier, ctx);
+  ast->type = explicit_type;
+}
 
 /*
  * if two types 'l & 'r are numeric, but 'l is an int & 'r is a float
@@ -142,17 +187,6 @@ ttype *max_type(ttype *l, ttype *r) {
  * in the expression 'l + 'r, the value with type 'l will be treated as
  * a float
  **/
-// static void coerce_numeric_types(ttype *left, ttype *right) {
-//   printf("%d <= %d %d <= %d\n", T_INT8, left->tag, right->tag, T_NUM);
-//
-//   if ((is_numeric_type(*left) && is_numeric_type(*right))) {
-//     printf("coerce type\n");
-//     // ttype_tag max_tag = max_type(left->tag, right->tag);
-//     left->tag = max_tag;
-//     right->tag = max_tag;
-//   }
-// }
-
 static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   if (ast == NULL) {
     return;
@@ -168,6 +202,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     generate_equations(left, ctx);
     generate_equations(right, ctx);
 
+    // avoid equations like Int :: Num or Num :: Int
     if (left->type.tag == T_VAR) {
       push_type_equation(&ctx->type_equations, &left->type, &right->type);
     } else if (right->type.tag == T_VAR) {
@@ -175,7 +210,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     }
 
     if (is_boolean_binop(op)) {
-      push_type_equation(&ctx->type_equations, &ast->type, &tbl);
+      push_type_equation(&ctx->type_equations, &ast->type, &Bool);
       break;
     }
 
@@ -183,16 +218,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       push_type_equation(&ctx->type_equations, &ast->type, &right->type);
       break;
     }
-    // for now, operands in binops need to be the same type
-    // TODO: allow a type-casting hierarchy eg (+ 1 1.0) is allowed and treated
-    // as a float
+
     if (is_numeric_type(left->type) && is_numeric_type(right->type)) {
-      // printf("numeric types\n");
-      // print_ttype(left->type);
-      // print_ttype(right->type);
-      // print_ttype(ast->type);
-      // print_type_equation(
-      //     (TypeEquation){&ast->type, max_type(&left->type, &right->type)});
       push_type_equation(&ctx->type_equations, &ast->type,
                          max_type(&left->type, &right->type));
 
@@ -273,7 +300,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_IF_ELSE: {
     generate_equations(ast->data.AST_IF_ELSE.condition, ctx);
     push_type_equation(&ctx->type_equations,
-                       &ast->data.AST_IF_ELSE.condition->type, &tbl);
+                       &ast->data.AST_IF_ELSE.condition->type, &Bool);
 
     generate_equations(ast->data.AST_IF_ELSE.then_body, ctx);
     push_type_equation(&ctx->type_equations, &ast->type,
@@ -310,8 +337,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     AST *operand = ast->data.AST_UNOP.operand;
 
     if (is_boolean_unop(op)) {
-      push_type_equation(&ctx->type_equations, &operand->type, &tbl);
-      push_type_equation(&ctx->type_equations, &ast->type, &tbl);
+      push_type_equation(&ctx->type_equations, &operand->type, &Bool);
+      push_type_equation(&ctx->type_equations, &ast->type, &Bool);
       break;
     }
     break;
@@ -335,17 +362,16 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     break;
   }
+
   case AST_SYMBOL_DECLARATION: {
     char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
+
     if (ast->data.AST_SYMBOL_DECLARATION.type != NULL) {
-      char *type = ast->data.AST_SYMBOL_DECLARATION.type;
-      // TODO: use explicitly-typed declarations here
-      if (strcmp(type, "double") == 0) {
-        ast->type.tag = T_NUM;
-      } else if (strcmp(type, "int") == 0) {
-        ast->type.tag = T_INT;
-      }
+      ttype t =
+          lookup_explicit_type(ast->data.AST_SYMBOL_DECLARATION.type, ctx);
+      push_type_equation(&ctx->type_equations, &ast->type, &t);
     }
+
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
@@ -359,10 +385,35 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
                          &ast->data.AST_ASSIGNMENT.expression->type);
       break;
     }
+    // if (ast->data.AST_ASSIGNMENT.type != NULL) {
+    //   ttype t = lookup_explicit_type(ast->data.AST_ASSIGNMENT.type, ctx);
+    //   push_type_equation(&ctx->type_equations, &ast->type, &t);
+    // }
+    assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
     ast_table_insert(ctx->symbol_table, name, ast);
+
     push_type_equation(&ctx->type_equations, &ast->type,
                        &ast->data.AST_ASSIGNMENT.expression->type);
+    break;
+  }
+  case AST_TYPE_DECLARATION: {
+    char *name = ast->data.AST_TYPE_DECLARATION.name;
+
+    AST *sym_ast;
+    if (ast_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
+      // sym already exists - this is a reassignment
+      // push_type_equation(&ctx->type_equations, &sym_ast->type,
+      //                    &ast->data.AST_ASSIGNMENT.expression->type);
+      break;
+    }
+    ttype *t =
+        compute_type_expression(ast->data.AST_TYPE_DECLARATION.type_expr, ctx);
+
+    sprintf(ast->type.as.T_VAR.name, "%s", name);
+
+    push_type_equation(&ctx->type_equations, &ast->type, t);
+    ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
   case AST_MAIN: {
@@ -392,9 +443,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     *tuple_type = ttuple(member_types, len);
     push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
 
-    break;
-  }
-  case AST_TYPE_DECLARATION: {
     break;
   }
   case AST_EXPRESSION:
@@ -540,6 +588,12 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
 void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left->as.T_TUPLE.length != right->as.T_FN.length) {
+
+    fprintf(stderr,
+            "Error [typecheck] type contradiction cannot set tuple with length "
+            "%d to a tuple type with length %d\n",
+            left->as.T_TUPLE.length, right->as.T_TUPLE.length);
+    _typecheck_error_flag = 1;
     return;
   }
 
@@ -653,9 +707,8 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (left->tag == T_FN && right->tag == T_FN) {
-    unify_functions(left, right, env);
+    return unify_functions(left, right, env);
   }
-  return;
 
   if (left->tag == T_TUPLE && right->tag == T_TUPLE) {
     return unify_tuples(left, right, env);
@@ -664,6 +717,9 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
 
 void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
   if (len == 0) {
+    return;
+  }
+  if (_typecheck_error_flag == 1) {
     return;
   }
   TypeEquation eq = *equations;

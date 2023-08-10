@@ -19,8 +19,8 @@ ttype tfn(ttype *param_types, int length) {
 }
 
 ttype ttuple(ttype *member_types, int length) {
-  return (ttype){T_COMPOUND,
-                 {.T_COMPOUND = {
+  return (ttype){T_TUPLE,
+                 {.T_TUPLE = {
                       .length = length,
                       .members = member_types,
                   }}};
@@ -58,9 +58,9 @@ bool is_generic_type(ttype t) {
     return false;
   }
 
-  if (t.tag == T_COMPOUND) {
-    for (int i = 0; i < t.as.T_COMPOUND.length; i++) {
-      if (is_generic_type(t.as.T_COMPOUND.members[i])) {
+  if (t.tag == T_TUPLE) {
+    for (int i = 0; i < t.as.T_TUPLE.length; i++) {
+      if (is_generic_type(t.as.T_TUPLE.members[i])) {
         return true;
       }
     }

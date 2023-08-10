@@ -128,7 +128,7 @@ AST *ast_tuple(int length, ...) {
 
   va_end(args);
 
-  tuple->type = (ttype){T_COMPOUND};
+  tuple->type = (ttype){T_TUPLE};
   return tuple;
 }
 
@@ -334,7 +334,7 @@ AST *parse_struct(bool can_assign) {
   proto->tag = AST_STRUCT;
   proto->data.AST_STRUCT.length = proto->data.AST_FN_PROTOTYPE.length;
   proto->data.AST_STRUCT.members = proto->data.AST_FN_PROTOTYPE.parameters;
-  proto->type = (ttype){T_COMPOUND};
+  proto->type = (ttype){T_TUPLE};
   return proto;
 }
 AST *parse_ptr(bool can_assign) {}

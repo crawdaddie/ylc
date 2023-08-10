@@ -15,17 +15,23 @@
  * */
 
 typedef enum {
-  T_VAR,   // 'x
-  T_INT8,  // int8 - alias char
-  T_INT,   // int
-  T_NUM,   // double
-  T_STR,   // str
-  T_BOOL,  // bool
-  T_TUPLE, // struct or tuple
-  T_PTR,   // &'x
-  T_VOID,  // void
-  T_FN,    // t1 -> t2 -> ... -> return_type
+  T_VAR,    // 'x
+  T_INT8,   // int8 - alias char
+  T_INT,    // int
+  T_NUM,    // double
+  T_STR,    // str
+  T_BOOL,   // bool
+  T_TUPLE,  // struct or tuple
+  T_STRUCT, // struct or tuple
+  T_PTR,    // &'x
+  T_VOID,   // void
+  T_FN,     // t1 -> t2 -> ... -> return_type
 } ttype_tag;
+
+typedef struct {
+  char *name;
+  int index;
+} struct_member_metadata;
 
 typedef struct ttype {
   ttype_tag tag;
@@ -40,10 +46,15 @@ typedef struct ttype {
     } T_FN;
 
     struct T_TUPLE {
-      int length; // length = num params + 1
-      // ie: param_t1 -> param_t2 -> param_t3 -> return_type
+      int length;
       struct ttype *members;
     } T_TUPLE;
+
+    struct T_STRUCT {
+      int length;
+      struct ttype *members;
+      struct_member_metadata *struct_metadata;
+    } T_STRUCT;
 
   } as;
 } ttype;
