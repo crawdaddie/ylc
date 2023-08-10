@@ -8,7 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 
-#define _TYPECHECK_DBG
+// #define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(ast);
 
@@ -479,8 +479,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       member_types[i] = member_ast->type;
     }
     *tuple_type = ttuple(member_types, len);
-    // push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
-    // print_type_equation((TypeEquation){&ast->type, tuple_type});
+    push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
 
     break;
   }

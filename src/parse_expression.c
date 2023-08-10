@@ -158,6 +158,11 @@ static AST *parse_tuple() {
       advance();
     }
   }
+  if (tuple->data.AST_TUPLE.members[0]->tag == AST_ASSIGNMENT) {
+    tuple->tag = AST_STRUCT;
+    tuple->data.AST_STRUCT.members = tuple->data.AST_TUPLE.members;
+    tuple->data.AST_STRUCT.length = tuple->data.AST_TUPLE.length;
+  }
   return tuple;
 }
 
