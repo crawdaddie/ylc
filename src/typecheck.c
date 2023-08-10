@@ -8,7 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 
-#define _TYPECHECK_DBG
+// #define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(ast);
 
@@ -567,6 +567,7 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
   for (int i = 0; i < left->as.T_FN.length; i++) {
     ttype *l_fn_mem = left->as.T_FN.members + i;
     ttype *r_fn_mem = right->as.T_FN.members + i;
+
     if (types_equal(l_fn_mem, r_fn_mem)) {
       continue;
     }
@@ -601,14 +602,19 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
     ttype *l_fn_mem = left->as.T_TUPLE.members + i;
     ttype *r_fn_mem = right->as.T_TUPLE.members + i;
 
+    if (types_equal(l_fn_mem, r_fn_mem)) {
+      continue;
+    }
+
     ttype mem_lookup;
+
     if (l_fn_mem->tag == T_VAR &&
         ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
-
       add_type_to_env(env, l_fn_mem, r_fn_mem);
     }
 
     left->as.T_TUPLE.members[i] = right->as.T_FN.members[i];
+
     unify(l_fn_mem, r_fn_mem, env);
   }
 
@@ -839,9 +845,6 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   if (ast->type.tag == T_VAR &&
       ttype_env_lookup(env, ast->type.as.T_VAR.name, &lookup) == 0) {
     ast->type = lookup;
-    // printf("update expr\n");
-    // print_ast(*ast, 0);
-    // print_ttype(ast->type);
   }
 
   return;

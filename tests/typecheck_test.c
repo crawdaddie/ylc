@@ -274,7 +274,9 @@ int test_generic_fn() {
   mu_assert(fn_type.as.T_FN.length == 7, "fn type has 7 members");
   ttype ret_tuple_type = fn_type.as.T_FN.members[6];
   mu_assert(ret_tuple_type.tag == T_TUPLE, "return has tuple type");
+
   int all_equal = 1;
+
   for (int i = 0; i < 6; i++) {
     if (strcmp(ret_tuple_type.as.T_TUPLE.members[0].as.T_VAR.name,
                fn_type.as.T_FN.members[0].as.T_VAR.name) != 0) {
