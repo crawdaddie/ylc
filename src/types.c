@@ -26,6 +26,15 @@ ttype ttuple(ttype *member_types, int length) {
                   }}};
 }
 
+ttype tstruct(ttype *member_types, struct_member_metadata *md, int length) {
+  return (ttype){T_STRUCT,
+                 {.T_STRUCT = {
+                      .length = length,
+                      .members = member_types,
+                      .struct_metadata = md,
+                  }}};
+}
+
 char *_tname() {
   t_counter++;
   char *result =

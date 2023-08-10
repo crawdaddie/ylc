@@ -72,6 +72,19 @@ void print_ttype(ttype type) {
     printf(")");
     break;
   }
+
+  case T_STRUCT: {
+    int length = type.as.T_STRUCT.length;
+    printf("(");
+    for (int i = 0; i < length; i++) {
+      printf("%s=", type.as.T_STRUCT.struct_metadata[i].name);
+      print_ttype(type.as.T_STRUCT.members[i]);
+      if (i < length - 1)
+        printf(" * ");
+    }
+    printf(")");
+    break;
+  }
   }
 }
 static void print_type_equation(TypeEquation type_equation) {
@@ -163,6 +176,28 @@ static ttype *compute_type_expression(AST *ast, TypeCheckContext *ctx) {
       member_types[i] = t;
     }
     *tuple_type = ttuple(member_types, len);
+    return tuple_type;
+  }
+  case AST_STRUCT: {
+
+    int len = ast->data.AST_STRUCT.length;
+    ttype *member_types = malloc(sizeof(ttype) * len);
+    ttype *tuple_type = malloc(sizeof(ttype));
+    struct_member_metadata *metadata =
+        malloc(sizeof(struct_member_metadata) * len);
+
+    for (int i = 0; i < len; i++) {
+      AST *member_ast = ast->data.AST_STRUCT.members[i];
+
+      ttype t = lookup_explicit_type(
+          member_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
+
+      member_types[i] = t;
+      metadata[i] = (struct_member_metadata){
+          .name = strdup(member_ast->data.AST_SYMBOL_DECLARATION.identifier),
+          .index = i};
+    }
+    *tuple_type = tstruct(member_types, metadata, len);
     return tuple_type;
   }
   }
@@ -546,13 +581,26 @@ void unify_variable(ttype *left, ttype *right, TypeEnv *env) {
   }
   return add_type_to_env(env, left, right);
 }
+
 bool types_equal(ttype *l, ttype *r) {
   if (l == r) {
     return true;
   }
 
-  if (l->tag == T_VAR && l->tag == T_VAR &&
-      strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+  if (l->tag != r->tag) {
+    return false;
+  }
+
+  if (l->tag == T_VAR && strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+    return true;
+  }
+
+  if (l->tag == T_TUPLE) {
+    for (int i = 0; i < l->as.T_TUPLE.length; i++) {
+      if (!types_equal(&l->as.T_TUPLE.members[i], &r->as.T_TUPLE.members[i])) {
+        return false;
+      }
+    }
     return true;
   }
 
@@ -604,6 +652,13 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
 
     if (types_equal(l_fn_mem, r_fn_mem)) {
       continue;
+    } else {
+      fprintf(stderr,
+              "Error [typecheck] type contradiction cannot set type tag %d to "
+              "type tag %d\n",
+              l_fn_mem->tag, r_fn_mem->tag);
+      _typecheck_error_flag = 1;
+      return;
     }
 
     ttype mem_lookup;
@@ -628,6 +683,13 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left == right || types_equal(left, right)) {
     return;
+  }
+  if (left->tag == T_FN && right->tag == T_FN) {
+    return unify_functions(left, right, env);
+  }
+
+  if (left->tag == T_TUPLE && right->tag == T_TUPLE) {
+    return unify_tuples(left, right, env);
   }
   // coerce numeric types??
   ttype lookup;
@@ -711,21 +773,10 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
     }
     return unify_variable(right, left, env);
   }
-
-  if (left->tag == T_FN && right->tag == T_FN) {
-    return unify_functions(left, right, env);
-  }
-
-  if (left->tag == T_TUPLE && right->tag == T_TUPLE) {
-    return unify_tuples(left, right, env);
-  }
 }
 
 void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
   if (len == 0) {
-    return;
-  }
-  if (_typecheck_error_flag == 1) {
     return;
   }
   TypeEquation eq = *equations;
@@ -733,6 +784,9 @@ void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
   print_type_equation(eq);
 #endif
   unify(eq.left, eq.right, env);
+  if (_typecheck_error_flag == 1) {
+    return;
+  }
 
 #ifdef _TYPECHECK_DBG
   printf("\033[1;31m");

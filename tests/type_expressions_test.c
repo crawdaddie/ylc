@@ -35,16 +35,58 @@ int test_typedef_tuple() {
                               "    0.5,\n"
                               ")");
 
-  print_ast(*test, 0);
+  mu_assert(
+      types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),
+      "var t has type Triple");
 
-  print_ttype(AST_TOP_LEVEL(test, 0)->type);
-  print_ttype(AST_TOP_LEVEL(test, 1)->type);
-
-  mu_assert(true, "");
-  // mu_assert(&AST_TOP_LEVEL(test, 1)->type == &AST_TOP_LEVEL(test, 0)->type,
-  // "");
+  free_ast(test);
   return 0;
 }
+
+int test_typedef_tuple_error() {
+  AST *test = typecheck_input("type Triple = (\n"
+                              "    double,\n"
+                              "    double,\n"
+                              "    double,\n"
+                              ")\n"
+                              "let Triple t = (\n"
+                              "    2.0,\n"
+                              "    1.0,\n"
+                              "    0.5,\n"
+                              "    0.2,\n"
+                              ")");
+
+  mu_assert(
+      types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),
+      "var t has type Triple");
+  mu_assert(tc_error_flag == 1,
+            "emits error when assigning tuple with 4 members to variable of "
+            "type Triple (tuple with 3 members)");
+  free_ast(test);
+  return 0;
+}
+
+int test_typedef_tuple_error2() {
+  AST *test = typecheck_input("type Triple = (\n"
+                              "    double,\n"
+                              "    double,\n"
+                              "    double,\n"
+                              ")\n"
+                              "let Triple t = (\n"
+                              "    2.0,\n"
+                              "    1.0,\n"
+                              "    \"hello\",\n"
+                              ")");
+
+  mu_assert(
+      types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),
+      "var t has type Triple");
+  mu_assert(tc_error_flag == 1,
+            "emits error when assigning tuple with wrong member types");
+  free_ast(test);
+  return 0;
+}
+
 int test_typedef_struct() {
   AST *test = typecheck_input("type Point = struct (\n"
                               "    double x,\n"
@@ -54,18 +96,42 @@ int test_typedef_struct() {
                               "    x = 2.0,\n"
                               "    y = 1.0,\n"
                               ")");
-  print_ast(*test, 0);
 
-  // mu_assert(&AST_TOP_LEVEL(test, 1)->type == &AST_TOP_LEVEL(test, 0)->type,
-  // "");
-  mu_assert(true, "");
+  mu_assert(
+      types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),
+      "var p has type Point");
+
+  free_ast(test);
+  return 0;
+}
+
+int test_typedef_struct_error() {
+  AST *test = typecheck_input("type Point = struct (\n"
+                              "    double x,\n"
+                              "    double y,\n"
+                              ")\n"
+                              "let Point p = (\n"
+                              "    x = 2.0,\n"
+                              "    y = \"some extra nonsense\",\n"
+                              ")");
+
+  mu_assert(
+      types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),
+      "var p has type Point");
+
+  mu_assert(tc_error_flag == 1,
+            "emits error when assigning struct with wrong field types");
+  free_ast(test);
   return 0;
 }
 
 int all_tests() {
   int test_result = 0;
   mu_run_test(test_typedef_tuple);
-  // mu_run_test(test_typedef_struct);
+  mu_run_test(test_typedef_tuple_error);
+  mu_run_test(test_typedef_tuple_error2);
+  mu_run_test(test_typedef_struct);
+  mu_run_test(test_typedef_struct_error);
   return test_result;
 }
 

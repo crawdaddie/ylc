@@ -70,6 +70,8 @@ ttype tnum();
 ttype tbool();
 ttype tstr();
 
+ttype tstruct(ttype *member_types, struct_member_metadata *md, int length);
+
 bool is_generic_type(ttype t);
 
 extern int t_counter;
