@@ -3,7 +3,8 @@ simple language for learning purposes, originally conceived as an interface for 
 
 bootstrapped in C (self-hosting way out of scope for now)
 
-uses LLVM C API as a backend to generate LLVM IR, and to implement a JIT for the REPL
+uses the LLVM C API to compile to native code via a JIT compiler
+
 
 # examples
 ```javascript
@@ -11,13 +12,15 @@ let m = fn (val) {
   match val
   | 1 -> 1 
   | 2 -> 2
-  | _ -> m(val - 2)
+  | _ -> -1
 }
 
 m(5)
 
+# extern fn declaration matches printf from <stdio.h>
 let printf = extern fn (str input) int
 # extern functions must be explicitly typed
+
 
 let println = fn (input) void {
     printf(input)
@@ -29,9 +32,23 @@ let fib = fn (n) {
     | 0 -> 0
     | 1 -> 1
     | _ -> fib(n - 1) + fib(n - 2)
+
 }
 
 fib(10)
+
+# type declaration
+type Point = struct (
+  double x,
+  double y,
+)
+
+let Point x = (
+  x = 2.0,
+  y = 1.0,
+)
+
+
 ```
 # dependencies
 - LLVM (after installing llvm you may need to add the llvm headers & libraries to your CPATH & LIBRARY_PATH)
@@ -50,7 +67,7 @@ use the ./ylcc script to compile an .ylc source file to executable
 - compile source: `./ylcc <example>.ylc`
 - ./ylcc script will compile a source file to LLVM IR bitcode,
 emit an object file with llc and finally link with clang
-- the executable will be named just '<example>'
+- the resulting executable will be named just `<example>`
 
 
 # run tests
