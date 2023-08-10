@@ -9,16 +9,16 @@ on:
 jobs:
   test:
     runs-on: macos-13
-    env:
-      PATH: "/usr/local/opt/llvm/bin:$PATH"
-      LDFLAGS: -L/usr/local/opt/llvm/lib
-      CPPFLAGS: -I/usr/local/opt/llvm/include
     steps:
     - uses: actions/checkout@v2
     - name: Set up LLVM
       run: |
         brew install llvm
         export CPATH=$(llvm-config --includedir):$CPATH
+        export PATH="/usr/local/opt/llvm/bin:$PATH"
+        export CPATH=$(llvm-config --includedir):$CPATH
+        export LDFLAGS="-L/usr/local/opt/llvm/lib"
+        export CPPFLAGS="-I/usr/local/opt/llvm/include"
 
     - name: Test Parser
       run: |
