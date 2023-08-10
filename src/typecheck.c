@@ -640,6 +640,9 @@ bool types_equal(ttype *l, ttype *r) {
   if (l->tag == T_TUPLE) {
     for (int i = 0; i < l->as.T_TUPLE.length; i++) {
       if (!types_equal(&l->as.T_TUPLE.members[i], &r->as.T_TUPLE.members[i])) {
+        // fprintf(stderr, "Error typecheck, cannot unify tuple members %d &
+        // %d",
+        //         l->tag, r->tag);
         return false;
       }
     }
@@ -715,7 +718,8 @@ void unify_structs(ttype *left, ttype *right, TypeEnv *env) {
       continue;
     } else {
       fprintf(stderr,
-              "Error [typecheck] type contradiction cannot set type tag %d to "
+              "Error [typecheck] type contradiction cannot set struct type tag "
+              "%d to "
               "type tag %d\n",
               l_fn_mem->tag, r_fn_mem->tag);
       _typecheck_error_flag = 1;
@@ -756,10 +760,8 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
       continue;
     } else {
       fprintf(stderr,
-              "Error [typecheck] type contradiction cannot set type tag %d to "
-              "type tag %d\n",
-              l_fn_mem->tag, r_fn_mem->tag);
-      _typecheck_error_flag = 1;
+              "Error [typecheck] type contradiction cannot unify tuples\n"),
+          _typecheck_error_flag = 1;
       return;
     }
 
