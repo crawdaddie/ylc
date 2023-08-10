@@ -15,50 +15,15 @@ jobs:
       run: |
         brew install llvm
 
-    - name: Test Parser
+    - name: Tests
       run: |
         export PATH="/usr/local/opt/llvm/bin:$PATH"
         export CPATH=$(llvm-config --includedir):$CPATH
         export LDFLAGS="-L/usr/local/opt/llvm/lib"
         export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/parse_test
-
-    - name: Test Codegen
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/codegen_test
-
-    - name: Test Symbol Table
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/symbol_table_test
-
-    - name: Test Typechecker 
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/typecheck_test
-
-    - name: Test Type Expressions
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make build/type_expressions_test
-
-    - name: Test ylc scripts E2E
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
-        export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
         make e2e 
