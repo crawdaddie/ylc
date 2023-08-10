@@ -152,7 +152,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
       LLVMValueRef value = codegen(ast, &ctx);
 
       dump_module(ctx.module);
+
+      printf("\n\033[1;35m");
       print_last_entered_type(ast);
+      printf("\033[1;0m\n");
       run_value(ctx.engine, value);
       free_ast(ast);
     }
