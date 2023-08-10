@@ -9,21 +9,37 @@ on:
 jobs:
   test:
     runs-on: macos-13
+    env:
+      PATH: "/usr/local/opt/llvm/bin:$PATH"
+      LDFLAGS: -L/usr/local/opt/llvm/lib
+      CPPFLAGS: -I/usr/local/opt/llvm/include
     steps:
     - uses: actions/checkout@v2
     - name: Set up LLVM
       run: |
         brew install llvm
-
-    - name: Tests
-      run: |
-        export PATH="/usr/local/opt/llvm/bin:$PATH"
         export CPATH=$(llvm-config --includedir):$CPATH
-        export LDFLAGS="-L/usr/local/opt/llvm/lib"
-        export CPPFLAGS="-I/usr/local/opt/llvm/include"
+
+    - name: Test Parser
+      run: |
         make build/parse_test
+
+    - name: Test Codegen
+      run: |
         make build/codegen_test
+
+    - name: Test Symbol Table
+      run: |
         make build/symbol_table_test
+
+    - name: Test Typechecker 
+      run: |
         make build/typecheck_test
+
+    - name: Test Type Expressions
+      run: |
         make build/type_expressions_test
-        make e2e 
+
+    - name: Test E2E scripts
+      run: |
+        make build/type_expressions_test
