@@ -31,7 +31,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
       LLVMFunctionType(LLVMVoidTypeInContext(ctx->context), NULL, 0, 0);
 
   // Create function.
-  LLVMValueRef func = LLVMAddFunction(ctx->module, inst_name("main"), funcType);
+  LLVMValueRef func = LLVMAddFunction(ctx->module, "main", funcType);
   LLVMSetLinkage(func, LLVMExternalLinkage);
 
   // Generate body.

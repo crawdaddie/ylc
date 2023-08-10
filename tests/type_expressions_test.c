@@ -105,6 +105,23 @@ int test_typedef_struct() {
   return 0;
 }
 
+int test_typedef_struct_member() {
+  AST *test = typecheck_input("type Point = struct (\n"
+                              "    double x,\n"
+                              "    double y,\n"
+                              ")\n"
+                              "let Point p = (\n"
+                              "    x = 2.0,\n"
+                              "    y = 1.0,\n"
+                              ")\n"
+                              "let px = p.x");
+
+  mu_assert(AST_TOP_LEVEL(test, 2)->type.tag == T_NUM, "var px has type Num");
+
+  free_ast(test);
+  return 0;
+}
+
 int test_typedef_struct_error() {
   AST *test = typecheck_input("type Point = struct (\n"
                               "    double x,\n"
@@ -131,6 +148,7 @@ int all_tests() {
   mu_run_test(test_typedef_tuple_error);
   mu_run_test(test_typedef_tuple_error2);
   mu_run_test(test_typedef_struct);
+  mu_run_test(test_typedef_struct_member);
   mu_run_test(test_typedef_struct_error);
   return test_result;
 }

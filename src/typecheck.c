@@ -8,7 +8,7 @@
 #include <stdlib.h>
 typedef AST *ast;
 
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(ast);
 
@@ -198,6 +198,7 @@ static ttype *compute_type_expression(AST *ast, TypeCheckContext *ctx) {
           .index = i};
     }
     *tuple_type = tstruct(member_types, metadata, len);
+
     return tuple_type;
   }
   }
@@ -445,9 +446,11 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ttype *t =
         compute_type_expression(ast->data.AST_TYPE_DECLARATION.type_expr, ctx);
 
-    sprintf(ast->type.as.T_VAR.name, "%s", name);
+    // sprintf(ast->type.as.T_VAR.name, "%s", name);
+    ast->type = *t;
 
     push_type_equation(&ctx->type_equations, &ast->type, t);
+
     ast_table_insert(ctx->symbol_table, name, ast);
     break;
   }
@@ -476,14 +479,54 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       member_types[i] = member_ast->type;
     }
     *tuple_type = ttuple(member_types, len);
-    push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
+    // push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
+    // print_type_equation((TypeEquation){&ast->type, tuple_type});
+
+    break;
+  }
+
+  case AST_MEMBER_ACCESS: {
+    AST *object;
+    char *obj_identifier =
+        ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
+
+    if (ast_table_lookup(
+            ctx->symbol_table,
+            ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
+            &object) == 0) {
+
+      while (object->type.tag == T_VAR) {
+        ast_table_lookup(ctx->symbol_table, object->type.as.T_VAR.name,
+                         &object);
+      }
+      if (object->type.tag != T_STRUCT) {
+        fprintf(stderr,
+                "Error [typecheck]: object %s does not have named members",
+                obj_identifier);
+        break;
+      }
+
+      char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
+
+      ttype obj_type = object->type;
+      for (int i = 0; i < object->type.as.T_STRUCT.length; i++) {
+        if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
+            0) {
+          int member_idx = obj_type.as.T_STRUCT.struct_metadata[i].index;
+
+          push_type_equation(&ctx->type_equations, &ast->type,
+                             &obj_type.as.T_STRUCT.members[member_idx]);
+
+          break;
+        }
+      }
+    }
 
     break;
   }
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_STRUCT:
-  case AST_MEMBER_ACCESS:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
   case AST_IMPORT:
@@ -604,6 +647,16 @@ bool types_equal(ttype *l, ttype *r) {
     return true;
   }
 
+  if (l->tag == T_STRUCT) {
+    for (int i = 0; i < l->as.T_STRUCT.length; i++) {
+      if (!types_equal(&l->as.T_STRUCT.members[i],
+                       &r->as.T_STRUCT.members[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   return false;
 }
 void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
@@ -633,10 +686,60 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
 
   return;
 }
+void unify_structs(ttype *left, ttype *right, TypeEnv *env) {
 
+  if (left->as.T_STRUCT.length != right->as.T_STRUCT.length) {
+
+    fprintf(stderr,
+            "Error [typecheck] type contradiction cannot set tuple with length "
+            "%d to a tuple type with length %d\n",
+            left->as.T_STRUCT.length, right->as.T_STRUCT.length);
+    _typecheck_error_flag = 1;
+    return;
+  }
+
+  struct_member_metadata lmd;
+  struct_member_metadata rmd;
+  for (int i = 0; i < left->as.T_STRUCT.length; i++) {
+    rmd = left->as.T_STRUCT.struct_metadata[i];
+    rmd = right->as.T_STRUCT.struct_metadata[i];
+    if (strcmp(lmd.name, rmd.name) != 0 || lmd.index != rmd.index) {
+      return;
+    }
+  }
+
+  for (int i = 0; i < left->as.T_STRUCT.length; i++) {
+    ttype *l_fn_mem = left->as.T_STRUCT.members + i;
+    ttype *r_fn_mem = right->as.T_STRUCT.members + i;
+
+    if (types_equal(l_fn_mem, r_fn_mem)) {
+      continue;
+    } else {
+      fprintf(stderr,
+              "Error [typecheck] type contradiction cannot set type tag %d to "
+              "type tag %d\n",
+              l_fn_mem->tag, r_fn_mem->tag);
+      _typecheck_error_flag = 1;
+      return;
+    }
+
+    ttype mem_lookup;
+
+    if (l_fn_mem->tag == T_VAR &&
+        ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+      add_type_to_env(env, l_fn_mem, r_fn_mem);
+    }
+
+    left->as.T_STRUCT.members[i] = right->as.T_FN.members[i];
+
+    unify(l_fn_mem, r_fn_mem, env);
+  }
+
+  return;
+}
 void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
 
-  if (left->as.T_TUPLE.length != right->as.T_FN.length) {
+  if (left->as.T_TUPLE.length != right->as.T_TUPLE.length) {
 
     fprintf(stderr,
             "Error [typecheck] type contradiction cannot set tuple with length "
@@ -676,12 +779,57 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
   return;
 }
 
+void unify_compound_types(struct T_TUPLE left, struct T_TUPLE right,
+                          TypeEnv *env) {
+
+  if (left.length != right.length) {
+
+    fprintf(stderr,
+            "Error [typecheck] type contradiction cannot set tuple / fn / "
+            "struct with length "
+            "%d to a tuple / fn / struct type with length %d\n",
+            left.length, right.length);
+    _typecheck_error_flag = 1;
+    return;
+  }
+
+  for (int i = 0; i < left.length; i++) {
+    ttype *l_fn_mem = left.members + i;
+    ttype *r_fn_mem = right.members + i;
+
+    if (types_equal(l_fn_mem, r_fn_mem)) {
+      continue;
+    } else {
+      fprintf(stderr,
+              "Error [typecheck] type contradiction cannot set type tag %d to "
+              "type tag %d\n",
+              l_fn_mem->tag, r_fn_mem->tag);
+      _typecheck_error_flag = 1;
+      return;
+    }
+
+    ttype mem_lookup;
+
+    if (l_fn_mem->tag == T_VAR &&
+        ttype_env_lookup(env, l_fn_mem->as.T_VAR.name, &mem_lookup) != 0) {
+      add_type_to_env(env, l_fn_mem, r_fn_mem);
+    }
+
+    left.members[i] = right.members[i];
+
+    unify(l_fn_mem, r_fn_mem, env);
+  }
+
+  return;
+}
+
 /*
  * Unify two types left and left, with substitution environment.
  **/
 void unify(ttype *left, ttype *right, TypeEnv *env) {
 
-  if (left == right || types_equal(left, right)) {
+  // print_type_equation((TypeEquation){left, right});
+  if (types_equal(left, right)) {
     return;
   }
   if (left->tag == T_FN && right->tag == T_FN) {
@@ -690,6 +838,10 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left->tag == T_TUPLE && right->tag == T_TUPLE) {
     return unify_tuples(left, right, env);
+  }
+
+  if (left->tag == T_STRUCT && right->tag == T_STRUCT) {
+    return unify_structs(left, right, env);
   }
   // coerce numeric types??
   ttype lookup;
