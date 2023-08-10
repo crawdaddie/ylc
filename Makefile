@@ -99,3 +99,4 @@ e2e:
 	build/lang examples/fib.ylc
 	build/lang examples/match.ylc
 	build/lang examples/match_rec.ylc
+	build/lang examples/rec.ylc
