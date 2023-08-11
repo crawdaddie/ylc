@@ -9,6 +9,9 @@ OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 CC=clang
 LD=clang
 
+# C_FLAGS=-g
+C_FLAGS=-Wall -Wextra
+# -g
 LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 LINK=-lpthread
@@ -60,10 +63,6 @@ build/type_expressions_test: $(TEST_OBJ) $(BUILD_DIR)/type_expressions_test.o
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
 
-.PHONY: debug-lang
-debug-lang:
-	make && lldb build/lang
-
 .PHONY: repl
 repl:
 	make && ./build/lang
@@ -104,3 +103,8 @@ e2e:
 .PHONY: clang-tidy
 clang-tidy:
 	clang-tidy --header-filter=src/*.h $(SRC)
+
+debug: C_FLAGS += -g
+debug: $(OBJ)
+
+.PHONY: debug

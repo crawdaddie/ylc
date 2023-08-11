@@ -93,8 +93,8 @@ int test_typedef_struct() {
                               "    double y,\n"
                               ")\n"
                               "let Point p = (\n"
-                              "    x = 2.0,\n"
                               "    y = 1.0,\n"
+                              "    x = 2.0,\n"
                               ")");
 
   mu_assert(

@@ -712,6 +712,7 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
   return;
 }
 void unify_structs(ttype *left, ttype *right, TypeEnv *env) {
+  // print_type_equation((TypeEquation){left, right});
 
   if (left->as.T_STRUCT.length != right->as.T_STRUCT.length) {
 
@@ -856,8 +857,6 @@ void unify_compound_types(struct T_TUPLE left, struct T_TUPLE right,
  **/
 void unify(ttype *left, ttype *right, TypeEnv *env) {
 
-  // print_type_equation((TypeEquation){left, right});
-  //
   if (left->tag == T_VAR && right->tag == T_VAR) {
     return unify_variable(left, right, env);
   }
@@ -877,6 +876,7 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   if (types_equal(left, right)) {
     return;
   }
+
   // coerce numeric types??
   ttype lookup;
   if (left->tag == T_VAR &&
@@ -1134,8 +1134,6 @@ int typecheck(AST *ast) {
 
   return _typecheck_error_flag;
 }
-
-// int typecheck(AST *ast) { return _typecheck(ast, 0); }
 
 void print_last_entered_type(AST *ast) {
   int last = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length - 1;

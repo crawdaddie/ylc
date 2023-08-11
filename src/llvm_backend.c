@@ -112,6 +112,15 @@ static int dump_ir(Context *ctx, char *output) {
   LLVMWriteBitcodeToFile(module, output);
   return 0;
 }
+
+int compile_to_output_file(char *output, AST *ast, Context *ctx) {
+  typecheck(ast);
+  codegen(ast, ctx);
+  dump_ir(ctx, output);
+  free_ast(ast);
+  return 1;
+}
+
 int LLVMRuntime(int repl, char *path, char *output) {
   LLVMInitializeCore(LLVMGetGlobalPassRegistry());
   LLVMInitializeNativeTarget();
@@ -133,7 +142,6 @@ int LLVMRuntime(int repl, char *path, char *output) {
   }
 
   if (path) {
-    char *filename = path;
     char *input = read_file(path);
     AST *ast = parse(input);
     free(input);
@@ -141,61 +149,59 @@ int LLVMRuntime(int repl, char *path, char *output) {
     ctx.module_path = path;
     LLVMSetSourceFileName(ctx.module, path, strlen(path));
     if (output) {
-      typecheck(ast);
-      LLVMValueRef value = codegen(ast, &ctx);
-      dump_ir(&ctx, output);
-      free_ast(ast);
-    } else {
-      dump_ast(ast);
-
-      typecheck(ast);
-      LLVMValueRef value = codegen(ast, &ctx);
-
-      dump_module(ctx.module);
-
-      printf("\n\033[1;35m");
-      print_last_entered_type(ast);
-      printf("\033[1;0m\n");
-      run_value(ctx.engine, value);
-      free_ast(ast);
+      return compile_to_output_file(output, ast, &ctx);
     }
-    if (repl) {
-      reinit_lang_ctx(&ctx);
-    }
-  }
 
-  if (repl) {
+    dump_ast(ast);
+    typecheck(ast);
+    LLVMValueRef value = codegen(ast, &ctx);
+    dump_module(ctx.module);
 
-    char cwd[PATH_MAX];
-    if (getcwd(cwd, sizeof(cwd)) == NULL) {
-      perror("getcwd() error");
+    printf("\n\033[1;35m");
+    print_last_entered_type(ast);
+    printf("\033[1;0m\n");
+    run_value(ctx.engine, value);
+    free_ast(ast);
+
+    if (!repl) {
       return 1;
     }
-    sprintf(cwd, "%s/_", cwd);
-    ctx.module_path = cwd;
-    char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
-    for (;;) {
 
-      repl_input(input, INPUT_BUFSIZE,
-                 "\033[1;31mλ \033[1;0m"
-                 "\033[1;36m");
-      printf("\033[1;0m");
+    reinit_lang_ctx(&ctx);
+  }
 
-      AST *ast = parse(input);
+  char cwd[PATH_MAX];
+  if (getcwd(cwd, sizeof(cwd)) == NULL) {
+    perror("getcwd() error");
+    return 1;
+  }
+  sprintf(cwd, "%s/_", cwd);
+  ctx.module_path = cwd;
+  char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
+  for (;;) {
 
-      typecheck(ast);
-      dump_ast(ast);
+    repl_input(input, INPUT_BUFSIZE,
+               "\033[1;31mλ \033[1;0m"
+               "\033[1;36m");
 
-      LLVMValueRef value = codegen(ast, &ctx);
+    printf("\033[1;0m");
 
-      if (value)
-        dump_module(ctx.module);
+    AST *ast = parse(input);
 
-      print_last_entered_type(ast);
-      run_value(ctx.engine, value);
-      free_ast(ast);
-      reinit_lang_ctx(&ctx);
-    }
+    typecheck(ast);
+    dump_ast(ast);
+
+    LLVMValueRef value = codegen(ast, &ctx);
+
+    if (value)
+      dump_module(ctx.module);
+
+    printf("\n\033[1;35m");
+    print_last_entered_type(ast);
+    printf("\033[1;0m\n");
+    run_value(ctx.engine, value);
+    free_ast(ast);
+    reinit_lang_ctx(&ctx);
   }
 
   // LLVMDisposePassManager(pass_anager);
