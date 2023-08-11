@@ -164,7 +164,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     free_ast(ast);
 
     if (!repl) {
-      return 1;
+      return 0;
     }
 
     reinit_lang_ctx(&ctx);
