@@ -7,7 +7,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 typedef AST *ast;
-
 // #define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(ast);
@@ -484,6 +483,27 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     break;
   }
 
+  case AST_STRUCT: {
+    int len = ast->data.AST_STRUCT.length;
+    ttype *member_types = malloc(sizeof(ttype) * len);
+    ttype *tuple_type = malloc(sizeof(ttype));
+    struct_member_metadata *md = malloc(sizeof(struct_member_metadata) * len);
+
+    for (int i = 0; i < len; i++) {
+      AST *member_ast = ast->data.AST_STRUCT.members[i];
+      generate_equations(member_ast->data.AST_ASSIGNMENT.expression, ctx);
+
+      ttype mem_type = member_ast->data.AST_ASSIGNMENT.expression->type;
+      member_types[i] = mem_type;
+      md[i] = (struct_member_metadata){
+          strdup(member_ast->data.AST_ASSIGNMENT.identifier), i};
+    }
+    *tuple_type = tstruct(member_types, md, len);
+    push_type_equation(&ctx->type_equations, &ast->type, tuple_type);
+
+    break;
+  }
+
   case AST_MEMBER_ACCESS: {
     AST *object;
     char *obj_identifier =
@@ -525,7 +545,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_EXPRESSION:
   case AST_STATEMENT:
-  case AST_STRUCT:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
   case AST_IMPORT:
@@ -625,6 +644,7 @@ void unify_variable(ttype *left, ttype *right, TypeEnv *env) {
 }
 
 bool types_equal(ttype *l, ttype *r) {
+
   if (l == r) {
     return true;
   }
@@ -632,17 +652,13 @@ bool types_equal(ttype *l, ttype *r) {
   if (l->tag != r->tag) {
     return false;
   }
-
-  if (l->tag == T_VAR && strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+  if (l->tag == r->tag) {
     return true;
   }
 
   if (l->tag == T_TUPLE) {
     for (int i = 0; i < l->as.T_TUPLE.length; i++) {
       if (!types_equal(&l->as.T_TUPLE.members[i], &r->as.T_TUPLE.members[i])) {
-        // fprintf(stderr, "Error typecheck, cannot unify tuple members %d &
-        // %d",
-        //         l->tag, r->tag);
         return false;
       }
     }
@@ -658,7 +674,14 @@ bool types_equal(ttype *l, ttype *r) {
     }
     return true;
   }
+  if (l->tag == T_VAR && strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+    return true;
+  }
 
+  if (l->tag == T_VAR && r->tag == T_VAR &&
+      strcmp(l->as.T_VAR.name, r->as.T_VAR.name) != 0) {
+    return false;
+  }
   return false;
 }
 void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
@@ -702,9 +725,11 @@ void unify_structs(ttype *left, ttype *right, TypeEnv *env) {
 
   struct_member_metadata lmd;
   struct_member_metadata rmd;
+
   for (int i = 0; i < left->as.T_STRUCT.length; i++) {
-    rmd = left->as.T_STRUCT.struct_metadata[i];
+    lmd = left->as.T_STRUCT.struct_metadata[i];
     rmd = right->as.T_STRUCT.struct_metadata[i];
+
     if (strcmp(lmd.name, rmd.name) != 0 || lmd.index != rmd.index) {
       return;
     }
@@ -757,8 +782,10 @@ void unify_tuples(ttype *left, ttype *right, TypeEnv *env) {
     ttype *r_fn_mem = right->as.T_TUPLE.members + i;
 
     if (types_equal(l_fn_mem, r_fn_mem)) {
+
       continue;
     } else {
+      // printf("---");
       fprintf(stderr,
               "Error [typecheck] type contradiction cannot unify tuples\n"),
           _typecheck_error_flag = 1;
@@ -830,9 +857,11 @@ void unify_compound_types(struct T_TUPLE left, struct T_TUPLE right,
 void unify(ttype *left, ttype *right, TypeEnv *env) {
 
   // print_type_equation((TypeEquation){left, right});
-  if (types_equal(left, right)) {
-    return;
+  //
+  if (left->tag == T_VAR && right->tag == T_VAR) {
+    return unify_variable(left, right, env);
   }
+
   if (left->tag == T_FN && right->tag == T_FN) {
     return unify_functions(left, right, env);
   }
@@ -843,6 +872,10 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left->tag == T_STRUCT && right->tag == T_STRUCT) {
     return unify_structs(left, right, env);
+  }
+
+  if (types_equal(left, right)) {
+    return;
   }
   // coerce numeric types??
   ttype lookup;
@@ -867,6 +900,7 @@ void unify(ttype *left, ttype *right, TypeEnv *env) {
   }
 
   if (left->tag == T_VAR && right->tag != T_VAR && right->tag != T_FN) {
+
     ttype lookup;
     if (ttype_env_lookup(env, left->as.T_VAR.name, &lookup) == 0) {
       unify(&lookup, right, env);
@@ -937,6 +971,7 @@ void unify_equations(TypeEquation *equations, int len, TypeEnv *env) {
   print_type_equation(eq);
 #endif
   unify(eq.left, eq.right, env);
+
   if (_typecheck_error_flag == 1) {
     return;
   }
@@ -1072,6 +1107,13 @@ int typecheck(AST *ast) {
   if (_typecheck_error_flag) {
     return 1;
   }
+#ifdef _TYPECHECK_DBG
+  printf("eqs---\n");
+  for (int i = 0; i < ctx.type_equations.length; i++) {
+    print_type_equation(ctx.type_equations.equations[i]);
+  }
+  printf("---\n");
+#endif
 
   TypeEnv env = {};
   TypeEquation *eqs =
