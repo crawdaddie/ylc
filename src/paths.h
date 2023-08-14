@@ -6,4 +6,6 @@ void resolve_path(const char *dir_name, const char *relativePath,
                   char *resultPath);
 
 bool has_extension(const char *path, const char *ext);
+
+void remove_extension(char *filename);
 #endif

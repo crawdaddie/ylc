@@ -1,13 +1,14 @@
 #include "codegen_symbol.h"
 #include "codegen.h"
 #include "codegen_types.h"
+#include "typecheck.h"
 #include <stdio.h>
 #include <stdlib.h>
 
 SymbolValue get_value(char *identifier, Context *ctx) {
   SymbolValue val;
   if (table_lookup(ctx->symbol_table, identifier, &val) != 0) {
-    fprintf(stderr, "Error symbol %s not found\n", identifier);
+    fprintf(stderr, "get value Error symbol %s not found\n", identifier);
   }
   return val;
 }
@@ -39,7 +40,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   SymbolValue sym;
 
   if (table_lookup(ctx->symbol_table, identifier, &sym) != 0) {
-    fprintf(stderr, "Error symbol %s not found\n", identifier);
+    fprintf(stderr, "ident Error symbol %s not found\n", identifier);
     return NULL;
   }
 
@@ -207,6 +208,14 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   AST *expr = data.expression;
   LLVMValueRef value;
 
+  if (expr->type.tag == T_STRUCT) {
+
+    value = codegen(expr, ctx);
+
+    LLVMTypeRef type = LLVMTypeOf(value);
+    return codegen_symbol(identifier, value, type, ctx);
+  }
+
   if (ast->data.AST_ASSIGNMENT.type != NULL) {
 
     type_symbol_table *metadata =
@@ -236,5 +245,6 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   if (!type) {
     type = LLVMTypeOf(value);
   }
+  // bind value to symbol
   return codegen_symbol(identifier, value, type, ctx);
 }

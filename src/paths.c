@@ -36,3 +36,10 @@ bool has_extension(const char *str, const char *extension) {
 
   return false; // The string does not end with ".so"
 }
+
+void remove_extension(char *filename) {
+  char *dot = strrchr(filename, '.'); // Find the last occurrence of '.'
+  if (dot && dot != filename) { // Make sure dot is not the first character
+    *dot = '\0'; // Replace dot with null character to remove the extension
+  }
+}

@@ -114,7 +114,7 @@ static int dump_ir(Context *ctx, char *output) {
 }
 
 int compile_to_output_file(char *output, AST *ast, Context *ctx) {
-  typecheck(ast);
+  typecheck(ast, ctx->module_path);
   codegen(ast, ctx);
   dump_ir(ctx, output);
   free_ast(ast);
@@ -152,8 +152,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
       return compile_to_output_file(output, ast, &ctx);
     }
 
+    typecheck(ast, path);
     dump_ast(ast);
-    typecheck(ast);
     LLVMValueRef value = codegen(ast, &ctx);
     dump_module(ctx.module);
 
@@ -177,6 +177,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
   }
   sprintf(cwd, "%s/_", cwd);
   ctx.module_path = cwd;
+
   char *input = malloc(sizeof(char) * INPUT_BUFSIZE);
   for (;;) {
 
@@ -188,7 +189,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
     AST *ast = parse(input);
 
-    typecheck(ast);
+    typecheck(ast, cwd);
     dump_ast(ast);
 
     LLVMValueRef value = codegen(ast, &ctx);

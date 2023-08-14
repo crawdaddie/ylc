@@ -3,6 +3,7 @@
 #include "parse.h"
 #include "parse_expression.h"
 #include "parse_function.h"
+#include "paths.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -102,14 +103,19 @@ static AST *import_module() {
   }
   token token = parser.previous;
   advance();
-  return AST_NEW(IMPORT, strdup(token.as.vstr));
+  char *module_name = strdup(token.as.vstr);
+
+  if (has_extension(module_name, ".so")) {
+    return AST_NEW(IMPORT_LIB, module_name);
+  }
+  return AST_NEW(IMPORT, module_name);
 }
 /**
- * match on tokens that begin a statement and call corresponding statement-type
- *constructors
+ * match on tokens that begin a statement and call corresponding
+ *statement-type constructors
  *
- * TOKEN_LET | TOKEN_WHILE | TOKEN_FN | TOKEN_LEFT_BRACE | TOKEN_LP | TOKEN_IF |
- *TOKEN_RETURN
+ * TOKEN_LET | TOKEN_WHILE | TOKEN_FN | TOKEN_LEFT_BRACE | TOKEN_LP | TOKEN_IF
+ *| TOKEN_RETURN
  **/
 AST *parse_statement() {
   char *src_offset = get_scanner_current();

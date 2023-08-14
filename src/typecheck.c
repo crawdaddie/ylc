@@ -1,11 +1,17 @@
 #include "typecheck.h"
 #include "codegen.h"
 #include "generic_symbol_table.h"
+#include "modules.h"
+#include "paths.h"
 #include "string.h"
 #include "symbol_table.h"
 #include "types.h"
+#include <dlfcn.h>
+#include <libgen.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <limits.h>
 typedef AST *ast;
 // #define _TYPECHECK_DBG
 
@@ -76,6 +82,11 @@ void print_ttype(ttype type) {
     int length = type.as.T_STRUCT.length;
     printf("(");
     for (int i = 0; i < length; i++) {
+      struct_member_metadata md = type.as.T_STRUCT.struct_metadata[i];
+      if (md.index == -1) {
+        continue;
+      }
+
       printf("%s=", type.as.T_STRUCT.struct_metadata[i].name);
       print_ttype(type.as.T_STRUCT.members[i]);
       if (i < length - 1)
@@ -106,6 +117,7 @@ typedef struct {
 typedef struct {
   ast_SymbolTable *symbol_table;
   TypeEquationsList type_equations;
+  const char *module_path;
 } TypeCheckContext;
 
 static int MAX_TEQ_LIST = 32;
@@ -543,11 +555,38 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     break;
   }
+
+  case AST_IMPORT: {
+    const char *module_name = ast->data.AST_IMPORT.module_name;
+    char resolved_path[PATH_MAX];
+    resolve_path(dirname(ctx->module_path), module_name, resolved_path);
+    AST *mod_ast = get_module(resolved_path);
+
+    // assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
+
+    if (has_extension(module_name, ".ylc")) {
+      char *mod_name = basename(module_name);
+      remove_extension(mod_name);
+
+      ast_table_insert(ctx->symbol_table, mod_name, mod_ast);
+      ast->tag = AST_ASSIGNMENT;
+      ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){.identifier = mod_name,
+                                                         .expression = mod_ast};
+
+      push_type_equation(&ctx->type_equations, &ast->type, &mod_ast->type);
+    }
+
+    break;
+  }
+  case AST_IMPORT_LIB: {
+
+    printf("handle lib import\n");
+    break;
+  }
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
-  case AST_IMPORT:
   case AST_VAR_ARG:
   default:
     break;
@@ -1076,7 +1115,6 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
-  case AST_IMPORT:
   case AST_VAR_ARG:
   default:
     break;
@@ -1092,9 +1130,10 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   return;
 }
 
-int typecheck(AST *ast) {
+int typecheck(AST *ast, const char *module_path) {
   _typecheck_error_flag = 0;
   TypeCheckContext ctx;
+  ctx.module_path = module_path;
 
   ast_SymbolTable symbol_table = {}; // init to zero
   symbol_table.current_frame_index = 0;
@@ -1108,11 +1147,12 @@ int typecheck(AST *ast) {
     return 1;
   }
 #ifdef _TYPECHECK_DBG
-  printf("eqs---\n");
-  for (int i = 0; i < ctx.type_equations.length; i++) {
-    print_type_equation(ctx.type_equations.equations[i]);
-  }
-  printf("---\n");
+  // printf("eqs---\n");
+  // for (int i = 0; i < ctx.type_equations.length; i++) {
+  //   print_type_equation(ctx.type_equations.equations[i]);
+  // }
+  // printf("---\n");
+  printf("typecheck %s\n", module_path);
 #endif
 
   TypeEnv env = {};

@@ -84,19 +84,23 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_main(ast, ctx);
   }
   case AST_IMPORT: {
-    const char *module_name = ast->data.AST_IMPORT.module_name;
-    if (has_extension(module_name, ".so")) {
-
-      void *libHandle = dlopen(module_name, RTLD_LAZY);
-
-      if (!libHandle) {
-        fprintf(stderr, "Error loading the shared library: %s\n", dlerror());
-      }
-      return get_int(0, ctx);
-    };
-
-    // TODO: handle native .ylc source modules
-    return codegen_module(ast->data.AST_IMPORT.module_name, ctx);
+    // const char *module_name = ast->data.AST_IMPORT.module_name;
+    // if (has_extension(module_name, ".so")) {
+    //
+    //   void *libHandle = dlopen(module_name, RTLD_LAZY);
+    //
+    //   if (!libHandle) {
+    //     fprintf(stderr, "Error loading the shared library: %s\n", dlerror());
+    //   }
+    //   return get_int(0, ctx);
+    // };
+    //
+    // // TODO: handle native .ylc source modules
+    // return codegen_module(ast->data.AST_IMPORT.module_name, ctx);
+    return get_int(0, ctx);
+  }
+  case AST_IMPORT_LIB: {
+    return NULL;
   }
 
   case AST_INTEGER:
@@ -191,7 +195,12 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     struct AST_MEMBER_ACCESS data = AST_DATA(ast, MEMBER_ACCESS);
 
     LLVMValueRef value = codegen(data.object, ctx);
+
+    printf("\nmember access: ");
+    LLVMDumpValue(value);
+
     const char *struct_name = LLVMGetStructName(LLVMTypeOf(value));
+
     type_symbol_table *metadata = get_type_metadata(struct_name, ctx);
     if (metadata == NULL) {
       return NULL;
@@ -226,6 +235,17 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       members[i] = codegen(data.members[i], ctx);
     }
     LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+    return tuple_struct;
+  }
+
+  case AST_STRUCT: {
+    struct AST_STRUCT data = AST_DATA(ast, STRUCT);
+    LLVMValueRef *members = malloc(sizeof(LLVMValueRef) * data.length);
+    for (int i = 0; i < data.length; i++) {
+      members[i] = codegen(data.members[i], ctx);
+    }
+    LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+    LLVMDumpValue(tuple_struct);
     return tuple_struct;
   }
 

@@ -19,7 +19,7 @@ static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
 
-  tc_error_flag = typecheck(ast);
+  tc_error_flag = typecheck(ast, "_");
   return ast;
 }
 

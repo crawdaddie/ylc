@@ -36,6 +36,7 @@ struct AST {
     AST_MEMBER_ASSIGNMENT,
     AST_INDEX_ACCESS,
     AST_IMPORT,
+    AST_IMPORT_LIB,
     AST_VAR_ARG,
   } tag;
 
@@ -185,6 +186,10 @@ struct AST {
     struct AST_IMPORT {
       char *module_name;
     } AST_IMPORT;
+
+    struct AST_IMPORT_LIB {
+      char *lib_name;
+    } AST_IMPORT_LIB;
 
   } data;
 

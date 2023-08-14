@@ -9,9 +9,9 @@ OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 CC=clang
 LD=clang
 
-# C_FLAGS=-g
 C_FLAGS=-Wall -Wextra
-# -g
+# C_FLAGS+=-g
+#
 LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
 LINK=-lpthread
