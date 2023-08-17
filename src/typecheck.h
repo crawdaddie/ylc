@@ -18,14 +18,14 @@ typedef struct {
   int length;
 } TypeEquationsList;
 
+INIT_SYM_TABLE_TYPES(ttype);
+typedef ttype_StackFrame TypeEnv;
 typedef struct {
   AST_SymbolTable *symbol_table;
   TypeEquationsList type_equations;
   const char *module_path;
+  TypeEnv type_env;
 } TypeCheckContext;
-
-INIT_SYM_TABLE_TYPES(ttype);
-typedef ttype_StackFrame TypeEnv;
 
 int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx);
 

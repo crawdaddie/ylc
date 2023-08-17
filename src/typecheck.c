@@ -280,7 +280,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       ttype *fn_type = malloc(sizeof(ttype));
       *fn_type = tfn(fn_members, length);
 
-      AST_table_insert(ctx->symbol_table, name, *ast);
       push_type_equation(&ctx->type_equations, &ast->type, fn_type);
       break;
     }
@@ -446,9 +445,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
     AST_table_insert(ctx->symbol_table, name, *ast);
+    ttype *t = malloc(sizeof(ttype));
+    *t = ast->data.AST_ASSIGNMENT.expression->type;
 
-    push_type_equation(&ctx->type_equations, &ast->type,
-                       &ast->data.AST_ASSIGNMENT.expression->type);
+    push_type_equation(&ctx->type_equations, &ast->type, t);
     break;
   }
   case AST_TYPE_DECLARATION: {
@@ -524,7 +524,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
 
   case AST_MEMBER_ACCESS: {
-    printf("mem access?\n");
     AST object;
     char *obj_identifier =
         ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
@@ -1201,22 +1200,21 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
   printf("typecheck %s\n", module_path);
 #endif
 
-  TypeEnv env = {};
   TypeEquation *eqs =
       ctx->type_equations.equations; // new pointer to eqs we can manipulate
-  unify_equations(eqs, ctx->type_equations.length, &env);
+  unify_equations(eqs, ctx->type_equations.length, &ctx->type_env);
 
   if (_typecheck_error_flag) {
     return 1;
   }
 
-  update_expression_types(ast, &env);
+  update_expression_types(ast, &ctx->type_env);
 
   if (_typecheck_error_flag) {
     return 1;
   }
 
-  free(ctx->type_equations.equations); // free original pointer to eqs
+  // free(ctx->type_equations.equations); // free original pointer to eqs
 
   return _typecheck_error_flag;
 }
