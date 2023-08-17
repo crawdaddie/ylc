@@ -1,6 +1,6 @@
 let f = fn (i) {
-  1
+  i + 1
 }
 
 
-f(0)
+let x = f(0)
