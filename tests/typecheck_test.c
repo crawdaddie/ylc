@@ -344,6 +344,22 @@ int test_fib_fn() {
   return 0;
 }
 
+int test_extern_fn() {
+  AST *test = typecheck_input("let randfloat = extern fn (double max) double");
+
+  AST *fn_h = AST_TOP_LEVEL(test, 0);
+  mu_assert(fn_h->type.tag == T_FN, "function type is populated");
+  mu_assert(fn_h->type.as.T_FN.length == 2,
+            "function type has 1 param & 1 return val (length = 2)");
+
+  mu_assert(fn_h->type.as.T_FN.members[0].tag == T_NUM &&
+                fn_h->type.as.T_FN.members[1].tag == T_NUM,
+            "function has type (Num -> Num)");
+
+  free_ast(test);
+  return 0;
+}
+
 int all_tests() {
   int test_result = 0;
   mu_run_test(test_nothing);
@@ -360,6 +376,7 @@ int all_tests() {
   mu_run_test(test_fib_fn);
   mu_run_test(test_partially_explicitly_typed_fn);
 
+  mu_run_test(test_extern_fn);
   // mu_run_test(test_int_casting);
   return test_result;
 }

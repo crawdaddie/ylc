@@ -1,7 +1,7 @@
 #ifndef _LANG_CODEGEN_CONDITIONALS_H
 #define _LANG_CODEGEN_CONDITIONALS_H
-#include "ast.h"
-#include "llvm_backend.h"
+#include "../ast.h"
+#include "../llvm_backend.h"
 #include <llvm-c/Core.h>
 
 LLVMValueRef codegen_if_else(AST *ast, Context *ctx);

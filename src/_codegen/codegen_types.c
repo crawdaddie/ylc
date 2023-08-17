@@ -106,7 +106,7 @@ void codegen_struct(AST *ast, LLVMTypeRef structType, Context *ctx) {
   LLVMStructSetBody(structType, structFields, num_members, 0);
 }
 
-LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
+LLVMTypeRef _codegen_type(AST *ast, char *name, Context *ctx) {
   switch (ast->tag) {
   case AST_STRUCT: {
     struct AST_STRUCT data = AST_DATA(ast, STRUCT);
@@ -138,7 +138,7 @@ LLVMTypeRef codegen_type(AST *ast, char *name, Context *ctx) {
     struct AST_UNOP data = AST_DATA(ast, UNOP);
     if (data.op == TOKEN_AMPERSAND) {
       // Ptr type
-      LLVMTypeRef base_type = codegen_type(data.operand, name, ctx);
+      LLVMTypeRef base_type = _codegen_type(data.operand, name, ctx);
       LLVMTypeRef pointer_type = LLVMPointerType(base_type, 0);
       return pointer_type;
     }
@@ -186,4 +186,67 @@ LLVMValueRef struct_instance_with_metadata(AST *expr, LLVMTypeRef type,
   }
 
   return LLVMConstNamedStruct(type, values, metadata->length);
+}
+
+LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
+  switch (type.tag) {
+  case T_INT:
+    return LLVMInt32TypeInContext(ctx->context);
+  case T_NUM:
+    return LLVMDoubleTypeInContext(ctx->context);
+  case T_STR:
+    return LLVMPointerType(LLVMInt8Type(), 0);
+  case T_BOOL:
+    return LLVMInt1Type();
+  case T_VOID:
+    return LLVMVoidTypeInContext(ctx->context);
+  case T_INT8:
+    return LLVMInt8TypeInContext(ctx->context);
+
+  case T_FN: {
+    int len = type.as.T_FN.length;
+    LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len - 1);
+    for (int i = 0; i < len - 1; i++) {
+      params[i] = codegen_ttype(type.as.T_FN.members[i], ctx);
+    }
+    LLVMTypeRef ret_type = codegen_ttype(type.as.T_FN.members[len - 1], ctx);
+    LLVMTypeRef function_type =
+        LLVMFunctionType(ret_type, params, len - 1, false);
+    return function_type;
+  }
+
+  case T_STRUCT: {
+    int len = type.as.T_STRUCT.length;
+    LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len);
+    for (int i = 0; i < len; i++) {
+      params[i] = codegen_ttype(type.as.T_STRUCT.members[i], ctx);
+    }
+    return LLVMStructType(params, len, true);
+  }
+
+  case T_TUPLE: {
+    int len = type.as.T_TUPLE.length;
+    LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len);
+    for (int i = 0; i < len; i++) {
+      params[i] = codegen_ttype(type.as.T_TUPLE.members[i], ctx);
+    }
+    return LLVMStructType(params, len, true);
+  }
+  }
+}
+int get_struct_member_index(ttype struct_type, char *name) {
+  struct_member_metadata *md = struct_type.as.T_STRUCT.struct_metadata;
+  for (int i = 0; i < struct_type.as.T_STRUCT.length; i++) {
+    struct_member_metadata member_type = md[i];
+
+    if (strcmp(name, member_type.name) == 0) {
+      return member_type.index;
+    }
+  }
+  return -1;
+}
+
+LLVMTypeRef codegen_type(AST *ast, Context *ctx) {
+  ttype type = ast->type;
+  return codegen_ttype(type, ctx);
 }

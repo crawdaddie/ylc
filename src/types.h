@@ -75,4 +75,10 @@ ttype tstruct(ttype *member_types, struct_member_metadata *md, int length);
 bool is_generic_type(ttype t);
 
 extern int t_counter;
+
+int get_struct_member_index(ttype struct_type, char *name);
+
+bool is_numeric_type(ttype t);
+ttype_tag max_type(ttype a, ttype b);
+
 #endif

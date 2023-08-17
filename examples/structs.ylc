@@ -4,17 +4,17 @@ type Point = struct (
 )
 
 
-let Point x = (
+let Point p = (
     x = 2.0,
     y = 1.0,
 )
 
-let zero = fn(Point p, double x) Point {
-    p.x = x
-}
-
-
-x.x = 2.5
+#let zero = fn(Point p, double x) Point {
+#    p.x = x
+#}
+#
+#
+#x.x = 2.5
 
 
 

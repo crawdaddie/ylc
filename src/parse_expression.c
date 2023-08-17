@@ -42,6 +42,7 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
   case TOKEN_MODULO:
   case TOKEN_SLASH:
   case TOKEN_EQUALITY:
+  case TOKEN_NOT_EQUAL:
   case TOKEN_LT:
   case TOKEN_GT:
   case TOKEN_LTE:
@@ -356,6 +357,7 @@ ParseRule rules[] = {
     [TOKEN_MINUS] = {parse_unary, parse_binary, PREC_TERM},
     [TOKEN_PLUS] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_EQUALITY] = {NULL, parse_binary, PREC_TERM},
+    [TOKEN_NOT_EQUAL] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_MODULO] = {NULL, parse_binary, PREC_TERM},
     [TOKEN_NL] = {NULL, NULL, PREC_NONE},
     [TOKEN_SLASH] = {NULL, parse_binary, PREC_FACTOR},

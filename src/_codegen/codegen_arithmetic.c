@@ -1,5 +1,5 @@
 #include "codegen_arithmetic.h"
-#include "lexer.h"
+#include "../lexer.h"
 #include <stdio.h>
 static LLVMTypeRef int_type(Context *ctx) {
   return LLVMInt32TypeInContext(ctx->context);
@@ -58,15 +58,14 @@ static LLVMOpcode op_map(token_type op, int is_float) {
 // }
 
 LLVMValueRef codegen_numerical_equality(LLVMValueRef left, LLVMTypeRef ltype,
-                              LLVMValueRef right, LLVMTypeRef rtype,
-                              Context *ctx) {
+                                        LLVMValueRef right, LLVMTypeRef rtype,
+                                        Context *ctx) {
 
   LLVMTypeRef itype = int_type(ctx);
 
   if (ltype == itype && rtype == itype) {
     return LLVMBuildICmp(ctx->builder, LLVMIntEQ, left, right, "int_eq");
   }
-
 
   LLVMTypeRef dbltype = double_type(ctx);
 
@@ -78,8 +77,7 @@ LLVMValueRef codegen_numerical_equality(LLVMValueRef left, LLVMTypeRef ltype,
     right = LLVMBuildSIToFP(ctx->builder, right, dbltype, "dbl_eq");
   }
 
-  return LLVMBuildFCmp(ctx->builder, LLVMRealUEQ, left, right,
-                       "dbl_eq");
+  return LLVMBuildFCmp(ctx->builder, LLVMRealUEQ, left, right, "dbl_eq");
 }
 
 LLVMValueRef numerical_binop(token_type op, LLVMValueRef left,

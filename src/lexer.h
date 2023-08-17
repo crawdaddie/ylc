@@ -20,6 +20,7 @@ typedef enum token_type {
   TOKEN_STAR,
   TOKEN_ASSIGNMENT,
   TOKEN_EQUALITY,
+  TOKEN_NOT_EQUAL,
   TOKEN_LT,
   TOKEN_GT,
   TOKEN_LTE,

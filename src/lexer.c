@@ -437,6 +437,10 @@ static int _MODULO_MATCHER(const char *input, token *tail) {
 
 static int _BANG_MATCHER(const char *input, token *tail) {
   if (*input == '!') {
+    if (*(input + 1) == '=') {
+      *tail = create_symbol_token(TOKEN_NOT_EQUAL);
+      return 2;
+    }
     *tail = create_symbol_token(TOKEN_BANG);
     return 1;
   }

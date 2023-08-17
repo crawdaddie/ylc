@@ -4,7 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define INIT_SYM_TABLE(entry_type)                                             \
+#define INIT_SYM_TABLE_TYPES(entry_type)                                       \
   typedef struct entry_type##_Symbol {                                         \
     char *key;                                                                 \
     entry_type value;                                                          \
@@ -21,15 +21,17 @@
     int current_frame_index;                                                   \
   } entry_type##_SymbolTable;                                                  \
                                                                                \
-  entry_type##_Symbol *entry_type##_create_entry(const char *key,              \
-                                                 entry_type value) {           \
+  static entry_type##_Symbol *entry_type##_create_entry(const char *key,       \
+                                                        entry_type value) {    \
     entry_type##_Symbol *entry =                                               \
         (entry_type##_Symbol *)malloc(sizeof(entry_type##_Symbol));            \
     entry->key = strdup(key);                                                  \
     entry->value = value;                                                      \
     entry->next = NULL;                                                        \
     return entry;                                                              \
-  }                                                                            \
+  }
+
+#define INIT_SYM_TABLE(entry_type)                                             \
                                                                                \
   void entry_type##_push_frame(entry_type##_SymbolTable *table) {              \
     table->current_frame_index++;                                              \
@@ -107,15 +109,9 @@
                                                                                \
     for (int i = table->current_frame_index; i >= 0; i--) {                    \
       entry_type##_StackFrame *frame = &table->stack[i];                       \
-      entry_type##_Symbol *entry = frame->entries[index];                      \
-                                                                               \
-      while (entry != NULL) {                                                  \
-        if (strcmp(entry->key, key) == 0) {                                    \
-          *value = entry->value;                                               \
-          return 0;                                                            \
-        }                                                                      \
-        entry = entry->next;                                                   \
-      }                                                                        \
+      if (entry_type##_env_lookup_idx(frame, key, index, value) == 0) {        \
+        return 0;                                                              \
+      };                                                                       \
     }                                                                          \
                                                                                \
     return 1;                                                                  \

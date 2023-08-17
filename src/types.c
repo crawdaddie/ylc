@@ -78,3 +78,24 @@ bool is_generic_type(ttype t) {
 
   return false;
 };
+
+int get_struct_member_index(ttype struct_type, char *name) {
+  struct_member_metadata *md = struct_type.as.T_STRUCT.struct_metadata;
+  for (int i = 0; i < struct_type.as.T_STRUCT.length; i++) {
+    struct_member_metadata member_type = md[i];
+
+    if (strcmp(name, member_type.name) == 0) {
+      return member_type.index;
+    }
+  }
+  return -1;
+}
+
+bool is_numeric_type(ttype t) { return t.tag >= T_INT8 && t.tag <= T_NUM; }
+
+ttype_tag max_type(ttype a, ttype b) {
+  if (a.tag >= b.tag) {
+    return a.tag;
+  }
+  return b.tag;
+}

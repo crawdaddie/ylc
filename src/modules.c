@@ -3,6 +3,7 @@
 #include "parse.h"
 #include "typecheck.h"
 
+INIT_SYM_TABLE_TYPES(LangModule);
 INIT_SYM_TABLE(LangModule);
 
 typedef LangModule_StackFrame ModuleEnv;

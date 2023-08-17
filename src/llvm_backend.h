@@ -1,6 +1,7 @@
 #ifndef _LANG_LLVM_BACKEND_H
 #define _LANG_LLVM_BACKEND_H
 #include "symbol_table.h"
+#include "typecheck.h"
 #include <llvm-c/Core.h>
 #include <llvm-c/ExecutionEngine.h>
 #include <llvm-c/Target.h>
@@ -18,6 +19,11 @@ typedef struct {
   LLVMPassManagerRef pass_manager;
 
   char *module_path;
+
+  ast_SymbolTable *ast_symbol_table;
+  TypeEquationsList type_equations;
+  // TypeEnv type_env;
+
 } Context;
 
 int init_lang_ctx(Context *ctx);

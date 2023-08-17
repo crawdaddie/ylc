@@ -5,6 +5,7 @@ typedef struct {
   int value;
 } ttype_;
 
+INIT_SYM_TABLE_TYPES(ttype_)
 INIT_SYM_TABLE(ttype_)
 
 int test_insert_value() {

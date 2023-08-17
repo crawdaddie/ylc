@@ -1,5 +1,6 @@
-import "libyalce_synth.so"
+let x = fn (i) {
+  1
+}
 
-let setup_audio = extern fn () int
 
-setup_audio()
+let g = x(0)

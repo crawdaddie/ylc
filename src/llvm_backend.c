@@ -1,13 +1,13 @@
 #include "input.h"
 #include "parse.h"
 #include "symbol_table.h"
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <limits.h>
+#include <string.h>
 #include <unistd.h>
 
-#include "codegen.h"
+#include "codegen/codegen.h"
 #include "llvm_backend.h"
 #include "typecheck.h"
 #include <llvm-c/BitWriter.h>
@@ -133,6 +133,11 @@ int LLVMRuntime(int repl, char *path, char *output) {
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;
 
+  TypeCheckContext tcheck_ctx = {};
+  ast_SymbolTable tcheck_symbol_table = {}; // init to zero
+  tcheck_symbol_table.current_frame_index = 0;
+  tcheck_ctx.symbol_table = &tcheck_symbol_table;
+
   if (repl) {
     printf("\033[1;31m"
            "YLC LANG REPL       \n"
@@ -152,7 +157,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
       return compile_to_output_file(output, ast, &ctx);
     }
 
-    typecheck(ast, path);
+    typecheck_in_ctx(ast, path, &tcheck_ctx);
     dump_ast(ast);
     LLVMValueRef value = codegen(ast, &ctx);
     dump_module(ctx.module);
@@ -189,7 +194,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
     AST *ast = parse(input);
 
-    typecheck(ast, cwd);
+    typecheck_in_ctx(ast, cwd, &tcheck_ctx);
     dump_ast(ast);
 
     LLVMValueRef value = codegen(ast, &ctx);

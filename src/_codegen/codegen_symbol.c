@@ -1,7 +1,7 @@
 #include "codegen_symbol.h"
+#include "../typecheck.h"
 #include "codegen.h"
 #include "codegen_types.h"
-#include "typecheck.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -209,28 +209,12 @@ LLVMValueRef codegen_symbol_assignment(AST *ast, Context *ctx) {
   LLVMValueRef value;
 
   if (expr->type.tag == T_STRUCT) {
-
     value = codegen(expr, ctx);
-
     LLVMTypeRef type = LLVMTypeOf(value);
     return codegen_symbol(identifier, value, type, ctx);
   }
 
-  if (ast->data.AST_ASSIGNMENT.type != NULL) {
-
-    type_symbol_table *metadata =
-        get_type_metadata(ast->data.AST_ASSIGNMENT.type, ctx);
-
-    if (metadata != NULL) {
-      LLVMTypeRef llvm_type = type_lookup(ast->data.AST_ASSIGNMENT.type, ctx);
-
-      value = struct_instance_with_metadata(expr, llvm_type, metadata, ctx);
-    } else {
-      value = codegen(expr, ctx);
-    }
-  } else {
-    value = codegen(expr, ctx);
-  }
+  value = codegen(expr, ctx);
 
   if (value == NULL) {
     return NULL;
