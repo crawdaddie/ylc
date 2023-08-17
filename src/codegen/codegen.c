@@ -1,4 +1,5 @@
 #include "codegen.h"
+#include "codegen_conditional.h"
 #include "codegen_function.h"
 #include "codegen_op.h"
 #include "codegen_symbol.h"
@@ -106,10 +107,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_UNOP: return codegen_unop(ast, ctx);
   case AST_BINOP: return codegen_binop(ast, ctx);
   case AST_CALL: return codegen_call(ast, ctx);
+  case AST_IF_ELSE: return codegen_if_else(ast, ctx);
+  case AST_MATCH: return codegen_match(ast, ctx);
   case AST_FN_PROTOTYPE:
   case AST_TUPLE:
-  case AST_IF_ELSE:
-  case AST_MATCH:
   case AST_STRUCT:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
