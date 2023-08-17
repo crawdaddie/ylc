@@ -134,7 +134,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
   ctx.symbol_table = &symbol_table;
 
   TypeCheckContext tcheck_ctx = {};
-  ast_SymbolTable tcheck_symbol_table = {}; // init to zero
+  AST_SymbolTable tcheck_symbol_table = {}; // init to zero
+  //
   tcheck_symbol_table.current_frame_index = 0;
   tcheck_ctx.symbol_table = &tcheck_symbol_table;
 
@@ -194,8 +195,15 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
     AST *ast = parse(input);
 
-    typecheck_in_ctx(ast, cwd, &tcheck_ctx);
     dump_ast(ast);
+    for (int i = 0; i < TABLE_SIZE; i++) {
+      AST_Symbol *sym = tcheck_ctx.symbol_table->stack[0].entries[i];
+      if (sym != NULL) {
+        printf("%s: %d", sym->key, sym->value.tag);
+        // print_ast(*sym->value, 0);
+      }
+    }
+    typecheck_in_ctx(ast, cwd, &tcheck_ctx);
 
     LLVMValueRef value = codegen(ast, &ctx);
 

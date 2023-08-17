@@ -48,7 +48,13 @@ static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
 
-  tc_error_flag = typecheck(ast, "_");
+  TypeCheckContext tcheck_ctx = {};
+  AST_SymbolTable tcheck_symbol_table = {}; // init to zero
+  //
+  tcheck_symbol_table.current_frame_index = 0;
+  tcheck_ctx.symbol_table = &tcheck_symbol_table;
+
+  tc_error_flag = typecheck_in_ctx(ast, "_", &tcheck_ctx);
   return ast;
 }
 
@@ -275,17 +281,17 @@ int test_generic_fn() {
   ttype ret_tuple_type = fn_type.as.T_FN.members[6];
   mu_assert(ret_tuple_type.tag == T_TUPLE, "return has tuple type");
 
-  int all_equal = 1;
+  int each_equal = 1;
 
   for (int i = 0; i < 6; i++) {
     if (strcmp(ret_tuple_type.as.T_TUPLE.members[0].as.T_VAR.name,
                fn_type.as.T_FN.members[0].as.T_VAR.name) != 0) {
-      all_equal = 0;
+      each_equal = 0;
     }
   }
 
   mu_assert(
-      all_equal == 1,
+      each_equal == 1,
       "return type of generic function is derived from types of arguments");
   mu_assert(ret_tuple_type.as.T_TUPLE.members[6].tag == T_INT,
             "Final member of tuple is int");
@@ -375,9 +381,8 @@ int all_tests() {
   mu_run_test(test_generic_fn);
   mu_run_test(test_fib_fn);
   mu_run_test(test_partially_explicitly_typed_fn);
-
+  mu_run_test(test_int_casting);
   mu_run_test(test_extern_fn);
-  // mu_run_test(test_int_casting);
   return test_result;
 }
 

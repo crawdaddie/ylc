@@ -3,9 +3,9 @@
 #include "ast.h"
 #include "generic_symbol_table.h"
 
-typedef AST *ast;
+// typedef AST *ast;
 int typecheck(AST *ast, const char *module_path);
-INIT_SYM_TABLE_TYPES(ast);
+INIT_SYM_TABLE_TYPES(AST);
 
 typedef struct {
   ttype *left; // dependent type
@@ -19,7 +19,7 @@ typedef struct {
 } TypeEquationsList;
 
 typedef struct {
-  ast_SymbolTable *symbol_table;
+  AST_SymbolTable *symbol_table;
   TypeEquationsList type_equations;
   const char *module_path;
 } TypeCheckContext;

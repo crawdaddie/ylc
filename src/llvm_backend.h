@@ -20,8 +20,8 @@ typedef struct {
 
   char *module_path;
 
-  ast_SymbolTable *ast_symbol_table;
-  TypeEquationsList type_equations;
+  // ast_SymbolTable *ast_symbol_table;
+  // TypeEquationsList type_equations;
   // TypeEnv type_env;
 
 } Context;

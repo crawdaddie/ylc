@@ -14,7 +14,7 @@
 #include <limits.h>
 // #define _TYPECHECK_DBG
 
-INIT_SYM_TABLE(ast);
+INIT_SYM_TABLE(AST);
 
 static int _typecheck_error_flag = 0;
 
@@ -118,11 +118,11 @@ void push_type_equation(TypeEquationsList *list, ttype *dependent_type,
 }
 
 static void enter_ttype_scope(TypeCheckContext *ctx) {
-  ast_push_frame(ctx->symbol_table);
+  AST_push_frame(ctx->symbol_table);
 }
 
 static void exit_ttype_scope(TypeCheckContext *ctx) {
-  ast_pop_frame(ctx->symbol_table);
+  AST_pop_frame(ctx->symbol_table);
 }
 
 static bool is_boolean_binop(token_type op) {
@@ -148,7 +148,7 @@ static ttype lookup_explicit_type(char *type_identifier,
     return Int;
   }
   AST *sym;
-  if (ast_table_lookup(ctx->symbol_table, type_identifier, &sym) == 0) {
+  if (AST_table_lookup(ctx->symbol_table, type_identifier, sym) == 0) {
     return sym->type;
   }
 }
@@ -220,7 +220,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   if (ast == NULL) {
     return;
   }
-
   switch (ast->tag) {
 
   case AST_BINOP: {
@@ -262,7 +261,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     char *name = ast->data.AST_FN_DECLARATION.name;
 
     if (name && ast->data.AST_FN_DECLARATION.is_extern) {
-      ast_table_insert(ctx->symbol_table, name, ast);
+      AST_table_insert(ctx->symbol_table, name, *ast);
 
       AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
       enter_ttype_scope(ctx);
@@ -281,15 +280,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       ttype *fn_type = malloc(sizeof(ttype));
       *fn_type = tfn(fn_members, length);
 
-      ast_table_insert(ctx->symbol_table, name, ast);
+      AST_table_insert(ctx->symbol_table, name, *ast);
       push_type_equation(&ctx->type_equations, &ast->type, fn_type);
       break;
     }
 
-
-
     AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-    ast_table_insert(ctx->symbol_table, name, ast);
+    AST_table_insert(ctx->symbol_table, name, *ast);
     enter_ttype_scope(ctx);
     generate_equations(prototype_ast, ctx);
 
@@ -324,8 +321,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_CALL: {
 
     char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
-    AST *func_ast;
-    if (ast_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
+    AST func_ast;
+    if (AST_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
       fprintf(stderr, "Error [typecheck]: function %s not found in scope\n",
               name);
 
@@ -333,8 +330,9 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       break;
     };
 
-
-    int fn_type_len = func_ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length + 1;
+    int fn_type_len = func_ast.data.AST_FN_DECLARATION.prototype->data
+                          .AST_FN_PROTOTYPE.length +
+                      1;
 
     ttype *fn_type_list = malloc(sizeof(ttype) * (fn_type_len));
 
@@ -348,7 +346,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ttype *implied_fn_type = malloc(sizeof(ttype));
     *implied_fn_type = tfn(fn_type_list, fn_type_len);
 
-    push_type_equation(&ctx->type_equations, &func_ast->type, implied_fn_type);
+    push_type_equation(&ctx->type_equations, &func_ast.type, implied_fn_type);
 
     break;
   }
@@ -402,12 +400,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_IDENTIFIER: {
 
     char *name = ast->data.AST_IDENTIFIER.identifier;
-    AST *sym_ast;
+    AST sym_ast;
 
-    if (ast_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
-      // printf("\nfound %s %d\n", name, sym_ast->type.tag);
-      // print_ttype(sym_ast->type);
-      push_type_equation(&ctx->type_equations, &ast->type, &sym_ast->type);
+    if (AST_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
+      // TODO: ew
+      ttype *t = malloc(sizeof(ttype));
+      *t = sym_ast.type;
+      push_type_equation(&ctx->type_equations, &ast->type, t);
     } else {
       fprintf(stderr, "Error [typecheck]: symbol %s not found in this scope\n",
               name);
@@ -427,16 +426,16 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       push_type_equation(&ctx->type_equations, &ast->type, &t);
     }
 
-    ast_table_insert(ctx->symbol_table, name, ast);
+    AST_table_insert(ctx->symbol_table, name, *ast);
     break;
   }
   case AST_ASSIGNMENT: {
     char *name = ast->data.AST_ASSIGNMENT.identifier;
     generate_equations(ast->data.AST_ASSIGNMENT.expression, ctx);
-    AST *sym_ast;
-    if (ast_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
+    AST sym_ast;
+    if (AST_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
       // sym already exists - this is a reassignment
-      push_type_equation(&ctx->type_equations, &sym_ast->type,
+      push_type_equation(&ctx->type_equations, &(sym_ast.type),
                          &ast->data.AST_ASSIGNMENT.expression->type);
       break;
     }
@@ -446,7 +445,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     // }
     assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
-    ast_table_insert(ctx->symbol_table, name, ast);
+    AST_table_insert(ctx->symbol_table, name, *ast);
 
     push_type_equation(&ctx->type_equations, &ast->type,
                        &ast->data.AST_ASSIGNMENT.expression->type);
@@ -455,8 +454,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_TYPE_DECLARATION: {
     char *name = ast->data.AST_TYPE_DECLARATION.name;
 
-    AST *sym_ast;
-    if (ast_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
+    AST sym_ast;
+    if (AST_table_lookup(ctx->symbol_table, name, &sym_ast) == 0) {
       // sym already exists - this is a reassignment
       // push_type_equation(&ctx->type_equations, &sym_ast->type,
       //                    &ast->data.AST_ASSIGNMENT.expression->type);
@@ -470,7 +469,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     push_type_equation(&ctx->type_equations, &ast->type, t);
 
-    ast_table_insert(ctx->symbol_table, name, ast);
+    AST_table_insert(ctx->symbol_table, name, *ast);
     break;
   }
   case AST_MAIN: {
@@ -525,20 +524,20 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
 
   case AST_MEMBER_ACCESS: {
-    AST *object;
+    printf("mem access?\n");
+    AST object;
     char *obj_identifier =
         ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
 
-    if (ast_table_lookup(
+    if (AST_table_lookup(
             ctx->symbol_table,
             ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
             &object) == 0) {
 
-      while (object->type.tag == T_VAR) {
-        ast_table_lookup(ctx->symbol_table, object->type.as.T_VAR.name,
-                         &object);
+      while (object.type.tag == T_VAR) {
+        AST_table_lookup(ctx->symbol_table, object.type.as.T_VAR.name, &object);
       }
-      if (object->type.tag != T_STRUCT) {
+      if (object.type.tag != T_STRUCT) {
         fprintf(stderr,
                 "Error [typecheck]: object %s does not have named members",
                 obj_identifier);
@@ -547,14 +546,15 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
       char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
 
-      ttype obj_type = object->type;
-      for (int i = 0; i < object->type.as.T_STRUCT.length; i++) {
+      ttype obj_type = object.type;
+      for (int i = 0; i < object.type.as.T_STRUCT.length; i++) {
         if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
             0) {
           int member_idx = obj_type.as.T_STRUCT.struct_metadata[i].index;
+          ttype *t = malloc(sizeof(ttype));
+          *t = obj_type.as.T_STRUCT.members[member_idx];
 
-          push_type_equation(&ctx->type_equations, &ast->type,
-                             &obj_type.as.T_STRUCT.members[member_idx]);
+          push_type_equation(&ctx->type_equations, &ast->type, t);
 
           break;
         }
@@ -576,7 +576,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       char *mod_name = basename(module_name);
       remove_extension(mod_name);
 
-      ast_table_insert(ctx->symbol_table, mod_name,mod_ast);
+      AST_table_insert(ctx->symbol_table, mod_name, *mod_ast);
       ast->tag = AST_ASSIGNMENT;
       ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){.identifier = mod_name,
                                                          .expression = mod_ast};
@@ -1141,7 +1141,7 @@ int typecheck(AST *ast, const char *module_path) {
   TypeCheckContext ctx;
   ctx.module_path = module_path;
 
-  ast_SymbolTable symbol_table = {}; // init to zero
+  AST_SymbolTable symbol_table = {}; // init to zero
   symbol_table.current_frame_index = 0;
   ctx.symbol_table = &symbol_table;
 
