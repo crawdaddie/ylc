@@ -145,7 +145,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   // Get the return type of the function
   LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
-  LLVMDumpValue(func);
   int is_void = 0;
 
   // Check if the return type is void
@@ -154,7 +153,8 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   }
   LLVMValueRef val =
       LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args,
-                     arg_count, is_void ? "" : inst_name("call"));
+                     arg_count, "");
+  LLVMDumpValue(val);
 
   free(args);
   return val;

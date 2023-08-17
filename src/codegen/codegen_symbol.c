@@ -19,24 +19,30 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   SymbolValue val;
   if (table_lookup(ctx->symbol_table, name, &val) == 0) {
-    LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
-    LLVMValueRef value = codegen(expr, ctx);
-    LLVMBuildStore(ctx->builder, value, variable);
-    return variable;
+    if (val.type == TYPE_GLOBAL_VARIABLE) {
+
+      LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
+      LLVMValueRef value = codegen(expr, ctx);
+      LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
+      LLVMDumpValue(s);
+      return variable;
+    } else if (val.type == TYPE_VARIABLE) {
+      LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
+      LLVMValueRef value = codegen(expr, ctx);
+      LLVMBuildStore(ctx->builder, value, variable);
+      return variable;
+    }
   }
 
-  // symbol doesn't exist create new
-  // return NULL;
   LLVMValueRef value = NULL;
   LLVMTypeRef type_ref = codegen_ttype(type, ctx);
 
   LLVMValueRef variable = NULL;
 
   if (ctx->symbol_table->current_frame_index == 0) {
-    // create global var
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
-    // printf("global %s\n", name);
-    // LLVMDumpValue(variable);
+
+    LLVMSetInitializer(variable, LLVMConstNull(type_ref));
     val.type = TYPE_GLOBAL_VARIABLE;
     val.data.TYPE_GLOBAL_VARIABLE.llvm_value = variable;
     val.data.TYPE_GLOBAL_VARIABLE.llvm_type = type_ref;
@@ -55,14 +61,8 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   if (expr) {
     value = codegen(expr, ctx);
-    // printf("\nstore val\n");
-    // LLVMDumpValue(value);
-    // printf("\n");
-    // LLVMDumpValue(variable);
-    LLVMSetInitializer(variable, value);
+    LLVMBuildStore(ctx->builder, value, variable);
     return variable;
-    // LLVMBuildStore(ctx->builder, value, variable);
-    // return variable;
   };
 
   return variable;
@@ -81,12 +81,16 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   switch (val.type) {
   case TYPE_VARIABLE: {
     LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
-    return LLVMBuildLoad2(ctx->builder, LLVMGetElementType(LLVMTypeOf(variable)), variable, "");
+    return LLVMBuildLoad2(
+        ctx->builder, LLVMGetElementType(LLVMTypeOf(variable)), variable, "");
   }
 
   case TYPE_GLOBAL_VARIABLE: {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
-    return LLVMGetInitializer(global);
+    // return LLVMGetInitializer(global);
+    //
+    return LLVMBuildLoad2(ctx->builder, LLVMGetElementType(LLVMTypeOf(global)),
+                          global, "");
   }
 
   case TYPE_FN_PARAM: {

@@ -1,6 +1,6 @@
-let x = fn (i) {
+let f = fn (i) {
   1
 }
 
 
-let g = x(0)
+f(0)
