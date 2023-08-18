@@ -1,6 +1,6 @@
 #ifndef _LANG_EXPRESSION_H
 #define _LANG_EXPRESSION_H
-#include "ast.h"
+#include "../ast.h"
 #include <stdbool.h>
 
 typedef enum {

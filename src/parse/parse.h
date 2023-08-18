@@ -1,7 +1,7 @@
 #ifndef _LANG_COMPILER_H
 #define _LANG_COMPILER_H
-#include "ast.h"
-#include "lexer.h"
+#include "../ast.h"
+#include "../lexer.h"
 #include <stdbool.h>
 AST *parse(const char *source);
 

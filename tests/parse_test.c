@@ -1,8 +1,8 @@
 #include "../src/ast.h"
 #include "../src/lexer.h"
-#include "../src/parse.h"
-#include "../src/parse_function.h"
-#include "../src/parse_statement.h"
+#include "../src/parse/parse.h"
+#include "../src/parse/parse_function.h"
+#include "../src/parse/parse_statement.h"
 #include "utils.h"
 #include <stdarg.h>
 #include <stdio.h>

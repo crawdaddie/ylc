@@ -5,6 +5,7 @@ BUILD_DIR := build
 # List all the source files and object files
 SRC := $(wildcard $(SRC_DIR)/*.c)
 SRC += $(wildcard $(SRC_DIR)/codegen/*.c)
+SRC += $(wildcard $(SRC_DIR)/parse/*.c)
 OBJ := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SRC))
 
 CC=clang
@@ -29,6 +30,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 $(BUILD_DIR):
 	mkdir -p $(BUILD_DIR)
 	mkdir -p $(BUILD_DIR)/codegen/
+	mkdir -p $(BUILD_DIR)/parse/
 
 # Clean target
 .PHONY: clean

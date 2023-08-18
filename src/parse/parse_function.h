@@ -1,6 +1,6 @@
 #ifndef _LANG_PARSE_FUNCTION_H
 #define _LANG_PARSE_FUNCTION_H
-#include "ast.h"
+#include "../ast.h"
 
 AST *parse_fn_arg();
 AST *parse_fn_body();

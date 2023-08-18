@@ -1,5 +1,5 @@
 #include "input.h"
-#include "parse.h"
+#include "parse/parse.h"
 #include "symbol_table.h"
 #include <limits.h>
 #include <stdio.h>

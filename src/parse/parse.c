@@ -1,9 +1,9 @@
 #include "parse.h"
-#include "ast.h"
-#include "lexer.h"
+#include "../ast.h"
+#include "../lexer.h"
+#include "../types.h"
 #include "parse_expression.h"
 #include "parse_statement.h"
-#include "types.h"
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>

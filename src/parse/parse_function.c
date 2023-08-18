@@ -1,5 +1,5 @@
 #include "parse_function.h"
-#include "lexer.h"
+#include "../lexer.h"
 #include "parse.h"
 #include "parse_expression.h"
 #include "parse_statement.h"

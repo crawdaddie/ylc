@@ -1,6 +1,6 @@
 #include "modules.h"
 #include "input.h"
-#include "parse.h"
+#include "parse/parse.h"
 #include "typecheck.h"
 
 INIT_SYM_TABLE_TYPES(LangModule);

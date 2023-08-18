@@ -1,9 +1,9 @@
 #include "parse_statement.h"
-#include "lexer.h"
+#include "../lexer.h"
+#include "../paths.h"
 #include "parse.h"
 #include "parse_expression.h"
 #include "parse_function.h"
-#include "paths.h"
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
