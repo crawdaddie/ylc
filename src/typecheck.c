@@ -1129,9 +1129,9 @@ void update_expression_types(AST *ast, TypeEnv *env) {
 
   if (ast->type.tag == T_VAR &&
       ttype_env_lookup(env, ast->type.as.T_VAR.name, &lookup) == 0) {
-    ast->type = lookup;
+    ttype *final = follow_links(env, &lookup);
+    ast->type = *final;
   }
-
   return;
 }
 

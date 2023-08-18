@@ -157,8 +157,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
       return compile_to_output_file(output, ast, &ctx);
     }
 
-    typecheck_in_ctx(ast, path, &tcheck_ctx);
     dump_ast(ast);
+    typecheck_in_ctx(ast, path, &tcheck_ctx);
     LLVMValueRef value = codegen(ast, &ctx);
     dump_module(ctx.module);
 
