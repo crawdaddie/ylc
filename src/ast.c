@@ -215,6 +215,9 @@ void print_ast(AST ast, int indent) {
 
   case AST_IMPORT: {
     printf("import %s\n", ast.data.AST_IMPORT.module_name);
+    if (ast.data.AST_IMPORT.module_ast) {
+      print_ast(*ast.data.AST_IMPORT.module_ast, indent + 1);
+    }
     break;
   }
   case AST_VAR_ARG: {
@@ -349,5 +352,3 @@ AST *ast_new(AST ast) {
   ptr->type = _tvar();
   return ptr;
 }
-
-

@@ -1,6 +1,8 @@
 #include "codegen.h"
+#include "codegen_compound.h"
 #include "codegen_conditional.h"
 #include "codegen_function.h"
+#include "codegen_module.h"
 #include "codegen_op.h"
 #include "codegen_symbol.h"
 #include <llvm-c/Analysis.h>
@@ -47,6 +49,7 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 }
 
 LLVMValueRef codegen(AST *ast, Context *ctx) {
+
   switch (ast->tag) {
   case AST_MAIN: {
     return codegen_main(ast, ctx);
@@ -102,21 +105,29 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_symbol(name, type, expr, ctx);
   }
   case AST_IDENTIFIER: {
-      return codegen_identifier(ast, ctx);
-    }
-  case AST_UNOP: return codegen_unop(ast, ctx);
-  case AST_BINOP: return codegen_binop(ast, ctx);
-  case AST_CALL: return codegen_call(ast, ctx);
-  case AST_IF_ELSE: return codegen_if_else(ast, ctx);
-  case AST_MATCH: return codegen_match(ast, ctx);
-  case AST_FN_PROTOTYPE:
+    return codegen_identifier(ast, ctx);
+  }
   case AST_TUPLE:
+    return codegen_tuple(ast, ctx);
   case AST_STRUCT:
+    return codegen_struct(ast, ctx);
+  case AST_UNOP:
+    return codegen_unop(ast, ctx);
+  case AST_BINOP:
+    return codegen_binop(ast, ctx);
+  case AST_CALL:
+    return codegen_call(ast, ctx);
+  case AST_IF_ELSE:
+    return codegen_if_else(ast, ctx);
+  case AST_MATCH:
+    return codegen_match(ast, ctx);
+  case AST_IMPORT:
+    return codegen_module(ast, ctx);
+  case AST_FN_PROTOTYPE:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ACCESS:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
-  case AST_IMPORT:
   case AST_IMPORT_LIB:
   case AST_VAR_ARG:
   default:

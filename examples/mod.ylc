@@ -1,5 +1,9 @@
 import "./math.ylc"
 
-math.mod_func
+#math.mod_func
+math.x
+
+import "./math.ylc"
+#math.add2(1)
 
 

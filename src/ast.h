@@ -185,6 +185,7 @@ struct AST {
 
     struct AST_IMPORT {
       char *module_name;
+      AST *module_ast;
     } AST_IMPORT;
 
     struct AST_IMPORT_LIB {

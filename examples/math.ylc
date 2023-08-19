@@ -6,4 +6,12 @@ let mod_func = fn (x) {
   x + 1
 }
 
-let x = 2
+let add2 = fn (x) {
+  x + 2
+}
+
+let add3 = fn (x, y) {
+  x + 3 + y
+}
+let x= 200.0
+

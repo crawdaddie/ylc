@@ -564,23 +564,39 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
 
   case AST_IMPORT: {
-    const char *module_name = ast->data.AST_IMPORT.module_name;
+    const char *module_filename = ast->data.AST_IMPORT.module_name;
+    char *mod_name = basename(module_filename);
+    if (has_extension(module_filename, ".ylc")) {
+      remove_extension(mod_name);
+    }
+
     char resolved_path[PATH_MAX];
-    resolve_path(dirname(ctx->module_path), module_name, resolved_path);
+    resolve_path(dirname(ctx->module_path), module_filename, resolved_path);
     AST *mod_ast = get_module(resolved_path);
+    ast->data.AST_IMPORT.module_ast = mod_ast;
 
     // assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
-    if (has_extension(module_name, ".ylc")) {
-      char *mod_name = basename(module_name);
-      remove_extension(mod_name);
+    if (has_extension(module_filename, ".ylc")) {
+      // remove_extension(mod_name);
+
+      struct AST_IMPORT import = ast->data.AST_IMPORT;
+      import.module_ast = mod_ast;
+      AST *import_ast = malloc(sizeof(AST));
+      import_ast->tag = AST_IMPORT;
+      import_ast->data.AST_IMPORT = import;
+      import_ast->type = mod_ast->type;
 
       AST_table_insert(ctx->symbol_table, mod_name, *mod_ast);
+      // printf("table insert mod [%s] mod_name\n");
       ast->tag = AST_ASSIGNMENT;
-      ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){.identifier = mod_name,
-                                                         .expression = mod_ast};
+      ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){
+          .identifier = mod_name, .expression = import_ast};
 
       push_type_equation(&ctx->type_equations, &ast->type, &mod_ast->type);
+      // push_type_equation(&ctx->type_equations,
+      //                    &ast->data.AST_ASSIGNMENT.expression->type,
+      //                    &mod_ast->type);
     }
 
     break;

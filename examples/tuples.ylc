@@ -1,19 +1,19 @@
 type Triple = (int, int, int)
-let a = (1,100,3)
+let Triple a = (1,100,3)
 
-let printf = extern fn (str input, int i) int
-
-let printint = fn (int input) int {
-let x = input
-    printf("%d\n", input)
-}
-
-
-
-let nth = fn (Triple t, int n) int {
-    t[n]
-}
-
-
-printint(nth(a, 2))
+#let printf = extern fn (str input, int i) int
+#
+#let printint = fn (int input) int {
+#let x = input
+#    printf("%d\n", input)
+#}
+#
+#
+#
+#let nth = fn (Triple t, int n) int {
+#    t[n]
+#}
+#
+#
+#printint(nth(a, 2))
 

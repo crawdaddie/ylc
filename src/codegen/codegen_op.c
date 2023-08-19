@@ -28,10 +28,12 @@ static LLVMValueRef numeric_binop(AST *left, AST *right, token_type op,
   LLVMValueRef r = codegen(right, ctx);
   if (left->type.tag < right->type.tag) {
     // cast left val up to match right
-    l = LLVMBuildSIToFP(ctx->builder, l, LLVMDoubleTypeInContext(ctx->context), "cast"); 
+    l = LLVMBuildSIToFP(ctx->builder, l, LLVMDoubleTypeInContext(ctx->context),
+                        "cast");
   } else if (right->type.tag < left->type.tag) {
     // cast right val up to match left
-    r = LLVMBuildSIToFP(ctx->builder, r, LLVMDoubleTypeInContext(ctx->context), "cast"); 
+    r = LLVMBuildSIToFP(ctx->builder, r, LLVMDoubleTypeInContext(ctx->context),
+                        "cast");
   } else if (left->type.tag == right->type.tag) {
   }
 
@@ -57,7 +59,7 @@ static LLVMValueRef numeric_binop(AST *left, AST *right, token_type op,
 
   if (max_tag_type == T_NUM) {
     // build float binop
-    printf("float binop\n");
+    // printf("float binop\n");
     return LLVMBuildBinOp(ctx->builder, OperatorMapFloat[op], l, r,
                           inst_name("float_binop"));
   }

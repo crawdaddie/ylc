@@ -14,6 +14,31 @@ void save_module(char *path, AST *ast) {
   LangModule_env_insert(&module_env, path, mod);
 }
 
+void save_langmod(char *path, LangModule *mod) {
+  LangModule_env_insert(&module_env, path, *mod);
+}
+
+void writeToFile(FILE *file, const void *data, size_t size) {
+  fwrite(data, size, 1, file);
+}
+static void writeTypeToFile(FILE *file, ttype type) {
+  int len = type.as.T_STRUCT.length;
+  writeToFile(file, &len, sizeof(int));
+  writeToFile(file, &type.as.T_STRUCT.members, sizeof(struct ttype) * len);
+
+  writeToFile(file, &type.as.T_STRUCT.struct_metadata,
+              sizeof(struct_member_metadata) * len);
+}
+
+static void save_type_bin(ttype mod_type) {
+  FILE *write_ptr;
+  write_ptr = fopen("./output.bin", "wb"); // w for write, b for binary
+
+  writeTypeToFile(write_ptr, mod_type);
+  fclose(write_ptr);
+  // write 10 bytes from our buffer
+}
+
 ttype compute_module_type(AST *ast) {}
 
 AST *parse_module(char *path) {
@@ -75,15 +100,20 @@ AST *parse_module(char *path) {
     }
   }
 
+  // print_ast(*module_struct_ast, 0);
   ttype module_type = module_struct_ast->type;
   module_type.tag = T_STRUCT;
   module_type.as.T_STRUCT.length = len;
   module_type.as.T_STRUCT.members = member_types;
   module_type.as.T_STRUCT.struct_metadata = md;
-  module_struct_ast->type = module_type;
 
-  return module_struct_ast;
+  free(module_struct_ast);
+
+  ast->type = module_type;
+
+  return ast;
 }
+
 /*
  * Returns the body of the module's Main node
  * ie either a list of statements or a single statement
@@ -96,4 +126,12 @@ AST *get_module(char *path) {
   AST *module = parse_module(path);
   save_module(path, module);
   return module;
+}
+
+LangModule *lookup_langmod(char *path) {
+  LangModule mod;
+  if (LangModule_env_lookup(&module_env, path, &mod) == 0) {
+    return &mod;
+  }
+  return NULL;
 }
