@@ -24,7 +24,7 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
       LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
       LLVMValueRef value = codegen(expr, ctx);
       LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
-      LLVMDumpValue(s);
+      // LLVMDumpValue(s);
       return variable;
     } else if (val.type == TYPE_VARIABLE) {
       LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
@@ -41,7 +41,6 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   if (ctx->symbol_table->current_frame_index == 0) {
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
-
     LLVMSetInitializer(variable, LLVMConstNull(type_ref));
     val.type = TYPE_GLOBAL_VARIABLE;
     val.data.TYPE_GLOBAL_VARIABLE.llvm_value = variable;

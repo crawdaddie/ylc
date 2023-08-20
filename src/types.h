@@ -23,9 +23,9 @@ typedef enum {
   T_BOOL,   // bool
   T_TUPLE,  // struct or tuple
   T_STRUCT, // struct or tuple
-  T_PTR,    // &'x
   T_VOID,   // void
   T_FN,     // t1 -> t2 -> ... -> return_type
+  T_PTR,    // &'x
 } ttype_tag;
 
 typedef struct {
@@ -39,11 +39,16 @@ typedef struct ttype {
     struct T_VAR {
       char name[16];
     } T_VAR;
+
     struct T_FN {
       int length; // length = num params + 1
       // ie: param_t1 -> param_t2 -> param_t3 -> return_type
       struct ttype *members;
     } T_FN;
+
+    struct T_PTR {
+      struct ttype *item;
+    } T_PTR;
 
     struct T_TUPLE {
       int length;
@@ -69,6 +74,7 @@ ttype tint();
 ttype tnum();
 ttype tbool();
 ttype tstr();
+ttype tptr(ttype *pointed_to);
 
 ttype tstruct(ttype *member_types, struct_member_metadata *md, int length);
 

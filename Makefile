@@ -12,7 +12,7 @@ CC=clang
 LD=clang
 
 C_FLAGS=-Wall -Wextra
-C_FLAGS+=-g
+# C_FLAGS+=-g
 #
 LLVM_CC_FLAGS=`llvm-config --cflags`
 LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`

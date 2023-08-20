@@ -1,4 +1,5 @@
 #include "codegen.h"
+#include "../paths.h"
 #include "codegen_compound.h"
 #include "codegen_conditional.h"
 #include "codegen_function.h"
@@ -101,6 +102,8 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     // also handles immediate declaration + assignment [ let a = x ]
     const char *name = ast->data.AST_ASSIGNMENT.identifier;
     ttype type = ast->type;
+    // printf("assignment\n");
+    // print_ttype(type);
     AST *expr = ast->data.AST_ASSIGNMENT.expression;
     return codegen_symbol(name, type, expr, ctx);
   }
@@ -123,12 +126,22 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_match(ast, ctx);
   case AST_IMPORT:
     return codegen_module(ast, ctx);
+  case AST_IMPORT_LIB: {
+    if (has_extension(ast->data.AST_IMPORT_LIB.lib_name, ".so")) {
+      return codegen_so(ast, ctx);
+    }
+    return NULL;
+  }
+  case AST_MEMBER_ACCESS: {
+    // print_ttype(ast->type);
+    // printf("member access\n");
+    // print_ast(*ast, 0);
+    return NULL;
+  }
   case AST_FN_PROTOTYPE:
   case AST_TYPE_DECLARATION:
-  case AST_MEMBER_ACCESS:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
-  case AST_IMPORT_LIB:
   case AST_VAR_ARG:
   default:
     break;

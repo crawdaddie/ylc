@@ -1,4 +1,5 @@
 #include "codegen_types.h"
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -26,6 +27,7 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
     LLVMTypeRef ret_type = codegen_ttype(type.as.T_FN.members[len - 1], ctx);
     LLVMTypeRef function_type =
         LLVMFunctionType(ret_type, params, len - 1, false);
+
     return function_type;
   }
 
@@ -33,9 +35,15 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
     int len = type.as.T_STRUCT.length;
     LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len);
     for (int i = 0; i < len; i++) {
-      params[i] = codegen_ttype(type.as.T_STRUCT.members[i], ctx);
+      ttype member_type = type.as.T_STRUCT.members[i];
+      if (member_type.tag == T_FN) {
+        params[i] = LLVMPointerType(codegen_ttype(member_type, ctx), 0);
+      } else {
+        params[i] = codegen_ttype(member_type, ctx);
+      }
     }
-    return LLVMStructType(params, len, true);
+    LLVMTypeRef t = LLVMStructType(params, len, true);
+    return t;
   }
 
   case T_TUPLE: {
@@ -45,6 +53,9 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
       params[i] = codegen_ttype(type.as.T_TUPLE.members[i], ctx);
     }
     return LLVMStructType(params, len, true);
+  }
+  case T_PTR: {
+    return LLVMPointerType(codegen_ttype(*type.as.T_PTR.item, ctx), 0);
   }
   }
 }

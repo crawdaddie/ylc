@@ -35,6 +35,12 @@ ttype tstruct(ttype *member_types, struct_member_metadata *md, int length) {
                   }}};
 }
 
+ttype tptr(ttype *pointed_to) {
+  ttype t = {T_PTR};
+  t.as.T_PTR.item = pointed_to;
+  return t;
+}
+
 char *_tname() {
   t_counter++;
   char *result =

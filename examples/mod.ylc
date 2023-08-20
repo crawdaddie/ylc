@@ -1,9 +1,16 @@
 import "./math.ylc"
+#let f = math.add2
+
+#let x = f(2)
 
 #math.mod_func
-math.x
+#math.x
 
-import "./math.ylc"
+#import "libffi.so"
+#let randint = extern fn (int max) int
+#let randfloat = extern fn (double max) double
+#
+#randfloat(5.0)
 #math.add2(1)
 
 

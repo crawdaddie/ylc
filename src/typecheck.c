@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include <limits.h>
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(AST);
 
@@ -87,6 +87,11 @@ void print_ttype(ttype type) {
         printf(" * ");
     }
     printf(")");
+    break;
+  }
+  case T_PTR: {
+    printf("*");
+    print_ttype(*type.as.T_PTR.item);
     break;
   }
   }
@@ -603,7 +608,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_IMPORT_LIB: {
 
-    printf("handle lib import\n");
     break;
   }
   case AST_EXPRESSION:
@@ -1226,11 +1230,17 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
 
   update_expression_types(ast, &ctx->type_env);
 
+#ifdef _TYPECHECK_DBG
+  // printf("eqs---\n");
+  // for (int i = 0; i < ctx.type_equations.length; i++) {
+  //   print_type_equation(ctx.type_equations.equations[i]);
+  // }
+  // printf("---\n");
+  // print_env(&ctx->type_env);
+#endif
   if (_typecheck_error_flag) {
     return 1;
   }
-
-  // free(ctx->type_equations.equations); // free original pointer to eqs
 
   return _typecheck_error_flag;
 }

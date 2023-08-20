@@ -62,6 +62,14 @@ AST *parse_module(char *path) {
 
   for (int i = 0; i < len; i++) {
     AST *stmt = module_struct_ast->data.AST_STRUCT.members[i];
+    /*
+        if (stmt->type.tag == T_FN) {
+          ttype *item = malloc(sizeof(ttype));
+          *item = stmt->type;
+          member_types[i] = tptr(item);
+        } else {
+        }
+        */
     member_types[i] = stmt->type;
     switch (stmt->tag) {
     case AST_TYPE_DECLARATION: {

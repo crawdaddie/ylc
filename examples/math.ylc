@@ -13,5 +13,4 @@ let add2 = fn (x) {
 let add3 = fn (x, y) {
   x + 3 + y
 }
-let x= 200.0
 
