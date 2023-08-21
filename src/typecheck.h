@@ -33,4 +33,6 @@ void print_ttype(ttype type);
 void print_last_entered_type(AST *ast);
 
 bool types_equal(ttype *l, ttype *r);
+
+ttype get_fn_return_type(ttype fn_type);
 #endif
