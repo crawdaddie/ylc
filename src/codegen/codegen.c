@@ -116,8 +116,10 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_struct(ast, ctx);
   case AST_UNOP:
     return codegen_unop(ast, ctx);
-  case AST_BINOP:
+  case AST_BINOP: {
+
     return codegen_binop(ast, ctx);
+  }
   case AST_CALL:
     return codegen_call(ast, ctx);
   case AST_IF_ELSE:
@@ -148,7 +150,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       return NULL;
     }
 
-    char *member_name  = ast->data.AST_MEMBER_ACCESS.member_name;
+    char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
     LLVMValueRef object;
     ttype object_type;
     if (val.type == TYPE_VARIABLE) {
@@ -161,17 +163,18 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     } else if (val.type == TYPE_MODULE) {
       return lookup_module_member(val, member_name, ctx);
     } else {
-      fprintf(stderr, "Error: unrecognized variable type"); 
+      fprintf(stderr, "Error: unrecognized variable type");
       return NULL;
     }
-// should i be dereferencing this?
-    // object = LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(object), 0),
+    // should i be dereferencing this?
+    // object = LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(object),
+    // 0),
     //                       object, "get_struct");
-
 
     unsigned int member_idx = get_struct_member_index(object_type, member_name);
 
-    LLVMValueRef member = LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
+    LLVMValueRef member =
+        LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
     LLVMDumpValue(member);
     return member;
   }

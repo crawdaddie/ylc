@@ -18,7 +18,7 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
 
-int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
+int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value, ttype t) {
 
   if (value == NULL) {
     fprintf(stderr, "Unable to codegen for node\n");
@@ -26,8 +26,38 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value) {
   }
 
   void *fp = LLVMGetPointerToGlobal(engine, value);
-  int (*FP)() = (int (*)())(intptr_t)fp;
-  fprintf(stderr, "(%d)\n", FP());
+  switch (t.tag) {
+  case T_BOOL:
+  case T_INT: {
+    int val = ((int (*)())fp)();
+    fprintf(stderr, "(%d)\n", val);
+    break;
+  }
+  case T_NUM: {
+    double val = ((double (*)())fp)();
+    fprintf(stderr, "(%f)\n", val);
+    break;
+  }
+  case T_STR: {
+    char *val = ((char *(*)())fp)();
+    fprintf(stderr, "(%s)\n", val);
+    break;
+  }
+  case T_INT8: {
+    void *val = ((void *(*)())fp)();
+    fprintf(stderr, "(%p)\n", val);
+    break;
+  }
+  case T_TUPLE:
+  case T_STRUCT:
+  case T_VOID:
+  case T_FN:
+  case T_PTR:
+  default: {
+    int val = ((int (*)())fp)();
+    fprintf(stderr, "(%d)\n", val);
+  }
+  }
   return 0;
 }
 
@@ -113,8 +143,9 @@ static int dump_ir(Context *ctx, char *output) {
   return 0;
 }
 
-int compile_to_output_file(char *output, AST *ast, Context *ctx) {
-  typecheck(ast, ctx->module_path);
+int compile_to_output_file(char *output, AST *ast, Context *ctx,
+                           TypeCheckContext *tcheck_ctx) {
+  typecheck_in_ctx(ast, ctx->module_path, tcheck_ctx);
   codegen(ast, ctx);
   dump_ir(ctx, output);
   free_ast(ast);
@@ -133,10 +164,11 @@ int LLVMRuntime(int repl, char *path, char *output) {
   init_symbol_table(&symbol_table);
   ctx.symbol_table = &symbol_table;
 
-  TypeCheckContext tcheck_ctx = {};
-  AST_SymbolTable tcheck_symbol_table = {}; // init to zero
+  TypeCheckContext tcheck_ctx = {0};
+  AST_SymbolTable tcheck_symbol_table = {0}; // init to zero
   tcheck_symbol_table.current_frame_index = 0;
   tcheck_ctx.symbol_table = &tcheck_symbol_table;
+  t_counter = 0;
 
   if (repl) {
     printf("\033[1;31m"
@@ -154,7 +186,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
     ctx.module_path = path;
     LLVMSetSourceFileName(ctx.module, path, strlen(path));
     if (output) {
-      return compile_to_output_file(output, ast, &ctx);
+      return compile_to_output_file(output, ast, &ctx, &tcheck_ctx);
     }
 
     dump_ast(ast);
@@ -163,9 +195,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
     dump_module(ctx.module);
 
     printf("\n\033[1;35m");
-    print_last_entered_type(ast);
+    ttype ret_type = get_last_entered_type(ast);
+    print_ttype(ret_type);
     printf("\033[1;0m\n");
-    run_value(ctx.engine, value);
+    run_value(ctx.engine, value, ret_type);
     free_ast(ast);
 
     if (!repl) {
@@ -203,9 +236,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
       dump_module(ctx.module);
 
     printf("\n\033[1;35m");
-    print_last_entered_type(ast);
+    ttype ret_type = get_last_entered_type(ast);
+    print_ttype(ret_type);
     printf("\033[1;0m\n");
-    run_value(ctx.engine, value);
+    run_value(ctx.engine, value, ret_type);
     free_ast(ast);
     reinit_lang_ctx(&ctx);
   }

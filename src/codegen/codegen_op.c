@@ -72,6 +72,7 @@ static LLVMValueRef numeric_binop(AST *left, AST *right, token_type op,
 }
 
 LLVMValueRef codegen_binop(AST *ast, Context *ctx) {
+
   AST *left = ast->data.AST_BINOP.left;
   AST *right = ast->data.AST_BINOP.right;
   token_type op = ast->data.AST_BINOP.op;

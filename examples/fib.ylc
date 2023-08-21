@@ -5,7 +5,7 @@
 #  printf("\n")
 #}
 
-let fib = fn (int n) {
+let fib = fn (n) {
   #fprintf("fmt: %d\n", n)
   match n
   | 0 -> 0

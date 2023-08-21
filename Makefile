@@ -64,6 +64,10 @@ build/type_expressions_test: $(TEST_OBJ) $(BUILD_DIR)/type_expressions_test.o
 	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
 	./$@
 
+build/unify_types_test: $(TEST_OBJ) $(BUILD_DIR)/unify_types_test.o
+	$(LD) $(LLVM_LINK_FLAGS) $^ -o $@
+	./$@
+
 $(BUILD_DIR)/%.o: $(TEST_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(LLVM_CC_FLAGS) $(C_FLAGS) -c $< -o $@
 

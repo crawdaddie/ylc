@@ -19,7 +19,14 @@ static AST *typecheck_input(const char *input) {
   tc_error_flag = 0;
   AST *ast = parse(input);
 
-  tc_error_flag = typecheck(ast, "_");
+  TypeCheckContext tcheck_ctx = {};
+  AST_SymbolTable tcheck_symbol_table = {}; // init to zero
+  //
+  tcheck_symbol_table.current_frame_index = 0;
+  tcheck_ctx.symbol_table = &tcheck_symbol_table;
+
+  tc_error_flag = typecheck_in_ctx(ast, "_", &tcheck_ctx);
+
   return ast;
 }
 

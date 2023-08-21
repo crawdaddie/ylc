@@ -110,7 +110,7 @@ AST *ast_tuple(int length, ...) {
   AST *tuple = AST_NEW(TUPLE, length);
   if (length == 0) {
 
-    AST **list = malloc(sizeof(AST *));
+    AST **list = calloc(sizeof(AST *), 1);
     tuple->data.AST_TUPLE.members = list;
     return tuple;
   }
@@ -120,7 +120,7 @@ AST *ast_tuple(int length, ...) {
   // Initialize the va_list with the variable arguments
   va_start(args, length);
 
-  AST **list = malloc(sizeof(AST *) * length);
+  AST **list = calloc(sizeof(AST *), length);
   for (int i = 0; i < length; i++) {
     AST *arg = va_arg(args, AST *);
     list[i] = arg;
@@ -159,7 +159,8 @@ static AST *parse_tuple() {
       advance();
     }
   }
-  if (tuple->data.AST_TUPLE.members[0]->tag == AST_ASSIGNMENT) {
+  if (tuple->data.AST_TUPLE.members[0] != NULL &&
+      tuple->data.AST_TUPLE.members[0]->tag == AST_ASSIGNMENT) {
     tuple->tag = AST_STRUCT;
     tuple->data.AST_STRUCT.members = tuple->data.AST_TUPLE.members;
     tuple->data.AST_STRUCT.length = tuple->data.AST_TUPLE.length;

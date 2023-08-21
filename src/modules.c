@@ -41,11 +41,11 @@ static void save_type_bin(ttype mod_type) {
 
 ttype compute_module_type(AST *ast) {}
 
-AST *parse_module(char *path) {
+AST *parse_module(char *path, TypeCheckContext *ctx) {
   char *input = read_file(path);
   AST *ast = parse(input);
   free(input);
-  typecheck(ast, path);
+  typecheck_in_ctx(ast, path, ctx);
 
   int len = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length;
 
@@ -126,12 +126,12 @@ AST *parse_module(char *path) {
  * Returns the body of the module's Main node
  * ie either a list of statements or a single statement
  * */
-AST *get_module(char *path) {
+AST *get_module(char *path, TypeCheckContext *ctx) {
   LangModule mod;
   if (LangModule_env_lookup(&module_env, path, &mod) == 0) {
     return mod.ast;
   }
-  AST *module = parse_module(path);
+  AST *module = parse_module(path, ctx);
   save_module(path, module);
   return module;
 }

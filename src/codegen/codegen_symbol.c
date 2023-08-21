@@ -31,7 +31,6 @@ static LLVMValueRef symbol_reassignment(SymbolValue val, const char *name,
     LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     LLVMValueRef value = codegen(expr, ctx);
     LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
-    // LLVMDumpValue(s);
     return variable;
   } else if (val.type == TYPE_VARIABLE) {
     LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
@@ -60,9 +59,9 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
   if (type.tag == T_FN) {
     LLVMValueRef value;
     LLVMTypeRef type_ref = codegen_ttype(type, ctx);
+
     if (expr) {
       value = codegen(expr, ctx);
-      LLVMDumpValue(value);
       bind_function(name, value, type_ref, type, ctx);
       return value;
     }
@@ -70,6 +69,9 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
   }
 
   if (ctx->symbol_table->current_frame_index == 0) {
+    printf("assignment %s\n", name);
+    print_ttype(type);
+
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
     LLVMSetInitializer(variable, LLVMConstNull(type_ref));
     val.type = TYPE_GLOBAL_VARIABLE;
@@ -134,6 +136,10 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   }
 
   case TYPE_FUNCTION: {
+    LLVMValueRef f = LLVMGetNamedFunction(ctx->module, name);
+    if (f) {
+      return f;
+    }
     return val.data.TYPE_FUNCTION.llvm_value;
   }
 

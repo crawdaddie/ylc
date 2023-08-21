@@ -38,6 +38,7 @@ struct AST {
     AST_IMPORT,
     AST_IMPORT_LIB,
     AST_VAR_ARG,
+    AST_CURRIED_FN
   } tag;
 
   union {
@@ -138,6 +139,12 @@ struct AST {
       AST *identifier;
       AST *parameters;
     } AST_CALL;
+
+    struct AST_CURRIED_FN {
+      AST *identifier;
+      AST *parameters;
+      int filled_len;
+    } AST_CURRIED_FN;
 
     struct AST_TUPLE {
       int length;

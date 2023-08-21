@@ -279,5 +279,15 @@ int main() {
     AST_NEW(IDENTIFIER, "x_"), AST_NEW(IDENTIFIER, "y_")), AST_NEW(IDENTIFIER,
     "j"))), "h"));
       */
+
+  /*
+  test_parse("let h = fn () {1 + 2}\n"
+             "h()\n",
+             2,
+             AST_NEW(FN_DECLARATION, AST_NEW(FN_PROTOTYPE, 2, NULL, NULL),
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                             AST_NEW(INTEGER, 2)),
+                     "h"));
+                     */
   return test_result;
 }
