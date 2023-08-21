@@ -1,5 +1,6 @@
 #include "codegen_symbol.h"
 #include "codegen.h"
+#include "codegen_function.h"
 #include "codegen_types.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -11,6 +12,35 @@ SymbolValue get_value(char *identifier, Context *ctx) {
   }
   return val;
 }
+
+static LLVMValueRef symbol_reassignment(SymbolValue val, const char *name,
+                                        ttype type, AST *expr, Context *ctx) {
+  // reassignment
+  if (type.tag == T_FN) {
+    LLVMValueRef value = NULL;
+    LLVMTypeRef type_ref = codegen_ttype(type, ctx);
+    if (expr) {
+      value = codegen(expr, ctx);
+      bind_function(name, value, type_ref, type, ctx);
+      return value;
+    }
+    return NULL;
+  }
+  if (val.type == TYPE_GLOBAL_VARIABLE) {
+
+    LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
+    LLVMValueRef value = codegen(expr, ctx);
+    LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
+    // LLVMDumpValue(s);
+    return variable;
+  } else if (val.type == TYPE_VARIABLE) {
+    LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
+    LLVMValueRef value = codegen(expr, ctx);
+    LLVMBuildStore(ctx->builder, value, variable);
+    return variable;
+  }
+  return NULL;
+}
 /**
  *
  * */
@@ -19,25 +49,25 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   SymbolValue val;
   if (table_lookup(ctx->symbol_table, name, &val) == 0) {
-    if (val.type == TYPE_GLOBAL_VARIABLE) {
-
-      LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
-      LLVMValueRef value = codegen(expr, ctx);
-      LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
-      // LLVMDumpValue(s);
-      return variable;
-    } else if (val.type == TYPE_VARIABLE) {
-      LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
-      LLVMValueRef value = codegen(expr, ctx);
-      LLVMBuildStore(ctx->builder, value, variable);
-      return variable;
-    }
+    return symbol_reassignment(val, name, type, expr, ctx);
   }
 
   LLVMValueRef value = NULL;
   LLVMTypeRef type_ref = codegen_ttype(type, ctx);
 
   LLVMValueRef variable = NULL;
+
+  if (type.tag == T_FN) {
+    LLVMValueRef value;
+    LLVMTypeRef type_ref = codegen_ttype(type, ctx);
+    if (expr) {
+      value = codegen(expr, ctx);
+      LLVMDumpValue(value);
+      bind_function(name, value, type_ref, type, ctx);
+      return value;
+    }
+    return NULL;
+  }
 
   if (ctx->symbol_table->current_frame_index == 0) {
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
@@ -66,8 +96,11 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   return variable;
 }
-
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
+  if (ast->tag == AST_MEMBER_ACCESS) {
+    return codegen(ast, ctx);
+  }
+
   char *name = ast->data.AST_IDENTIFIER.identifier;
 
   SymbolValue val;
@@ -88,7 +121,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
     // return LLVMGetInitializer(global);
     //
-    return LLVMBuildLoad2(ctx->builder, LLVMGetElementType(LLVMTypeOf(global)),
+    return LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(global), 0),
                           global, "");
   }
 
@@ -98,7 +131,8 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
 
   case TYPE_FUNCTION: {
     // return val.data.TYPE_FUNCTION.llvm_value;
-    return LLVMGetNamedFunction(ctx->module, name);
+    // return LLVMGetNamedFunction(ctx->module, name);
+    return val.data.TYPE_FUNCTION.llvm_value;
   }
 
   case TYPE_RECURSIVE_REF: {

@@ -1,4 +1,8 @@
 import "./math.ylc"
+
+let x = math.add2(2)
+
+
 #let f = math.add2
 
 #let x = f(2)

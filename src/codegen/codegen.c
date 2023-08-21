@@ -133,10 +133,48 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return NULL;
   }
   case AST_MEMBER_ACCESS: {
+    // printf("\nmember access\n");
+    // print_ast(*ast->data.AST_MEMBER_ACCESS.object, 0);
+    // printf(". %s\n", ast->data.AST_MEMBER_ACCESS.member_name);
     // print_ttype(ast->type);
-    // printf("member access\n");
-    // print_ast(*ast, 0);
-    return NULL;
+    //
+    char *object_id =
+        ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
+
+    SymbolValue val;
+
+    if (table_lookup(ctx->symbol_table, object_id, &val) != 0) {
+      fprintf(stderr, "Error symbol %s not found\n", object_id);
+      return NULL;
+    }
+
+    char *member_name  = ast->data.AST_MEMBER_ACCESS.member_name;
+    LLVMValueRef object;
+    ttype object_type;
+    if (val.type == TYPE_VARIABLE) {
+      object = val.data.TYPE_VARIABLE.llvm_value;
+      object_type = val.data.TYPE_VARIABLE.type;
+
+    } else if (val.type == TYPE_GLOBAL_VARIABLE) {
+      object = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
+      object_type = val.data.TYPE_GLOBAL_VARIABLE.type;
+    } else if (val.type == TYPE_MODULE) {
+      printf("module lookup\n");
+      return lookup_module_member(val, member_name, ctx);
+    } else {
+      fprintf(stderr, "Error: unrecognized variable type"); 
+      return NULL;
+    }
+// should i be dereferencing this?
+    // object = LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(object), 0),
+    //                       object, "get_struct");
+
+
+    unsigned int member_idx = get_struct_member_index(object_type, member_name);
+
+    LLVMValueRef member = LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
+    LLVMDumpValue(member);
+    return member;
   }
   case AST_FN_PROTOTYPE:
   case AST_TYPE_DECLARATION:

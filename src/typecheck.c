@@ -158,6 +158,49 @@ static ttype lookup_explicit_type(char *type_identifier,
   }
 }
 
+ttype get_fn_return_type(ttype fn_type) {
+  int len = fn_type.as.T_FN.length;
+  return fn_type.as.T_FN.members[len - 1];
+}
+
+static int ast_member_lookup(AST *ast, TypeCheckContext *ctx, AST *object) {
+
+  char *obj_identifier =
+      ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
+
+  if (AST_table_lookup(
+          ctx->symbol_table,
+          ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
+          object) == 0) {
+
+    while (object->type.tag == T_VAR) {
+      AST_table_lookup(ctx->symbol_table, object->type.as.T_VAR.name, object);
+    }
+    return 0;
+  }
+  return 1;
+}
+
+static void typecheck_object_member_call(AST *ast, TypeCheckContext *ctx) {
+
+  AST *object = malloc(sizeof(AST));
+  if (ast_member_lookup(ast->data.AST_CALL.identifier, ctx, object) == 0) {
+    char *member_name =
+        ast->data.AST_CALL.identifier->data.AST_MEMBER_ACCESS.member_name;
+    unsigned int idx = get_struct_member_index(object->type, member_name);
+    ttype member_type = object->type.as.T_STRUCT.members[idx];
+    if (member_type.tag != T_FN) {
+      fprintf(stderr, "Error: %s not callable", member_name);
+      return;
+    }
+    ttype *return_type = malloc(sizeof(ttype));
+    *return_type = get_fn_return_type(member_type);
+
+    push_type_equation(&ctx->type_equations, &ast->type, return_type);
+    return;
+  };
+}
+
 static ttype *compute_type_expression(AST *ast, TypeCheckContext *ctx) {
   switch (ast->tag) {
 
@@ -222,6 +265,7 @@ void assign_explicit_type(AST *ast, char *type_identifier,
  * a float
  **/
 static void generate_equations(AST *ast, TypeCheckContext *ctx) {
+  printf("gen eq %d\n", ast->tag);
   if (ast == NULL) {
     return;
   }
@@ -323,8 +367,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
 
   case AST_CALL: {
+    if (ast->data.AST_CALL.identifier->tag == AST_MEMBER_ACCESS) {
+      typecheck_object_member_call(ast, ctx);
+      break;
+    }
 
     char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+
     AST func_ast;
     if (AST_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
       fprintf(stderr, "Error [typecheck]: function %s not found in scope\n",
@@ -410,6 +459,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       // TODO: ew
       ttype *t = malloc(sizeof(ttype));
       *t = sym_ast.type;
+
       push_type_equation(&ctx->type_equations, &ast->type, t);
     } else {
       fprintf(stderr, "Error [typecheck]: symbol %s not found in this scope\n",
@@ -541,6 +591,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       while (object.type.tag == T_VAR) {
         AST_table_lookup(ctx->symbol_table, object.type.as.T_VAR.name, &object);
       }
+
       if (object.type.tag != T_STRUCT) {
         fprintf(stderr,
                 "Error [typecheck]: object %s does not have named members",
@@ -579,26 +630,27 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     resolve_path(dirname(ctx->module_path), module_filename, resolved_path);
     AST *mod_ast = get_module(resolved_path);
     ast->data.AST_IMPORT.module_ast = mod_ast;
+    ast->type = mod_ast->type;
 
     // assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
     if (has_extension(module_filename, ".ylc")) {
       // remove_extension(mod_name);
 
-      struct AST_IMPORT import = ast->data.AST_IMPORT;
-      import.module_ast = mod_ast;
-      AST *import_ast = malloc(sizeof(AST));
-      import_ast->tag = AST_IMPORT;
-      import_ast->data.AST_IMPORT = import;
-      import_ast->type = mod_ast->type;
+      // struct AST_IMPORT import = ast->data.AST_IMPORT;
+      // import.module_ast = mod_ast;
+      // AST *import_ast = malloc(sizeof(AST));
+      // import_ast->tag = AST_IMPORT;
+      // import_ast->data.AST_IMPORT = import;
+      // import_ast->type = mod_ast->type;
 
-      AST_table_insert(ctx->symbol_table, mod_name, *mod_ast);
+      AST_table_insert(ctx->symbol_table, mod_name, *ast);
       // printf("table insert mod [%s] mod_name\n");
-      ast->tag = AST_ASSIGNMENT;
-      ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){
-          .identifier = mod_name, .expression = import_ast};
+      // ast->tag = AST_ASSIGNMENT;
+      // ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){
+      //     .identifier = mod_name, .expression = ast};
 
-      push_type_equation(&ctx->type_equations, &ast->type, &mod_ast->type);
+      // push_type_equation(&ctx->type_equations, &ast->type, &mod_ast->type);
       // push_type_equation(&ctx->type_equations,
       //                    &ast->data.AST_ASSIGNMENT.expression->type,
       //                    &mod_ast->type);
@@ -751,6 +803,9 @@ bool types_equal(ttype *l, ttype *r) {
 void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left->as.T_FN.length != right->as.T_FN.length) {
+    printf("unify funcs\n");
+    print_type_equation((TypeEquation){left, right});
+
     return;
   }
 
@@ -769,6 +824,10 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
       add_type_to_env(env, l_fn_mem, r_fn_mem);
     }
 
+    if (r_fn_mem->tag == T_VAR) {
+      printf("r type\n");
+      print_ttype(*r_fn_mem);
+    }
     left->as.T_FN.members[i] = right->as.T_FN.members[i];
     unify(l_fn_mem, r_fn_mem, env);
   }
@@ -1124,6 +1183,10 @@ void update_expression_types(AST *ast, TypeEnv *env) {
     update_expression_types(ast->data.AST_UNOP.operand, env);
     break;
   }
+  case AST_MEMBER_ACCESS: {
+    update_expression_types(ast->data.AST_MEMBER_ACCESS.object, env);
+    break;
+  }
   case AST_IDENTIFIER:
   case AST_INTEGER:
   case AST_NUMBER:
@@ -1136,7 +1199,6 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_STRUCT:
-  case AST_MEMBER_ACCESS:
   case AST_TYPE_DECLARATION:
   case AST_MEMBER_ASSIGNMENT:
   case AST_INDEX_ACCESS:
@@ -1212,11 +1274,11 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
     return 1;
   }
 #ifdef _TYPECHECK_DBG
-  // printf("eqs---\n");
-  // for (int i = 0; i < ctx.type_equations.length; i++) {
-  //   print_type_equation(ctx.type_equations.equations[i]);
-  // }
-  // printf("---\n");
+  printf("eqs---\n");
+  for (int i = 0; i < ctx->type_equations.length; i++) {
+    print_type_equation(ctx->type_equations.equations[i]);
+  }
+  printf("---\n");
   printf("typecheck %s\n", module_path);
 #endif
 

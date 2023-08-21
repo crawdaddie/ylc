@@ -33,6 +33,7 @@ typedef struct SymbolValue {
     TYPE_EXTERN_FN,
     TYPE_TYPE_DECLARATION,
     TYPE_FUNCTION,
+    TYPE_MODULE,
   } type;
 
   union {
@@ -75,10 +76,18 @@ typedef struct SymbolValue {
 
     struct TYPE_TYPE_DECLARATION {
       LLVMTypeRef llvm_type;
-      type_symbol_table *type_metadata;
+      // type_symbol_table *type_metadata;
       ttype type;
+
     } TYPE_TYPE_DECLARATION;
+
+    struct TYPE_MODULE {
+      // type_symbol_table *type_metadata;
+      ttype type;
+      char **names;
+    } TYPE_MODULE;
   } data;
+
 } SymbolValue;
 
 #define VALUE(type_tag, ...)                                                   \

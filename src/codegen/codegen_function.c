@@ -45,8 +45,8 @@ static void store_self(char *name, LLVMValueRef function,
                                                      .type = type}}});
 }
 
-static void bind_function(const char *name, LLVMValueRef func,
-                          LLVMTypeRef fn_type, ttype type, Context *ctx) {
+void bind_function(const char *name, LLVMValueRef func, LLVMTypeRef fn_type,
+                   ttype type, Context *ctx) {
 
   SymbolValue sym;
   sym.type = TYPE_FUNCTION;

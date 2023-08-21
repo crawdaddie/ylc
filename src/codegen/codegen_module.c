@@ -6,6 +6,7 @@
 #include <libgen.h>
 #include <limits.h>
 #include <stdio.h>
+#include "../symbol_table.h"
 
 #include <dlfcn.h>
 #include <libgen.h>
@@ -75,6 +76,45 @@ static void mangle_names(LLVMModuleRef module, char *prefix) {
     global = LLVMGetNextGlobal(global);
   }
 }
+static void bind_module(ttype type, char *module_name, Context *ctx) {
+  printf("\nbinding module %s: ", module_name);
+  print_ttype(type);
+  printf("\n");
+
+  int len = type.as.T_STRUCT.length;
+  char **member_mapping = malloc(sizeof(char *) * type.as.T_STRUCT.length); 
+  for (int i = 0; i < len; i++) {
+    struct_member_metadata md = type.as.T_STRUCT.struct_metadata[i];
+    ttype_tag member_type_tag = type.as.T_STRUCT.members[md.index].tag;
+
+    char *mangled_name = mname();
+    sprintf(mangled_name, "_%s_%s", module_name, md.name);
+    member_mapping[md.index] = mangled_name;
+  }
+  SymbolValue module = {
+    .type = TYPE_MODULE,
+    .data = {
+      .TYPE_MODULE = {
+        .type = type,
+        .names = member_mapping
+      }
+    }
+  };
+  table_insert(ctx->symbol_table, module_name, module);
+
+
+}
+
+
+LLVMValueRef lookup_module_member(SymbolValue module_sym, char *member_name, Context *ctx) {
+  ttype type = module_sym.data.TYPE_MODULE.type;
+  unsigned int idx = get_struct_member_index(type, member_name);
+  char *mangled_name = module_sym.data.TYPE_MODULE.names[idx];
+  ttype member_type = module_sym.data.TYPE_MODULE.type.as.T_STRUCT.members[idx];
+  if (member_type.tag == T_FN) {
+    return LLVMGetNamedFunction(ctx->module, mangled_name);
+  }
+}
 
 LLVMValueRef codegen_module(AST *ast, Context *ctx) {
 
@@ -96,6 +136,8 @@ LLVMValueRef codegen_module(AST *ast, Context *ctx) {
     mod_ctx.module_path = resolved_path;
     LLVMSetSourceFileName(mod_ctx.module, resolved_path, strlen(resolved_path));
     codegen(ast->data.AST_IMPORT.module_ast, &mod_ctx);
+    printf("mod type\n");
+    print_ttype(ast->type);
 
     mangle_names(mod_ctx.module, module_name);
 
@@ -113,6 +155,7 @@ LLVMValueRef codegen_module(AST *ast, Context *ctx) {
     save_langmod(resolved_path, lang_module);
   }
   LLVMValueRef module_struct = build_module_struct(ast->type, module_name, ctx);
+  bind_module(ast->type, module_name, ctx);
   return module_struct;
   // return LLVMConstInt(LLVMInt1Type(), 0, 0);
 }
