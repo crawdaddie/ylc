@@ -122,8 +122,15 @@ void print_ast(AST ast, int indent) {
   }
 
   case AST_CALL: {
-    printf("(%s ",
-           ast.data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
+    if (ast.data.AST_CALL.identifier->tag == AST_IDENTIFIER) {
+      printf("(%s ",
+             ast.data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier);
+    } else if (ast.data.AST_CALL.identifier->tag == AST_MEMBER_ACCESS) {
+      printf("( ");
+      print_ast(*ast.data.AST_CALL.identifier, 0);
+    } else {
+      printf("(anon func ");
+    }
     print_ast(*ast.data.AST_CALL.parameters, 0);
     printf(")");
     break;
@@ -193,7 +200,7 @@ void print_ast(AST ast, int indent) {
 
   case AST_MEMBER_ACCESS: {
     print_ast(*ast.data.AST_MEMBER_ACCESS.object, indent);
-    printf(" . %s", ast.data.AST_MEMBER_ACCESS.member_name);
+    printf(".%s ", ast.data.AST_MEMBER_ACCESS.member_name);
     break;
   }
 

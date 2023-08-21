@@ -159,7 +159,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       object = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
       object_type = val.data.TYPE_GLOBAL_VARIABLE.type;
     } else if (val.type == TYPE_MODULE) {
-      printf("module lookup\n");
       return lookup_module_member(val, member_name, ctx);
     } else {
       fprintf(stderr, "Error: unrecognized variable type"); 

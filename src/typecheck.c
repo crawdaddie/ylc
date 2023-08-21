@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include <limits.h>
-#define _TYPECHECK_DBG
+// #define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(AST);
 
@@ -149,9 +149,15 @@ static ttype lookup_explicit_type(char *type_identifier,
   if (strcmp(type_identifier, "double") == 0) {
     return Num;
   }
+
   if (strcmp(type_identifier, "int") == 0) {
     return Int;
   }
+
+  if (strcmp(type_identifier, "str") == 0) {
+    return Str;
+  }
+
   AST *sym;
   if (AST_table_lookup(ctx->symbol_table, type_identifier, sym) == 0) {
     return sym->type;
@@ -187,12 +193,16 @@ static void typecheck_object_member_call(AST *ast, TypeCheckContext *ctx) {
   if (ast_member_lookup(ast->data.AST_CALL.identifier, ctx, object) == 0) {
     char *member_name =
         ast->data.AST_CALL.identifier->data.AST_MEMBER_ACCESS.member_name;
+
     unsigned int idx = get_struct_member_index(object->type, member_name);
+
     ttype member_type = object->type.as.T_STRUCT.members[idx];
+
     if (member_type.tag != T_FN) {
       fprintf(stderr, "Error: %s not callable", member_name);
       return;
     }
+
     ttype *return_type = malloc(sizeof(ttype));
     *return_type = get_fn_return_type(member_type);
 
@@ -254,6 +264,7 @@ void assign_explicit_type(AST *ast, char *type_identifier,
   ttype explicit_type = lookup_explicit_type(type_identifier, ctx);
   ast->type = explicit_type;
 }
+static void typecheck_extern_function(AST *ast, TypeCheckContext *ctx) {}
 
 /*
  * if two types 'l & 'r are numeric, but 'l is an int & 'r is a float
@@ -265,7 +276,6 @@ void assign_explicit_type(AST *ast, char *type_identifier,
  * a float
  **/
 static void generate_equations(AST *ast, TypeCheckContext *ctx) {
-  printf("gen eq %d\n", ast->tag);
   if (ast == NULL) {
     return;
   }

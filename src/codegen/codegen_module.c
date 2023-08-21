@@ -7,11 +7,9 @@
 #include <limits.h>
 #include <stdio.h>
 #include "../symbol_table.h"
-
 #include <dlfcn.h>
 #include <libgen.h>
 #include <stdlib.h>
-
 #include <llvm-c/Linker.h>
 
 #define MAX_ID_LEN 64
@@ -22,7 +20,6 @@ static void mangle_name(const char *prefix, LLVMValueRef value) {
 
   char *mangled_name = mname();
   sprintf(mangled_name, "_%s_%s", prefix, name);
-  // printf("mangled name '%s'\n", mangled_name);
   LLVMSetValueName2(value, mangled_name, strlen(mangled_name));
 }
 
@@ -37,26 +34,13 @@ LLVMValueRef build_module_struct(ttype type, char *module_name, Context *ctx) {
     sprintf(mangled_name, "_%s_%s", module_name, md.name);
     if (member_type_tag == T_FN) {
       members[i] = LLVMGetNamedFunction(ctx->module, mangled_name);
-      // members[i] = LLVMBuildLoad2(ctx->builder, LLVMTypeOf(members[i]),
-      // members[i], "");
 
     } else {
       members[i] = LLVMGetNamedGlobal(ctx->module, mangled_name);
     }
-    /*
-    printf("\nextract\n");
-    LLVMDumpValue(members[i]);
-    printf("\n");
-    LLVMDumpType(LLVMTypeOf(members[i]));
-    printf("\n");
-    */
   }
   LLVMTypeRef struct_ty = codegen_ttype(type, ctx);
   LLVMValueRef mod_struct = LLVMConstStruct(members, len, true);
-  /*
-  printf("\nmod struct type: ");
-  LLVMDumpType(LLVMTypeOf(mod_struct));
-  */
   return mod_struct;
 }
 
@@ -77,9 +61,6 @@ static void mangle_names(LLVMModuleRef module, char *prefix) {
   }
 }
 static void bind_module(ttype type, char *module_name, Context *ctx) {
-  printf("\nbinding module %s: ", module_name);
-  print_ttype(type);
-  printf("\n");
 
   int len = type.as.T_STRUCT.length;
   char **member_mapping = malloc(sizeof(char *) * type.as.T_STRUCT.length); 
@@ -105,15 +86,21 @@ static void bind_module(ttype type, char *module_name, Context *ctx) {
 
 }
 
-
 LLVMValueRef lookup_module_member(SymbolValue module_sym, char *member_name, Context *ctx) {
   ttype type = module_sym.data.TYPE_MODULE.type;
   unsigned int idx = get_struct_member_index(type, member_name);
   char *mangled_name = module_sym.data.TYPE_MODULE.names[idx];
   ttype member_type = module_sym.data.TYPE_MODULE.type.as.T_STRUCT.members[idx];
+
   if (member_type.tag == T_FN) {
     return LLVMGetNamedFunction(ctx->module, mangled_name);
+  } else {
+    LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, mangled_name);
+    LLVMValueRef load = LLVMBuildLoad2(
+        ctx->builder, codegen_ttype(member_type, ctx), global, "");
+    return load;
   }
+  return NULL;
 }
 
 LLVMValueRef codegen_module(AST *ast, Context *ctx) {
@@ -136,8 +123,6 @@ LLVMValueRef codegen_module(AST *ast, Context *ctx) {
     mod_ctx.module_path = resolved_path;
     LLVMSetSourceFileName(mod_ctx.module, resolved_path, strlen(resolved_path));
     codegen(ast->data.AST_IMPORT.module_ast, &mod_ctx);
-    printf("mod type\n");
-    print_ttype(ast->type);
 
     mangle_names(mod_ctx.module, module_name);
 
@@ -154,10 +139,12 @@ LLVMValueRef codegen_module(AST *ast, Context *ctx) {
     lang_module->is_linked = true;
     save_langmod(resolved_path, lang_module);
   }
-  LLVMValueRef module_struct = build_module_struct(ast->type, module_name, ctx);
+
+  // Deprecated in favor of treating module as a separate lookup table type rather than a struct
+  // LLVMValueRef module_struct = build_module_struct(ast->type, module_name, ctx);
+  // return module_struct;
   bind_module(ast->type, module_name, ctx);
-  return module_struct;
-  // return LLVMConstInt(LLVMInt1Type(), 0, 0);
+  return LLVMConstInt(LLVMInt1Type(), 0, 0);
 }
 
 LLVMValueRef codegen_so(AST *ast, Context *ctx) {

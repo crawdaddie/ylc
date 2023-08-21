@@ -96,6 +96,14 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   return variable;
 }
+
+static LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
+                                              Context *ctx) {
+  LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
+  return LLVMBuildLoad2(ctx->builder, val.data.TYPE_GLOBAL_VARIABLE.llvm_type,
+                        global, "");
+}
+
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   if (ast->tag == AST_MEMBER_ACCESS) {
     return codegen(ast, ctx);
@@ -113,16 +121,12 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   switch (val.type) {
   case TYPE_VARIABLE: {
     LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
-    return LLVMBuildLoad2(
-        ctx->builder, LLVMGetElementType(LLVMTypeOf(variable)), variable, "");
+    return LLVMBuildLoad2(ctx->builder, val.data.TYPE_VARIABLE.llvm_type,
+                          variable, "");
   }
 
   case TYPE_GLOBAL_VARIABLE: {
-    LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
-    // return LLVMGetInitializer(global);
-    //
-    return LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(global), 0),
-                          global, "");
+    return codegen_global_identifier(val, name, ctx);
   }
 
   case TYPE_FN_PARAM: {
@@ -130,8 +134,6 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   }
 
   case TYPE_FUNCTION: {
-    // return val.data.TYPE_FUNCTION.llvm_value;
-    // return LLVMGetNamedFunction(ctx->module, name);
     return val.data.TYPE_FUNCTION.llvm_value;
   }
 

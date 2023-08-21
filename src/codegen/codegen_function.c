@@ -143,6 +143,8 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   for (i = 0; i < arg_count; i++) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
   }
+  // printf("---\narg\n");
+  // LLVMDumpValue(args[0]);
 
   // Get the return type of the function
   LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));

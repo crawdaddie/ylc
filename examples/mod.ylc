@@ -1,12 +1,10 @@
 import "./math.ylc"
+let j = math.x
+let f = math.add2(j)
 
-let x = math.add2(2)
-
-
-#let f = math.add2
+let printf = extern fn (str fmt) int
 
 #let x = f(2)
-
 #math.mod_func
 #math.x
 

@@ -1,6 +1,8 @@
 #include "codegen_conditional.h"
+
 #include "codegen.h"
 #include "codegen_types.h"
+#include <stddef.h>
 
 /*
  * Check if match_on evaluates to boolean 1
@@ -88,7 +90,8 @@ LLVMValueRef codegen_match(AST *ast, Context *ctx) {
   LLVMBasicBlockRef *blocks = malloc(sizeof(LLVMBasicBlockRef) * 2 * num_cases);
 
   for (int i = 0; i < num_cases; ++i) {
-    blocks[2 * i] = LLVMAppendBasicBlock(func, inst_name("match_cond"));
+    blocks[(ptrdiff_t)2 * i] =
+        LLVMAppendBasicBlock(func, inst_name("match_cond"));
     blocks[2 * i + 1] = LLVMAppendBasicBlock(func, inst_name("match_expr"));
   }
   LLVMBasicBlockRef endBlock = LLVMAppendBasicBlock(func, "end");
