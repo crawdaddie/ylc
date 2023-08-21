@@ -16,6 +16,7 @@
 
 INIT_SYM_TABLE(AST);
 
+static void generate_equations(AST *ast, TypeCheckContext *ctx);
 static int _typecheck_error_flag = 0;
 
 void print_ttype(ttype type) {
@@ -168,6 +169,51 @@ ttype get_fn_return_type(ttype fn_type) {
   int len = fn_type.as.T_FN.length;
   return fn_type.as.T_FN.members[len - 1];
 }
+/*
+ * Transform ast call node with incomplete args to anon fn declaration which
+ * is curried version of original fn
+ **/
+static void typecheck_curry_function(AST *ast, AST *func_ast,
+                                     TypeCheckContext *ctx) {
+
+  AST **original_fn_parameters = func_ast->data.AST_FN_DECLARATION.prototype
+                                     ->data.AST_FN_PROTOTYPE.parameters;
+  char *id = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+
+  AST *call_params = ast->data.AST_CALL.parameters;
+  int call_params_len = call_params->data.AST_TUPLE.length;
+  AST **og_call_list = call_params->data.AST_TUPLE.members;
+
+  int fn_param_len =
+      func_ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length;
+
+  AST **call_list = malloc(sizeof(AST *) * fn_param_len);
+  for (int i = 0; i < call_params_len; i++) {
+    call_list[i] = og_call_list[i];
+  }
+
+  AST *new_prot = AST_NEW(FN_PROTOTYPE, fn_param_len - call_params_len);
+  new_prot->data.AST_FN_PROTOTYPE.length = fn_param_len - call_params_len;
+  new_prot->data.AST_FN_PROTOTYPE.parameters =
+      malloc(sizeof(AST *) * fn_param_len - call_params_len);
+
+  for (int i = 0; i < fn_param_len - call_params_len; i++) {
+    new_prot->data.AST_FN_PROTOTYPE.parameters[i] =
+        original_fn_parameters[i + call_params_len];
+
+    call_list[call_params_len + i] =
+        AST_NEW(IDENTIFIER, new_prot->data.AST_FN_PROTOTYPE.parameters[i]
+                                ->data.AST_SYMBOL_DECLARATION.identifier);
+  }
+
+  ast->tag = AST_FN_DECLARATION;
+  ast->data.AST_FN_DECLARATION.prototype = new_prot;
+  ast->data.AST_FN_DECLARATION.body = AST_NEW(
+      CALL, AST_NEW(IDENTIFIER, id), AST_NEW(TUPLE, fn_param_len, call_list));
+  ast->data.AST_FN_DECLARATION.is_extern = false;
+  ast->data.AST_FN_DECLARATION.name = NULL;
+  generate_equations(ast, ctx);
+}
 
 static int ast_member_lookup(AST *ast, TypeCheckContext *ctx, AST *object) {
 
@@ -317,9 +363,11 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     break;
   }
   case AST_FN_DECLARATION: {
-    char *name = ast->data.AST_FN_DECLARATION.name;
 
-    if (name && ast->data.AST_FN_DECLARATION.is_extern) {
+    if (ast->data.AST_FN_DECLARATION.name != NULL &&
+        ast->data.AST_FN_DECLARATION.is_extern) {
+
+      char *name = ast->data.AST_FN_DECLARATION.name;
       AST_table_insert(ctx->symbol_table, name, *ast);
 
       AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
@@ -342,9 +390,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       push_type_equation(&ctx->type_equations, &ast->type, fn_type);
       break;
     }
+    bool is_anon = ast->data.AST_FN_DECLARATION.name == NULL;
 
     AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
-    AST_table_insert(ctx->symbol_table, name, *ast);
+    if (!is_anon) {
+      AST_table_insert(ctx->symbol_table, ast->data.AST_FN_DECLARATION.name,
+                       *ast);
+    }
     enter_ttype_scope(ctx);
     generate_equations(prototype_ast, ctx);
 
@@ -393,9 +445,16 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       break;
     };
 
-    int fn_type_len = func_ast.data.AST_FN_DECLARATION.prototype->data
-                          .AST_FN_PROTOTYPE.length +
-                      1;
+    int parameters_len = func_ast.data.AST_FN_DECLARATION.prototype->data
+                             .AST_FN_PROTOTYPE.length;
+
+    int args_len = ast->data.AST_CALL.parameters->data.AST_TUPLE.length;
+    if (args_len < parameters_len) {
+      typecheck_curry_function(ast, &func_ast, ctx);
+      break;
+    }
+
+    int fn_type_len = parameters_len + 1;
 
     ttype *fn_type_list = malloc(sizeof(ttype) * (fn_type_len));
 
@@ -642,28 +701,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ast->data.AST_IMPORT.module_ast = mod_ast;
     ast->type = mod_ast->type;
 
-    // assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
-
     if (has_extension(module_filename, ".ylc")) {
-      // remove_extension(mod_name);
-
-      // struct AST_IMPORT import = ast->data.AST_IMPORT;
-      // import.module_ast = mod_ast;
-      // AST *import_ast = malloc(sizeof(AST));
-      // import_ast->tag = AST_IMPORT;
-      // import_ast->data.AST_IMPORT = import;
-      // import_ast->type = mod_ast->type;
-
       AST_table_insert(ctx->symbol_table, mod_name, *ast);
-      // printf("table insert mod [%s] mod_name\n");
-      // ast->tag = AST_ASSIGNMENT;
-      // ast->data.AST_ASSIGNMENT = (struct AST_ASSIGNMENT){
-      //     .identifier = mod_name, .expression = ast};
-
-      // push_type_equation(&ctx->type_equations, &ast->type, &mod_ast->type);
-      // push_type_equation(&ctx->type_equations,
-      //                    &ast->data.AST_ASSIGNMENT.expression->type,
-      //                    &mod_ast->type);
     }
 
     break;
@@ -813,8 +852,8 @@ bool types_equal(ttype *l, ttype *r) {
 void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
 
   if (left->as.T_FN.length != right->as.T_FN.length) {
-    printf("unify funcs\n");
-    print_type_equation((TypeEquation){left, right});
+    // printf("unify funcs\n");
+    // print_type_equation((TypeEquation){left, right});
 
     return;
   }
@@ -835,8 +874,8 @@ void unify_functions(ttype *left, ttype *right, TypeEnv *env) {
     }
 
     if (r_fn_mem->tag == T_VAR) {
-      printf("r type\n");
-      print_ttype(*r_fn_mem);
+
+      add_type_to_env(env, r_fn_mem, l_fn_mem);
     }
     left->as.T_FN.members[i] = right->as.T_FN.members[i];
     unify(l_fn_mem, r_fn_mem, env);

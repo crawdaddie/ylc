@@ -60,8 +60,8 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   char *name = ast->data.AST_FN_DECLARATION.name;
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
   AST *body_ast = ast->data.AST_FN_DECLARATION.body;
-  ttype type = ast->type;
 
+  ttype type = ast->type;
   LLVMTypeRef fn_type = codegen_type(ast, ctx);
   LLVMValueRef function =
       LLVMAddFunction(ctx->module, name ? name : "", fn_type);
@@ -74,8 +74,6 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   store_self(name ? name : "this_fn", function, fn_type, type, ctx);
 
   LLVMPositionBuilderAtEnd(ctx->builder, block);
-  // printf("body ast\n");
-  // print_ast(*body_ast, 0);
   LLVMValueRef body = codegen(body_ast, ctx);
 
   // Check if the return type is void
@@ -143,9 +141,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   for (i = 0; i < arg_count; i++) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
   }
-  // printf("---\narg\n");
-  // LLVMDumpValue(args[0]);
-
   // Get the return type of the function
   LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
   int is_void = 0;
@@ -157,7 +152,6 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   LLVMValueRef val =
       LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args,
                      arg_count, is_void ? "" : inst_name("call"));
-  // LLVMDumpValue(val);
 
   free(args);
   return val;

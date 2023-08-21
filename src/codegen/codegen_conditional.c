@@ -96,15 +96,7 @@ LLVMValueRef codegen_match(AST *ast, Context *ctx) {
   }
   LLVMBasicBlockRef endBlock = LLVMAppendBasicBlock(func, "end");
 
-  // TODO: treat type of match expression as equivalent to function return type
-  // but would like to be able to use a match expr as an expr you can assign to
-  // a variable
-  // need to do some dynamic type inference but don't know how yet
-  // AST *result_type_ast = ast->data.AST_MATCH.result_type;
   LLVMTypeRef result_type = codegen_type(ast, ctx);
-  // result_type_ast
-  //     ? (type_lookup(result_type_ast->data.AST_IDENTIFIER.identifier, ctx))
-  //     : LLVMGetReturnType(LLVMGlobalGetValueType(func));
 
   LLVMValueRef result =
       LLVMBuildAlloca(ctx->builder, result_type, "result_var");

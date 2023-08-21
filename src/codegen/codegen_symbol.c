@@ -31,7 +31,6 @@ static LLVMValueRef symbol_reassignment(SymbolValue val, const char *name,
     LLVMValueRef variable = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
     LLVMValueRef value = codegen(expr, ctx);
     LLVMValueRef s = LLVMBuildStore(ctx->builder, value, variable);
-    // LLVMDumpValue(s);
     return variable;
   } else if (val.type == TYPE_VARIABLE) {
     LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
@@ -62,7 +61,6 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
     LLVMTypeRef type_ref = codegen_ttype(type, ctx);
     if (expr) {
       value = codegen(expr, ctx);
-      LLVMDumpValue(value);
       bind_function(name, value, type_ref, type, ctx);
       return value;
     }

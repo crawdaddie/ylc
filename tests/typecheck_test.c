@@ -350,6 +350,21 @@ int test_fib_fn() {
   return 0;
 }
 
+int test_curried_fn() {
+
+  AST *test = typecheck_input("let f = fn (a,b,c) {\n"
+                              "  a + b + c\n"
+                              "}\n"
+                              "let g = f(1, 2)\n");
+
+  AST *g = AST_TOP_LEVEL(test, 1);
+  ttype t = g->type;
+  print_ttype(t);
+  mu_assert(t.tag == T_FN, "g is a fn");
+
+  return 0;
+}
+
 int test_extern_fn() {
   AST *test = typecheck_input("let randfloat = extern fn (double max) double");
 
@@ -383,6 +398,7 @@ int all_tests() {
   mu_run_test(test_partially_explicitly_typed_fn);
   mu_run_test(test_int_casting);
   mu_run_test(test_extern_fn);
+  mu_run_test(test_curried_fn);
   return test_result;
 }
 
