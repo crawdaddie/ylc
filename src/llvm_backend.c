@@ -137,6 +137,7 @@ int LLVMRuntime(int repl, char *path, char *output) {
   AST_SymbolTable tcheck_symbol_table = {}; // init to zero
   tcheck_symbol_table.current_frame_index = 0;
   tcheck_ctx.symbol_table = &tcheck_symbol_table;
+  t_counter = 0;
 
   if (repl) {
     printf("\033[1;31m"

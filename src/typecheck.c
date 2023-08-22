@@ -12,7 +12,7 @@
 #include <stdlib.h>
 
 #include <limits.h>
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 
 INIT_SYM_TABLE(AST);
 
@@ -107,6 +107,7 @@ static void print_type_equation(TypeEquation type_equation) {
 static ttype Bool = {T_BOOL};
 static ttype Str = {T_STR};
 static ttype Int = {T_INT};
+static ttype Int8 = {T_INT8};
 static ttype Num = {T_NUM};
 
 static int MAX_TEQ_LIST = 32;
@@ -147,6 +148,7 @@ static ttype *_max_type(ttype *l, ttype *r) {
 static ttype lookup_explicit_type(char *type_identifier,
                                   TypeCheckContext *ctx) {
 
+  printf("lookup explicit type %s\n", type_identifier);
   if (strcmp(type_identifier, "double") == 0) {
     return Num;
   }
@@ -155,8 +157,13 @@ static ttype lookup_explicit_type(char *type_identifier,
     return Int;
   }
 
+
   if (strcmp(type_identifier, "str") == 0) {
     return Str;
+  }
+
+  if (strcmp(type_identifier, "int8") == 0) {
+    return Int8;
   }
 
   AST *sym;
@@ -379,13 +386,15 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       ttype *fn_members = malloc(sizeof(ttype) * length);
       for (int i = 0; i < length - 1; i++) {
         AST *param_ast = prototype_ast->data.AST_FN_PROTOTYPE.parameters[i];
-        fn_members[i] = param_ast->type;
+        fn_members[i] = lookup_explicit_type(param_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
       }
 
       fn_members[length - 1] =
           lookup_explicit_type(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
       ttype *fn_type = malloc(sizeof(ttype));
       *fn_type = tfn(fn_members, length);
+      printf("decl %s ", name);
+      print_ttype(*fn_type);
 
       push_type_equation(&ctx->type_equations, &ast->type, fn_type);
       break;

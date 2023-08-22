@@ -64,7 +64,6 @@ static AST *rec_parse(AST *ast) {
 }
 
 AST *parse(const char *source) {
-  t_counter = 0;
 
   AST *ast = malloc(sizeof(AST));
   ast->tag = AST_MAIN;

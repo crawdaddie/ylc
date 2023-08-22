@@ -132,7 +132,8 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
   }
 
   case TYPE_FUNCTION: {
-    return val.data.TYPE_FUNCTION.llvm_value;
+    // return val.data.TYPE_FUNCTION.llvm_value;
+    return LLVMGetNamedFunction(ctx->module, name);
   }
 
   case TYPE_RECURSIVE_REF: {
