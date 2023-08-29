@@ -1,0 +1,30 @@
+import "libs/libyalce_synth.so"
+
+
+let printf = extern fn (str fmt, int8 i) int
+let setup_audio = extern fn () int
+let stop_audio  = extern fn () int
+
+let play_node   = extern fn (int8 x) int8
+let sq_detune   = extern fn (double freq) int8
+let impulse     = extern fn (double freq) int8
+let lpf         = extern fn (double freq, double bw, int8 in) int8
+let chain       = extern fn (int sig_idx, int8 dest, int8 src) int8
+
+setup_audio()
+
+let lp = lpf(1000.0, 0.1)
+let x = impulse(10.0)
+x = lp(x)
+play_node(x)
+#
+#printf("sq: [%p]", sq_detune(100.0))
+
+#let syn = fn (freq) {
+#  sq_detune(100.0)
+#    -> lp(2000.0, 0.1)
+#    -> out() 
+#}
+
+
+

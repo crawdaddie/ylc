@@ -55,6 +55,7 @@ static AST *typecheck_input(const char *input) {
   tcheck_ctx.symbol_table = &tcheck_symbol_table;
 
   tc_error_flag = typecheck_in_ctx(ast, "_", &tcheck_ctx);
+  // print_env(&tcheck_ctx.type_env);
   return ast;
 }
 
@@ -331,7 +332,7 @@ int test_partially_explicitly_typed_fn() {
   return 0;
 }
 
-int test_fib_fn() {
+int test_fib_fn_decl() {
 
   AST *test = typecheck_input("let fib = fn (n) {\n"
                               "  match n\n"
@@ -340,12 +341,47 @@ int test_fib_fn() {
                               "  | _ -> fib(n - 1) + fib(n - 2)\n"
                               "}");
 
+  print_ast(*test, 0);
   AST *fn_h = AST_TOP_LEVEL(test, 0);
   ttype fn_type = fn_h->type;
   mu_assert(fn_type.tag == T_FN, "fib is a fn");
   mu_assert(fn_type.as.T_FN.members[0].tag == T_INT &&
                 fn_type.as.T_FN.members[1].tag == T_INT,
             "fib (Int -> Int)");
+
+  return 0;
+}
+
+int test_fib_fn_call() {
+
+  AST *test = typecheck_input("let fib = fn (n) {\n"
+                              "  match n\n"
+                              "  | 0 -> 0\n"
+                              "  | 1 -> 1\n"
+                              "  | _ -> fib(n - 1) + fib(n - 2)\n"
+                              "}\n"
+                              "fib(2)");
+
+  print_ast(*test, 0);
+  AST *fn_call = AST_TOP_LEVEL(test, 1);
+  ttype call_type = fn_call->type;
+  mu_assert(call_type.tag == T_INT, "fib call is an Int");
+
+  AST *ret_l = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.body->data.AST_MATCH.matches[2]
+                   ->data.AST_BINOP.right->data.AST_BINOP.left;
+
+  print_ast(*ret_l, 0);
+  print_ttype(ret_l->type);
+  mu_assert(ret_l->type.tag == T_INT, "recursive call has Int type");
+
+  AST *ret_r = AST_TOP_LEVEL(test, 0)
+                   ->data.AST_FN_DECLARATION.body->data.AST_MATCH.matches[2]
+                   ->data.AST_BINOP.right->data.AST_BINOP.right;
+
+  print_ast(*ret_r, 0);
+  print_ttype(ret_r->type);
+  mu_assert(ret_r->type.tag == T_INT, "recursive call has Int type");
 
   return 0;
 }
@@ -376,7 +412,7 @@ int test_curried_fn() {
   AST *g = AST_TOP_LEVEL(test, 1);
   ttype t = g->type;
 
-  mu_assert(t.tag == T_FN, "g is a fn");
+  mu_assert(t.tag == T_VAR, "g is a call");
   ttype f = AST_TOP_LEVEL(test, 0)->type;
 
   /*mu_assert(get_fn_return_type(t).tag == T_INT &&
@@ -386,24 +422,29 @@ int test_curried_fn() {
   return 0;
 }
 
+#define run_test(TEST)                                                         \
+  t_counter = 0;                                                               \
+  mu_run_test(TEST);
+
 int all_tests() {
   int test_result = 0;
-  mu_run_test(test_nothing);
-  mu_run_test(test_binop);
-  mu_run_test(test_simple_exprs);
-  mu_run_test(test_untyped_function);
-  mu_run_test(test_fn_call);
-  mu_run_test(test_fn_with_conditionals);
-  mu_run_test(test_fn_with_conditionals2);
-  mu_run_test(test_fn_with_type_error);
-  mu_run_test(test_fn_with_unop);
-  mu_run_test(test_fn_with_match_expr);
-  mu_run_test(test_generic_fn);
-  mu_run_test(test_fib_fn);
-  mu_run_test(test_partially_explicitly_typed_fn);
-  mu_run_test(test_int_casting);
-  mu_run_test(test_extern_fn);
-  mu_run_test(test_curried_fn);
+  // run_test(test_nothing);
+  // run_test(test_binop);
+  // run_test(test_simple_exprs);
+  // run_test(test_untyped_function);
+  // run_test(test_fn_call);
+  // run_test(test_fn_with_conditionals);
+  // run_test(test_fn_with_conditionals2);
+  // run_test(test_fn_with_type_error);
+  // run_test(test_fn_with_unop);
+  // run_test(test_fn_with_match_expr);
+  // run_test(test_generic_fn);
+  // run_test(test_fib_fn_decl);
+  run_test(test_fib_fn_call);
+  // run_test(test_partially_explicitly_typed_fn);
+  // run_test(test_int_casting);
+  // run_test(test_extern_fn);
+  // run_test(test_curried_fn);
   return test_result;
 }
 

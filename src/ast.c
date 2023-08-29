@@ -200,7 +200,7 @@ void print_ast(AST ast, int indent) {
 
   case AST_MEMBER_ACCESS: {
     print_ast(*ast.data.AST_MEMBER_ACCESS.object, indent);
-    printf(".%s ", ast.data.AST_MEMBER_ACCESS.member_name);
+    printf(".%s", ast.data.AST_MEMBER_ACCESS.member_name);
     break;
   }
 

@@ -87,4 +87,8 @@ int get_struct_member_index(ttype struct_type, char *name);
 bool is_numeric_type(ttype t);
 ttype_tag max_type(ttype a, ttype b);
 
+void print_ttype(ttype type);
+
+bool types_equal(ttype *l, ttype *r);
+
 #endif

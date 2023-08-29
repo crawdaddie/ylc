@@ -20,6 +20,8 @@
     entry_type##_StackFrame stack[STACK_SIZE];                                 \
     int current_frame_index;                                                   \
   } entry_type##_SymbolTable;                                                  \
+  int entry_type##_env_lookup(entry_type##_StackFrame *frame, const char *key, \
+                              entry_type *value);                              \
                                                                                \
   static entry_type##_Symbol *entry_type##_create_entry(const char *key,       \
                                                         entry_type value) {    \
@@ -32,7 +34,6 @@
   }
 
 #define INIT_SYM_TABLE(entry_type)                                             \
-                                                                               \
   void entry_type##_push_frame(entry_type##_SymbolTable *table) {              \
     table->current_frame_index++;                                              \
     table->stack[table->current_frame_index].allocated_entries = 0;            \
@@ -79,8 +80,8 @@
                                const char *key, entry_type value) {            \
     unsigned int index = hash(key);                                            \
     entry_type##_Symbol *entry = frame->entries[index];                        \
-    entry_type##_Symbol *newSymbol = entry_type##_create_entry(key, value);    \
                                                                                \
+    entry_type##_Symbol *newSymbol = entry_type##_create_entry(key, value);    \
     if (entry == NULL) {                                                       \
       frame->entries[index] = newSymbol;                                       \
     } else {                                                                   \

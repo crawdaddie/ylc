@@ -105,3 +105,124 @@ ttype_tag max_type(ttype a, ttype b) {
   }
   return b.tag;
 }
+
+void print_ttype(ttype type) {
+  switch (type.tag) {
+  case T_VOID: {
+    printf("Void");
+    break;
+  }
+  case T_INT: {
+    printf("Int");
+    break;
+  }
+  case T_INT8: {
+    printf("Int8");
+    break;
+  }
+  case T_NUM: {
+    printf("Num");
+    break;
+  }
+  case T_STR: {
+    printf("Str");
+    break;
+  }
+  case T_BOOL: {
+    printf("Bool");
+    break;
+  }
+  case T_VAR: {
+    printf("%s", type.as.T_VAR.name);
+    break;
+  }
+  case T_FN: {
+    int length = type.as.T_FN.length;
+    printf("(");
+    for (int i = 0; i < length; i++) {
+      print_ttype(type.as.T_FN.members[i]);
+      if (i < length - 1)
+        printf(" -> ");
+    }
+    printf(")");
+    break;
+  }
+
+  case T_TUPLE: {
+    int length = type.as.T_TUPLE.length;
+    printf("(");
+    for (int i = 0; i < length; i++) {
+      print_ttype(type.as.T_TUPLE.members[i]);
+      if (i < length - 1)
+        printf(" * ");
+    }
+    printf(")");
+    break;
+  }
+
+  case T_STRUCT: {
+    int length = type.as.T_STRUCT.length;
+    printf("(");
+    for (int i = 0; i < length; i++) {
+      struct_member_metadata md = type.as.T_STRUCT.struct_metadata[i];
+      if (md.index == -1) {
+        continue;
+      }
+
+      printf("%s=", type.as.T_STRUCT.struct_metadata[i].name);
+      print_ttype(type.as.T_STRUCT.members[i]);
+      if (i < length - 1)
+        printf(" * ");
+    }
+    printf(")");
+    break;
+  }
+  case T_PTR: {
+    printf("*");
+    print_ttype(*type.as.T_PTR.item);
+    break;
+  }
+  }
+}
+
+bool types_equal(ttype *l, ttype *r) {
+
+  if (l == r) {
+    return true;
+  }
+
+  if (l->tag != r->tag) {
+    return false;
+  }
+  if (l->tag == r->tag) {
+    return true;
+  }
+
+  if (l->tag == T_TUPLE) {
+    for (int i = 0; i < l->as.T_TUPLE.length; i++) {
+      if (!types_equal(&l->as.T_TUPLE.members[i], &r->as.T_TUPLE.members[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  if (l->tag == T_STRUCT) {
+    for (int i = 0; i < l->as.T_STRUCT.length; i++) {
+      if (!types_equal(&l->as.T_STRUCT.members[i],
+                       &r->as.T_STRUCT.members[i])) {
+        return false;
+      }
+    }
+    return true;
+  }
+  if (l->tag == T_VAR && strcmp(l->as.T_VAR.name, r->as.T_VAR.name) == 0) {
+    return true;
+  }
+
+  if (l->tag == T_VAR && r->tag == T_VAR &&
+      strcmp(l->as.T_VAR.name, r->as.T_VAR.name) != 0) {
+    return false;
+  }
+  return false;
+}

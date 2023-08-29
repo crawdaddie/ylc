@@ -1,0 +1,7 @@
+let f = fn (x, y, z) {
+  x + y + z
+}
+
+let f2 = f(1, 2)
+
+let x = f2(100)

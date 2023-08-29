@@ -112,21 +112,18 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   AST *prototype = ast->data.AST_FN_DECLARATION.prototype;
   ttype type = ast->type;
   LLVMTypeRef fn_type = codegen_type(ast, ctx);
-  printf("extern %s\n", name);
-  LLVMDumpType(fn_type);
   LLVMValueRef function = LLVMAddFunction(ctx->module, name, fn_type);
-  LLVMDumpValue(function);
 
   bind_function(name, function, fn_type, type, ctx);
 
   return function;
 };
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
-  char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
-  LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
 
-  LLVMDumpValue(func);
-  printf("\n");
+  char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+  printf("ast call %s", name);
+
+  LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
 
   if (func == NULL) {
     fprintf(stderr, "Error: function %s not found in this scope (%d)\n",
@@ -149,15 +146,14 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   }
 
   // Get the return type of the function
-  printf("get return type for %s : ", name);
   LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
-  LLVMDumpType(returnType);
   int is_void = 0;
 
   // Check if the return type is void
   if (LLVMGetTypeKind(returnType) == LLVMVoidTypeKind) {
     is_void = 1;
   }
+
   LLVMValueRef val =
       LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func), func, args,
                      arg_count, is_void ? "" : inst_name("call"));
