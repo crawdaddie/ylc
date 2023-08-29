@@ -121,7 +121,6 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
-  printf("ast call %s", name);
 
   LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
 

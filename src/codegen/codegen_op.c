@@ -76,9 +76,6 @@ LLVMValueRef codegen_binop(AST *ast, Context *ctx) {
   AST *left = ast->data.AST_BINOP.left;
   AST *right = ast->data.AST_BINOP.right;
   token_type op = ast->data.AST_BINOP.op;
-  printf("numeric binop??\n");
-  print_ttype(left->type);
-  print_ttype(right->type);
 
   if (is_numeric_type(left->type) && is_numeric_type(right->type)) {
     return numeric_binop(left, right, op, ctx);

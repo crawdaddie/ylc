@@ -152,6 +152,10 @@ void unify(TypeEquation eq, TypeEnv *env) {
     return unify((TypeEquation){l, r, -1}, env);
   }
 
+  if (r->tag == T_VAR && l->tag != T_VAR) {
+    return unify((TypeEquation){r, l, index}, env);
+  }
+
   switch (l->tag) {
   case T_FN: {
     if (r->tag == T_VAR) {

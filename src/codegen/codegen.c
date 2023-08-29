@@ -50,8 +50,6 @@ static LLVMValueRef codegen_main(AST *ast, Context *ctx) {
 }
 
 LLVMValueRef codegen(AST *ast, Context *ctx) {
-  print_ast(*ast, 0);
-  printf("\n");
 
   switch (ast->tag) {
   case AST_MAIN: {
