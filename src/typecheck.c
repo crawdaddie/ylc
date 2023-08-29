@@ -59,7 +59,9 @@ void push_to_list(TypeEquationsList *list, TypeEquation eq) {
  * */
 void push_type_equation_index(ttype *l, ttype *r, int n,
                               TypeCheckContext *ctx) {
-  TypeEquation eq = {l, r, n};
+  ttype *right = malloc(sizeof(ttype));
+  *right = *r;
+  TypeEquation eq = {l, right, n};
 
   if (n != -1) {
     // TODO: unify indexed type equations, eg l :: fn_type[n]
@@ -67,9 +69,8 @@ void push_type_equation_index(ttype *l, ttype *r, int n,
     // find r type
     r = follow_links(&ctx->type_env, r);
     if (r->tag == T_VAR) {
-      printf("defer: ");
-      eq.right = r;
-      print_type_equation(eq);
+      eq.right->tag = r->tag;
+      eq.right->as = r->as;
       // push equation to deferred typecheck equations list
       return push_to_list(&ctx->type_equations, eq);
     }
@@ -392,11 +393,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
 
-    printf("\n-----\nast call %s", name);
-    print_ast(*ast, 0);
-    print_ttype(ast->type);
-    printf("\n-----\n");
-
     AST func_ast;
     if (AST_table_lookup(ctx->symbol_table, name, &func_ast) != 0) {
       fprintf(stderr, "Error [typecheck]: function %s not found in scope\n",
@@ -418,14 +414,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     }
 
     if (args_len == parameters_len) {
-      printf("\nreturn type %s\n", name);
-      print_ttype(func_ast.type);
-      printf("\n");
       push_type_equation_index(&ast->type, &func_ast.type, parameters_len, ctx);
     }
-
-    print_ttype(ast->type);
-    printf("\n");
 
     break;
   }
@@ -673,11 +663,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   default:
     break;
   }
-  if (_typecheck_error_flag == 1) {
-    printf("Typecheck error");
-    print_ast(*ast, 0);
-    return;
-  }
 }
 
 void print_env(TypeEnv *env) {
@@ -795,17 +780,8 @@ void update_expression_types(AST *ast, TypeEnv *env) {
 
   if (ast->type.tag == T_VAR &&
       ttype_env_lookup(env, ast->type.as.T_VAR.name, &lookup) == 0) {
-    printf("\nlookup ast call??: %s ", ast->type.as.T_VAR.name);
-    print_ttype(lookup);
     ttype *final = follow_links(env, &lookup);
     ast->type = *final;
-    if (ast->tag == AST_CALL) {
-      printf("update: ");
-      print_ast(*ast, 0);
-      printf(" :: ");
-      print_ttype(ast->type);
-      printf("\n");
-    }
   }
 
   return;

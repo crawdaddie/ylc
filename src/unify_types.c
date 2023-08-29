@@ -33,13 +33,14 @@ static void unify_vars(ttype *l, ttype *r, TypeEnv *env) {
     return;
   }
   r = follow_links(env, r);
-
-  add_type_to_env(env, l, r);
-
-  // update type l that points to ast_node->type
-  //
-  l->tag = r->tag;
-  l->as = r->as;
+  if (r->tag != T_VAR) {
+    add_type_to_env(env, l, r);
+    // printf("update l %s\n", l->as.T_VAR.name);
+    // update type l that points to ast_node->type
+    //
+    l->tag = r->tag;
+    l->as = r->as;
+  }
 }
 
 static void unify_tuple(ttype *lvar, ttype *rtuple, TypeEnv *env) {
@@ -63,6 +64,7 @@ static void unify_fn(ttype *lvar, ttype *rfn, TypeEnv *env) {
     }
   }
   add_type_to_env(env, lvar, rfn);
+  // printf("lvar update %s\n", lvar->as.T_VAR.name);
   lvar->tag = T_FN;
   lvar->as = rfn->as;
   return;
@@ -161,7 +163,6 @@ void unify(TypeEquation eq, TypeEnv *env) {
   case T_TUPLE:
   case T_STRUCT: {
     if (!check_compound(l, r)) {
-      printf("check compound");
       _typecheck_error_flag = 1;
       return;
     }
@@ -195,7 +196,12 @@ void unify(TypeEquation eq, TypeEnv *env) {
   case T_STR:
   case T_BOOL:
   case T_VOID:
-  case T_PTR:
+  case T_PTR: {
+    if (l->tag != r->tag) {
+      _typecheck_error_flag = 1;
+      return;
+    }
+  }
   default:
     break;
   }
