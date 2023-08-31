@@ -69,8 +69,6 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
   }
 
   if (ctx->symbol_table->current_frame_index == 0) {
-    printf("assignment %s\n", name);
-    print_ttype(type);
 
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
     LLVMSetInitializer(variable, LLVMConstNull(type_ref));

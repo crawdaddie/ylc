@@ -249,6 +249,11 @@ void free_ast(AST *ast) {
   if (ast == NULL) {
     return;
   }
+  if (ast->tag == AST_CALL && ast->type.tag == T_FN) {
+    // defer this til all other references freed?
+    return;
+  }
+
   switch (ast->tag) {
   case AST_MAIN:
     free_ast(ast->data.AST_MAIN.body);

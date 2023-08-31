@@ -55,7 +55,6 @@ static AST *typecheck_input(const char *input) {
   tcheck_ctx.symbol_table = &tcheck_symbol_table;
 
   tc_error_flag = typecheck_in_ctx(ast, "_", &tcheck_ctx);
-  // print_env(&tcheck_ctx.type_env);
   return ast;
 }
 
@@ -414,6 +413,18 @@ int test_curried_fn() {
 
   mu_assert(g->data.AST_ASSIGNMENT.expression->tag == AST_CALL,
             "g is a call not value");
+
+  mu_assert(g->data.AST_ASSIGNMENT.expression->type.tag == T_FN,
+            "g is a fn not a called value");
+
+  mu_assert(g->data.AST_ASSIGNMENT.expression->type.as.T_FN.length == 2,
+            "g is a fn not a called value");
+
+  mu_assert(
+      g->data.AST_ASSIGNMENT.expression->type.as.T_FN.members[0].tag == T_INT &&
+          g->data.AST_ASSIGNMENT.expression->type.as.T_FN.members[1].tag ==
+              T_INT,
+      "g is a fn and has same type as last param + return of f");
 
   mu_assert(AST_TOP_LEVEL(test, 2)->type.tag == T_INT,
             "final call has int type");

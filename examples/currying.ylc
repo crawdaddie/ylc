@@ -2,6 +2,6 @@ let f = fn (x, y, z) {
   x + y + z
 }
 
-let f2 = f(1, 2)
+let g = f(1, 2)
 
-let x = f2(100)
+let x = g(100)

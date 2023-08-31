@@ -347,6 +347,17 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
     // missing args later
     ast->data.AST_CALL.parameters->data.AST_TUPLE.members =
         realloc(members, sizeof(AST *) * parameters_len);
+
+    // adapting curried func - create type equation that says this type equals a
+    // func type with signature composed of last n types of original func
+    ttype *ptypes = malloc(sizeof(ttype) * args_len);
+    for (int i = 0; i < args_len; i++) {
+      ptypes[i] = _tvar();
+      push_type_equation_index(&ptypes[i], &func_ast.type, parameters_len - i,
+                               ctx);
+    }
+    ttype fn_type = tfn(ptypes, args_len);
+    ast->type = fn_type;
   }
 
   for (int i = 0; i < args_len; i++) {
@@ -873,7 +884,6 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
   }
 
   update_expression_types(ast, &ctx->type_env);
-  print_env(&ctx->type_env);
   if (_typecheck_error_flag) {
     return 1;
   }

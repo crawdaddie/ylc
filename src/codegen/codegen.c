@@ -102,9 +102,12 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     // also handles immediate declaration + assignment [ let a = x ]
     const char *name = ast->data.AST_ASSIGNMENT.identifier;
     ttype type = ast->type;
-    // printf("assignment\n");
-    // print_ttype(type);
     AST *expr = ast->data.AST_ASSIGNMENT.expression;
+
+    if (ast->type.tag == T_FN && expr->tag == AST_CALL) {
+      // currying a function
+      return NULL;
+    }
     return codegen_symbol(name, type, expr, ctx);
   }
   case AST_IDENTIFIER: {
@@ -117,7 +120,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   case AST_UNOP:
     return codegen_unop(ast, ctx);
   case AST_BINOP: {
-
     return codegen_binop(ast, ctx);
   }
   case AST_CALL:
