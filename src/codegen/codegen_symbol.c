@@ -51,15 +51,11 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
     return symbol_reassignment(val, name, type, expr, ctx);
   }
 
+  LLVMValueRef variable = NULL;
   LLVMValueRef value = NULL;
   LLVMTypeRef type_ref = codegen_ttype(type, ctx);
 
-  LLVMValueRef variable = NULL;
-
   if (type.tag == T_FN) {
-    LLVMValueRef value;
-    LLVMTypeRef type_ref = codegen_ttype(type, ctx);
-
     if (expr) {
       value = codegen(expr, ctx);
       bind_function(name, value, type_ref, type, ctx);

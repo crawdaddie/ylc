@@ -18,7 +18,8 @@
 #include <llvm-c/Transforms/Scalar.h>
 #include <llvm-c/Transforms/Utils.h>
 
-int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value, ttype t) {
+int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value, AST *expr) {
+  ttype t = expr->type;
 
   if (value == NULL) {
     fprintf(stderr, "Unable to codegen for node\n");
@@ -198,7 +199,8 @@ int LLVMRuntime(int repl, char *path, char *output) {
     ttype ret_type = get_last_entered_type(ast);
     print_ttype(ret_type);
     printf("\033[1;0m\n");
-    run_value(ctx.engine, value, ret_type);
+
+    run_value(ctx.engine, value, get_final_expression(ast));
     free_ast(ast);
 
     if (!repl) {
@@ -239,7 +241,9 @@ int LLVMRuntime(int repl, char *path, char *output) {
     ttype ret_type = get_last_entered_type(ast);
     print_ttype(ret_type);
     printf("\033[1;0m\n");
-    run_value(ctx.engine, value, ret_type);
+
+    run_value(ctx.engine, value, get_final_expression(ast));
+
     free_ast(ast);
     reinit_lang_ctx(&ctx);
   }

@@ -212,9 +212,12 @@ struct AST_STATEMENT_LIST *new_ast_stmt_list();
 void free_ast(AST *ast);
 
 AST *ast_new(AST ast);
+AST *get_final_expression(AST *ast);
+
 #define AST_NEW(tag, ...)                                                      \
   ast_new((AST){AST_##tag, {.AST_##tag = (struct AST_##tag){__VA_ARGS__}}})
 
 #define AST_DATA(ast, TYPE) (struct AST_##TYPE)(ast->data.AST_##TYPE)
 #define FN_PROTOTYPE(fn_decl_ast) fn_decl_ast->data.AST_FN_DECLARATION.prototype
+
 #endif /* end of include guard: _LANG_AST_H */

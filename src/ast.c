@@ -249,6 +249,7 @@ void free_ast(AST *ast) {
   if (ast == NULL) {
     return;
   }
+
   if (ast->tag == AST_CALL && ast->type.tag == T_FN) {
     // defer this til all other references freed?
     return;
@@ -363,4 +364,9 @@ AST *ast_new(AST ast) {
     *ptr = ast;
   ptr->type = _tvar();
   return ptr;
+}
+
+AST *get_final_expression(AST *ast) {
+  int last_idx = ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.length - 1;
+  return ast->data.AST_MAIN.body->data.AST_STATEMENT_LIST.statements[last_idx];
 }
