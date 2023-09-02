@@ -1,5 +1,7 @@
 #include "codegen_compound.h"
 #include "codegen.h"
+#include "codegen_types.h"
+#include <stdio.h>
 
 LLVMValueRef codegen_struct(AST *ast, Context *ctx) {
 
@@ -30,5 +32,12 @@ LLVMValueRef codegen_tuple(AST *ast, Context *ctx) {
 
 LLVMValueRef codegen_array(AST *ast, Context *ctx) {
   // return NULL;
-  // LLVMValueRef array = LLVMConstArray
+  int len = ast->data.AST_ARRAY.length;
+  LLVMValueRef *vals = malloc(sizeof(LLVMValueRef) * len);
+  for (int i = 0; i < len; i++) {
+    vals[i] = codegen(ast->data.AST_ARRAY.members[i], ctx);
+  }
+  LLVMTypeRef type = codegen_ttype(*ast->type.as.T_ARRAY.member_type, ctx);
+  LLVMValueRef array = LLVMConstArray(type, vals, len);
+  return array;
 };

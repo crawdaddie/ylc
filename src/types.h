@@ -26,6 +26,7 @@ typedef enum {
   T_VOID,   // void
   T_FN,     // t1 -> t2 -> ... -> return_type
   T_PTR,    // &'x
+  T_ARRAY,
 } ttype_tag;
 
 typedef struct {
@@ -55,6 +56,11 @@ typedef struct ttype {
       struct ttype *members;
     } T_TUPLE;
 
+    struct T_ARRAY {
+      int length;
+      struct ttype *member_type;
+    } T_ARRAY;
+
     struct T_STRUCT {
       int length;
       struct ttype *members;
@@ -67,6 +73,7 @@ typedef struct ttype {
 ttype _tvar();
 ttype tfn(ttype *param_types, int length);
 ttype ttuple(ttype *member_types, int length);
+ttype tarray(ttype *member_type, int length);
 char *_tname();
 ttype tvar(char *name);
 ttype tvoid();

@@ -232,6 +232,7 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
     ttype tuple_type = ttuple(member_types, len);
     return tuple_type;
   }
+
   case AST_STRUCT: {
 
     int len = ast->data.AST_STRUCT.length;
@@ -640,6 +641,18 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     tuple_type = ttuple(member_types, len);
 
     push_type_equation(&ast->type, &tuple_type, ctx);
+    break;
+  }
+
+  case AST_ARRAY: {
+
+    int len = ast->data.AST_ARRAY.length;
+    ttype array_type;
+
+    AST *member_ast = ast->data.AST_TUPLE.members[0];
+    array_type = tarray(&member_ast->type, len);
+    push_type_equation(&ast->type, &array_type, ctx);
+
     break;
   }
 

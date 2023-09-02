@@ -346,11 +346,36 @@ AST *parse_struct(bool can_assign) {
 }
 AST *parse_ptr(bool can_assign) {}
 
+static AST *parse_array(bool can_assign) {
+  AST *array_ast = ast_tuple(0);
+  while (!match(TOKEN_RIGHT_SQ)) {
+    if (check(TOKEN_NL)) {
+      advance();
+    }
+    AST *member = parse_expression();
+    ast_tuple_push((AST *)&array_ast->data.AST_TUPLE, member);
+    if (check(TOKEN_COMMA)) {
+      advance();
+    }
+    if (check(TOKEN_NL)) {
+      advance();
+    }
+  }
+
+  array_ast->tag = AST_ARRAY;
+  struct AST_ARRAY data;
+  data.length = array_ast->data.AST_TUPLE.length;
+  data.members = array_ast->data.AST_TUPLE.members;
+  array_ast->data.AST_ARRAY = data;
+  return array_ast;
+
+}
+
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
 
-    [TOKEN_LEFT_SQ] = {NULL, parse_index_access, PREC_CALL},
+    [TOKEN_LEFT_SQ] = {parse_array, parse_index_access, PREC_CALL},
     [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
     [TOKEN_COMMA] = {NULL, NULL, PREC_NONE},

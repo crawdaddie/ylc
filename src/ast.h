@@ -38,7 +38,8 @@ struct AST {
     AST_IMPORT,
     AST_IMPORT_LIB,
     AST_VAR_ARG,
-    AST_CURRIED_FN
+    AST_CURRIED_FN,
+    AST_ARRAY,
   } tag;
 
   union {
@@ -198,6 +199,11 @@ struct AST {
     struct AST_IMPORT_LIB {
       char *lib_name;
     } AST_IMPORT_LIB;
+
+    struct AST_ARRAY {
+      int length;
+      AST **members;
+    } AST_ARRAY;
 
   } data;
 

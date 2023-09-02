@@ -149,6 +149,20 @@ void print_ast(AST ast, int indent) {
     printf(")");
     break;
   }
+
+  case AST_ARRAY: {
+    if (ast.data.AST_ARRAY.length == 0) {
+      break;
+    }
+
+    printf("[");
+    for (int i = 0; i < ast.data.AST_ARRAY.length; i++) {
+      print_ast(*ast.data.AST_ARRAY.members[i], 0);
+      printf(",");
+    }
+    printf("]");
+    break;
+  }
   case AST_IF_ELSE: {
     printf("if:");
     print_ast(*ast.data.AST_IF_ELSE.condition, 0);
@@ -309,6 +323,13 @@ void free_ast(AST *ast) {
   case AST_TUPLE: {
     for (int i = 0; i < ast->data.AST_TUPLE.length; i++) {
       free_ast(ast->data.AST_TUPLE.members[i]);
+    }
+    break;
+  }
+
+  case AST_ARRAY: {
+    for (int i = 0; i < ast->data.AST_ARRAY.length; i++) {
+      free_ast(ast->data.AST_ARRAY.members[i]);
     }
     break;
   }

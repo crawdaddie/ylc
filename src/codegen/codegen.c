@@ -115,6 +115,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_TUPLE:
     return codegen_tuple(ast, ctx);
+
+  case AST_ARRAY:
+    return codegen_array(ast, ctx);
   case AST_STRUCT:
     return codegen_struct(ast, ctx);
   case AST_UNOP:

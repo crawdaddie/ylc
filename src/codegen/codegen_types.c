@@ -17,7 +17,6 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
     return LLVMVoidTypeInContext(ctx->context);
   case T_INT8:
     return LLVMInt8TypeInContext(ctx->context);
-
   case T_FN: {
     int len = type.as.T_FN.length;
     LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len - 1);
@@ -57,7 +56,11 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
   case T_PTR: {
     return LLVMPointerType(codegen_ttype(*type.as.T_PTR.item, ctx), 0);
   }
+  case T_ARRAY: {
+      return LLVMArrayType(codegen_ttype(*type.as.T_ARRAY.member_type, ctx), type.as.T_ARRAY.length);
+    }
   }
+
 }
 
 LLVMTypeRef codegen_type(AST *ast, Context *ctx) {

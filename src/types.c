@@ -40,6 +40,13 @@ ttype tptr(ttype *pointed_to) {
   t.as.T_PTR.item = pointed_to;
   return t;
 }
+ttype tarray(ttype *type, int len) {
+  return (ttype){T_ARRAY,
+                 {.T_ARRAY = {
+                      .length = len,
+                      .member_type = type,
+                  }}};
+}
 
 char *_tname() {
   t_counter++;
@@ -180,6 +187,12 @@ void print_ttype(ttype type) {
   case T_PTR: {
     printf("*");
     print_ttype(*type.as.T_PTR.item);
+    break;
+  }
+
+  case T_ARRAY: {
+    print_ttype(*type.as.T_ARRAY.member_type);
+    printf("[%d]", type.as.T_ARRAY.length);
     break;
   }
   }
