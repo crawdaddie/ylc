@@ -5,3 +5,5 @@ let get_point = extern fn (double x, double y) &Point
 
 let x = get_point(0.2, 1.2)
 
+x.x
+

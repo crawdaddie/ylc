@@ -2,7 +2,7 @@
 #include "typecheck.h"
 #include <stdio.h>
 
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 INIT_SYM_TABLE(ttype);
 
 static void print_type_equation(TypeEquation type_equation) {

@@ -6,6 +6,7 @@
 #include "codegen_module.h"
 #include "codegen_op.h"
 #include "codegen_symbol.h"
+#include "codegen_types.h"
 #include <llvm-c/Analysis.h>
 #include <llvm-c/Support.h>
 #include <stdio.h>
@@ -158,6 +159,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
     LLVMValueRef object;
     ttype object_type;
+
     if (val.type == TYPE_VARIABLE) {
       object = val.data.TYPE_VARIABLE.llvm_value;
       object_type = val.data.TYPE_VARIABLE.type;
@@ -171,16 +173,26 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       fprintf(stderr, "Error: unrecognized variable type");
       return NULL;
     }
-    // should i be dereferencing this?
-    // object = LLVMBuildLoad2(ctx->builder, LLVMPointerType(LLVMTypeOf(object),
-    // 0),
-    //                       object, "get_struct");
+
+    LLVMDumpValue(object);
+    printf("\n");
+    print_ttype(object_type);
+    printf("\n");
+    if (is_ptr_to_struct(object_type)) {
+      object_type = *object_type.as.T_PTR.item;
+        object = LLVMBuildLoad2(ctx->builder, codegen_ttype(object_type, ctx), object, "ptr_deref");
+
+      unsigned int member_idx = get_struct_member_index(object_type, member_name);
+
+      LLVMValueRef member =
+          LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
+      return member;
+    }
 
     unsigned int member_idx = get_struct_member_index(object_type, member_name);
 
     LLVMValueRef member =
         LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
-    LLVMDumpValue(member);
     return member;
   }
   case AST_FN_PROTOTYPE:

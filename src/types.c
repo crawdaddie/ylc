@@ -105,6 +105,10 @@ int get_struct_member_index(ttype struct_type, char *name) {
   return -1;
 }
 
+int is_ptr_to_struct(ttype t) {
+  return t.tag == T_PTR && t.as.T_PTR.item->tag == T_STRUCT;
+}
+
 bool is_numeric_type(ttype t) { return t.tag >= T_INT8 && t.tag <= T_NUM; }
 
 ttype_tag max_type(ttype a, ttype b) {

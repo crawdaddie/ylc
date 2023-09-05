@@ -116,10 +116,9 @@ static ttype lookup_explicit_type(char *type_identifier,
     return Int8;
   }
 
-  AST *sym;
-  if (AST_table_lookup(ctx->symbol_table, type_identifier, sym) == 0) {
-    printf("lookup %s/??\n", type_identifier);
-    return sym->type;
+  AST sym;
+  if (AST_table_lookup(ctx->symbol_table, type_identifier, &sym) == 0) {
+    return sym.type;
   }
 }
 
@@ -217,9 +216,9 @@ static void typecheck_object_member_call(AST *ast, TypeCheckContext *ctx) {
 
 static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
   switch (ast->tag) {
-    case AST_IDENTIFIER: {
-      return lookup_explicit_type(ast->data.AST_IDENTIFIER.identifier, ctx);
-    }
+  case AST_IDENTIFIER: {
+    return lookup_explicit_type(ast->data.AST_IDENTIFIER.identifier, ctx);
+  }
 
   case AST_TUPLE: {
     int len = ast->data.AST_TUPLE.length;
@@ -261,13 +260,13 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_UNOP: {
     if (ast->data.AST_UNOP.op == TOKEN_AMPERSAND) {
+      printf("ampersand type\n");
       AST *operand = ast->data.AST_UNOP.operand;
       ttype *pointed_to = malloc(sizeof(ttype));
       *pointed_to = compute_type_expression(operand, ctx);
-        printf("ampersand type\n");
-        print_ttype(*pointed_to);
-      ttype t= tptr(pointed_to);
-        return t;
+      print_ttype(*pointed_to);
+      ttype t = tptr(pointed_to);
+      return t;
     }
     return ast->type;
   }
@@ -458,8 +457,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
             param_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
       }
 
-      fn_members[length - 1] =
-          compute_type_expression(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
+      fn_members[length - 1] = compute_type_expression(
+          prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
 
       ttype *fn_type = malloc(sizeof(ttype));
       *fn_type = tfn(fn_members, length);
@@ -630,11 +629,11 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ttype t =
         compute_type_expression(ast->data.AST_TYPE_DECLARATION.type_expr, ctx);
 
-
     ast->type.tag = t.tag;
     ast->type.as = t.as;
 
     AST_table_insert(ctx->symbol_table, name, *ast);
+
     break;
   }
   case AST_MAIN: {
@@ -712,43 +711,50 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   }
 
   case AST_MEMBER_ACCESS: {
-    AST object;
     char *obj_identifier =
         ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
 
+    AST object;
     if (AST_table_lookup(
             ctx->symbol_table,
             ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
-            &object) == 0) {
+            &object) != 0) {
 
-      while (object.type.tag == T_VAR) {
-        AST_table_lookup(ctx->symbol_table, object.type.as.T_VAR.name, &object);
-      }
-
-      if (object.type.tag != T_STRUCT) {
-        fprintf(stderr,
-                "Error [typecheck]: object %s does not have named members",
-                obj_identifier);
-        break;
-      }
-
-      char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
-
-      ttype obj_type = object.type;
-      for (int i = 0; i < object.type.as.T_STRUCT.length; i++) {
-        if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
-            0) {
-          int member_idx = obj_type.as.T_STRUCT.struct_metadata[i].index;
-          ttype *t = malloc(sizeof(ttype));
-          *t = obj_type.as.T_STRUCT.members[member_idx];
-
-          push_type_equation(&ast->type, t, ctx);
-
-          break;
-        }
-      }
+      fprintf(stderr,
+              "Error [typecheck]: object %s not found in this scope\n",
+              obj_identifier);
+      break;
     }
 
+    while (object.type.tag == T_VAR) {
+      AST_table_lookup(ctx->symbol_table, object.type.as.T_VAR.name, &object);
+    }
+
+    if (object.type.tag != T_STRUCT && !is_ptr_to_struct(object.type)) {
+      fprintf(stderr,
+              "Error [typecheck]: object %s does not have named members\n",
+              obj_identifier);
+      break;
+    }
+
+    char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
+
+    ttype obj_type = is_ptr_to_struct(object.type) ? *object.type.as.T_PTR.item : object.type;
+    for (int i = 0; i < object.type.as.T_STRUCT.length; i++) {
+      if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
+          0) {
+        int member_idx = obj_type.as.T_STRUCT.struct_metadata[i].index;
+        ttype *t = malloc(sizeof(ttype));
+        *t = obj_type.as.T_STRUCT.members[member_idx];
+
+        push_type_equation(&ast->type, t, ctx);
+
+        break;
+      }
+    }
+    // fprintf(stderr,
+    //         "Error [typecheck]: object %s does not have named member %s\n",
+    //         obj_identifier, member_name);
     break;
   }
 

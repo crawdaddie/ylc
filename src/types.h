@@ -90,7 +90,7 @@ bool is_generic_type(ttype t);
 extern int t_counter;
 
 int get_struct_member_index(ttype struct_type, char *name);
-
+int is_ptr_to_struct(ttype t);
 bool is_numeric_type(ttype t);
 ttype_tag max_type(ttype a, ttype b);
 
