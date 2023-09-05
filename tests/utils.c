@@ -223,6 +223,19 @@ int compare_ast(AST *a, AST *b) {
     }
     return 0;
   }
+
+  case AST_ARRAY: {
+    if (a->data.AST_ARRAY.length != b->data.AST_ARRAY.length) {
+      return 1;
+    }
+    for (int i = 0; i < a->data.AST_ARRAY.length; i++) {
+      if (compare_ast(a->data.AST_ARRAY.members[i],
+                      b->data.AST_ARRAY.members[i]) != 0) {
+        return 1;
+      }
+    }
+    return 0;
+  }
   case AST_CALL: {
     if (compare_ast(a->data.AST_CALL.identifier, b->data.AST_CALL.identifier) !=
             0 ||

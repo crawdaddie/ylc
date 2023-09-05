@@ -1,0 +1,9 @@
+let a = [2,1,2,3]
+#let b = []
+#let reduce = fn (f, acc, [head, ...tail]) {
+#  if (head == null)  {acc} else { reduce(f, f(acc, head), tail) }
+#}
+#
+#let map = fn (f, [head, ...tail]) {
+#  if (head == null) { [] } else { [f(head), ...map(f, tail)] }
+#}

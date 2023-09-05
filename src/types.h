@@ -12,7 +12,7 @@
  *       | &t       (ptr to item of type t)
  *       | void
  *       | t1 -> t2 (function type)
- * */
+ **/
 
 typedef enum {
   T_VAR,    // 'x
@@ -26,7 +26,7 @@ typedef enum {
   T_VOID,   // void
   T_FN,     // t1 -> t2 -> ... -> return_type
   T_PTR,    // &'x
-  T_ARRAY,
+  T_ARRAY,  // 't[n]
 } ttype_tag;
 
 typedef struct {

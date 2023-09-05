@@ -40,6 +40,7 @@ ttype tptr(ttype *pointed_to) {
   t.as.T_PTR.item = pointed_to;
   return t;
 }
+
 ttype tarray(ttype *type, int len) {
   return (ttype){T_ARRAY,
                  {.T_ARRAY = {

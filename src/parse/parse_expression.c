@@ -362,19 +362,47 @@ static AST *parse_array(bool can_assign) {
     }
   }
 
+  // array_ast->type = (ttype){T_ARRAY};
+
   array_ast->tag = AST_ARRAY;
   struct AST_ARRAY data;
   data.length = array_ast->data.AST_TUPLE.length;
   data.members = array_ast->data.AST_TUPLE.members;
   array_ast->data.AST_ARRAY = data;
   return array_ast;
+}
+// static AST *if_expression(bool can_assign) {
+//   if (!match(TOKEN_LP)) {
+//     fprintf(stderr, "Error, expected expression after if\n");
+//     return NULL;
+//   }
+//   AST *condition = parse_expression();
+//   if (!match(TOKEN_RP)) {
+//     return NULL;
+//   }
+//   AST *then_body = parse_fn_body();
+//   AST *else_body = parse_fn_body();
+//   return AST_NEW(IF_ELSE, condition, then_body, else_body);
+// }
+static AST *parse_ternary(bool can_assign, AST *condition) {
 
+  enum token_type op_type = parser.previous.type;
+  ParseRule *rule = get_rule(op_type);
+
+  AST *then_expr = parse_expression();
+
+  if (!match(TOKEN_COLON)) {
+    fprintf(stderr, "Error: expected : after ternary");
+    return NULL;
+  }
+  AST *else_expr = parse_expression();
+  AST *conditional = AST_NEW(IF_ELSE, condition, then_expr, else_expr);
+  return conditional;
 }
 
 ParseRule rules[] = {
     [TOKEN_LP] = {parse_grouping, parse_call, PREC_CALL},
     [TOKEN_RP] = {NULL, NULL, PREC_NONE},
-
     [TOKEN_LEFT_SQ] = {parse_array, parse_index_access, PREC_CALL},
     [TOKEN_LEFT_BRACE] = {parse_scoped_block, NULL, PREC_NONE},
     // [TOKEN_RIGHT_BRACE] = {NULL, NULL, PREC_NONE}, */
@@ -426,6 +454,8 @@ ParseRule rules[] = {
     [TOKEN_STRUCT] = {parse_struct, NULL, PREC_NONE},
     // [TOKEN_PIPE] = {NULL, parse_binary, PREC_NONE}
     [TOKEN_AMPERSAND] = {parse_unary, NULL, PREC_NONE},
+    [TOKEN_COLON] = {NULL, NULL, PREC_NONE},
+    [TOKEN_QUESTION] = {NULL, parse_ternary, PREC_TERM},
 };
 
 static ParseRule *get_rule(enum token_type type) { return &(rules[type]); }
@@ -455,9 +485,11 @@ static AST *parse_precedence(Precedence precedence) {
   AST *expr = prefix_rule(can_assign);
   while (precedence <= get_rule(parser.current.type)->precedence) {
     advance();
-
     ParseFnInfix infix_rule = get_rule(parser.previous.type)->infix;
     AST *tmp = infix_rule(can_assign, expr);
+    if (tmp == NULL) {
+      printf("intermediate null\n");
+    }
     expr = tmp;
   }
 

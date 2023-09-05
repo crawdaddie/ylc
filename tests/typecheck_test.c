@@ -436,6 +436,27 @@ int test_curried_fn() {
   return 0;
 }
 
+int test_array() {
+
+  AST *test = typecheck_input("[1,2,3]");
+  ttype t = AST_TOP_LEVEL(test, 0)->type;
+  mu_assert(t.tag == T_ARRAY, "array has type T_ARRAY");
+  mu_assert(t.as.T_ARRAY.member_type->tag == T_INT && t.as.T_ARRAY.length == 3,
+            "array has type Int[3]");
+
+  free_ast(test);
+  return 0;
+}
+
+int test_array_with_type_error() {
+
+  AST *test = typecheck_input("[1,2,3.0]");
+
+  mu_assert(tc_error_flag == 1, "emits error when typechecking '[1,2,3.0]'");
+  free_ast(test);
+  return 0;
+}
+
 #define run_test(TEST)                                                         \
   t_counter = 0;                                                               \
   mu_run_test(TEST);
@@ -459,6 +480,8 @@ int all_tests() {
   run_test(test_int_casting);
   run_test(test_extern_fn);
   run_test(test_curried_fn);
+  run_test(test_array);
+  run_test(test_array_with_type_error);
   return test_result;
 }
 

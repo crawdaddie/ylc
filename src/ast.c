@@ -81,7 +81,8 @@ void print_ast(AST ast, int indent) {
     if (ast.data.AST_FN_PROTOTYPE.type) {
       printf("\n");
       left_pad(indent);
-      printf("returns %s", ast.data.AST_FN_PROTOTYPE.type);
+      printf("returns: ");
+      print_ast(*ast.data.AST_FN_PROTOTYPE.type, 0);
     }
     break;
   }
@@ -152,6 +153,7 @@ void print_ast(AST ast, int indent) {
 
   case AST_ARRAY: {
     if (ast.data.AST_ARRAY.length == 0) {
+      printf("[]");
       break;
     }
 
@@ -208,6 +210,9 @@ void print_ast(AST ast, int indent) {
 
   case AST_TYPE_DECLARATION: {
     printf("type %s\n", ast.data.AST_TYPE_DECLARATION.name);
+    if (ast.data.AST_TYPE_DECLARATION.type_expr == NULL) {
+      break;
+    }
     print_ast(*ast.data.AST_TYPE_DECLARATION.type_expr, indent + 1);
     break;
   }

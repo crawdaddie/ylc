@@ -1,13 +1,58 @@
 import "libs/libyalce_synth.so"
 
+#typedef struct Signal {
+#  // size of the data array will be size * layout
+#  // data is interleaved, so sample for frame x, channel 0 will be at index
+#  // layout * x + 0
+#  // sample for frame x, channel 1 will be at index layout * x + 1
+#  double *data;
+#  int size;   // number of frames
+#  int layout; // how they are laid out
+#} Signal;
+
+type Signal = struct (
+  double data,
+  int size,
+  int layout
+)
+
+#typedef struct Node {
+#  Signal *ins;
+#  int num_ins;
+#
+#  Signal add;
+#  Signal mul;
+#  Signal out;
+#
+#  node_perform perform;
+#  void *data;
+#  const char *name;
+#
+#  // 'ephemeral value' for offsetting the calculation of a node's frames into
+#  // a block - should be accessed by `int get_block_offset(Node *node)` that
+#  // resets it to 0 after reading
+#  int _block_offset;
+#
+#  bool killed;
+#
+#  struct Node *next;
+#  struct Node *prev;
+#  struct Node *parent;
+#  struct Node *_sub;
+#  struct Node *
+#      _sub_tail; // optional pointer to a node before the add_out or replace_out
+#                 // node found at the end of a Container Node's signal chain
+#} Node;
+type Node = int8
+
 
 let printf      = extern fn (str fmt, int8 i) int
 let setup_audio = extern fn () int
 let stop_audio  = extern fn () int
 
-let play_node   = extern fn (int8 x) int8
+let play_node   = extern fn (int8 x) int8 
 let sq_detune   = extern fn (double freq) int8
-let impulse     = extern fn (double freq) int8
+let impulse     = extern fn (double freq) int8 
 let lpf         = extern fn (double freq, double bw) int8
 let chain       = extern fn (int sig_idx, int8 dest, int8 src) int8
 

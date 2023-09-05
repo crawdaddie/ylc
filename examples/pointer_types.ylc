@@ -1,0 +1,7 @@
+import "libffi.so"
+type Point = struct (double x, double y)
+
+let get_point = extern fn (double x, double y) &Point
+
+let x = get_point(0.2, 1.2)
+

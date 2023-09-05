@@ -198,6 +198,18 @@ void print_token(token token) {
     printf("&");
     break;
   }
+
+  case TOKEN_QUESTION: {
+
+    printf("?");
+    break;
+  }
+
+  case TOKEN_COLON: {
+
+    printf(":");
+    break;
+  }
   }
 }
 
@@ -471,6 +483,22 @@ static int _STAR_MATCHER(const char *input, token *tail) {
   return 0;
 }
 
+static int _QUESTION_MATCHER(const char *input, token *tail) {
+  if (*input == '?') {
+    *tail = create_symbol_token(TOKEN_QUESTION);
+    return 1;
+  }
+  return 0;
+}
+
+static int _COLON_MATCHER(const char *input, token *tail) {
+  if (*input == ':') {
+    *tail = create_symbol_token(TOKEN_COLON);
+    return 1;
+  }
+  return 0;
+}
+
 /*
 static int _BAR_MATCHER(const char *input, token *tail) {
   if (*input == '|') {
@@ -621,13 +649,17 @@ static int _IDENTIFIER_MATCHER(const char *input, token *tail) {
   return 0;
 }
 
-#define NUM_MATCHERS 20
+#define NUM_MATCHERS 22
 static token_matcher matchers[NUM_MATCHERS] = {
-    _BRACKET_MATCHER,   _COMMA_MATCHER,        _DOT_MATCHER,    _EQL_MATCHER,
-    _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER, _PIPE_MATCHER,
-    _MINUS_MATCHER,     _BANG_MATCHER,         _MODULO_MATCHER, _PLUS_MATCHER,
-    _SLASH_MATCHER,     _STAR_MATCHER,         _NL_MATCHER,     _STRING_MATCHER,
-    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,   _BAR_MATCHER,    _AND_MATCHER};
+    _COLON_MATCHER,     _QUESTION_MATCHER,     _BRACKET_MATCHER,
+    _COMMA_MATCHER,     _DOT_MATCHER,          _EQL_MATCHER,
+    _LESS_THAN_MATCHER, _GREATER_THAN_MATCHER, _ASSIGN_MATCHER,
+    _PIPE_MATCHER,      _MINUS_MATCHER,        _BANG_MATCHER,
+    _MODULO_MATCHER,    _PLUS_MATCHER,         _SLASH_MATCHER,
+    _STAR_MATCHER,      _NL_MATCHER,           _STRING_MATCHER,
+    _NUMBER_MATCHER,    _IDENTIFIER_MATCHER,   _BAR_MATCHER,
+    _AND_MATCHER,
+};
 
 static token error_token(char *msg) {
   return create_literal_token(TOKEN_ERROR, (literal){.vstr = msg});

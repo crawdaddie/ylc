@@ -117,7 +117,11 @@ AST *parse_fn_prototype() {
   }
 
   if (match(TOKEN_IDENTIFIER)) {
-    proto->data.AST_FN_PROTOTYPE.type = strdup(parser.previous.as.vstr);
+    proto->data.AST_FN_PROTOTYPE.type =
+        AST_NEW(IDENTIFIER, strdup(parser.previous.as.vstr));
+  } else if (check(TOKEN_AMPERSAND)) {
+    AST *type_expr = parse_expression();
+    proto->data.AST_FN_PROTOTYPE.type = type_expr;
   } else {
     proto->data.AST_FN_PROTOTYPE.type = NULL;
   }

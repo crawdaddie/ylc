@@ -57,10 +57,10 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
     return LLVMPointerType(codegen_ttype(*type.as.T_PTR.item, ctx), 0);
   }
   case T_ARRAY: {
-      return LLVMArrayType(codegen_ttype(*type.as.T_ARRAY.member_type, ctx), type.as.T_ARRAY.length);
-    }
+    return LLVMArrayType(codegen_ttype(*type.as.T_ARRAY.member_type, ctx),
+                         type.as.T_ARRAY.length);
   }
-
+  }
 }
 
 LLVMTypeRef codegen_type(AST *ast, Context *ctx) {

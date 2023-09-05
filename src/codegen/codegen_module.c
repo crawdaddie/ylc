@@ -1,16 +1,15 @@
 #include "codegen_module.h"
 #include "../modules.h"
 #include "../paths.h"
+#include "../symbol_table.h"
 #include "codegen.h"
 #include "codegen_types.h"
-#include <libgen.h>
-#include <limits.h>
-#include <stdio.h>
-#include "../symbol_table.h"
 #include <dlfcn.h>
 #include <libgen.h>
-#include <stdlib.h>
+#include <limits.h>
 #include <llvm-c/Linker.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 #define MAX_ID_LEN 64
 static char *mname() { return malloc(sizeof(char) * MAX_ID_LEN); }
@@ -63,7 +62,7 @@ static void mangle_names(LLVMModuleRef module, char *prefix) {
 static void bind_module(ttype type, char *module_name, Context *ctx) {
 
   int len = type.as.T_STRUCT.length;
-  char **member_mapping = malloc(sizeof(char *) * type.as.T_STRUCT.length); 
+  char **member_mapping = malloc(sizeof(char *) * type.as.T_STRUCT.length);
   for (int i = 0; i < len; i++) {
     struct_member_metadata md = type.as.T_STRUCT.struct_metadata[i];
     ttype_tag member_type_tag = type.as.T_STRUCT.members[md.index].tag;
@@ -73,20 +72,13 @@ static void bind_module(ttype type, char *module_name, Context *ctx) {
     member_mapping[md.index] = mangled_name;
   }
   SymbolValue module = {
-    .type = TYPE_MODULE,
-    .data = {
-      .TYPE_MODULE = {
-        .type = type,
-        .names = member_mapping
-      }
-    }
-  };
+      .type = TYPE_MODULE,
+      .data = {.TYPE_MODULE = {.type = type, .names = member_mapping}}};
   table_insert(ctx->symbol_table, module_name, module);
-
-
 }
 
-LLVMValueRef lookup_module_member(SymbolValue module_sym, char *member_name, Context *ctx) {
+LLVMValueRef lookup_module_member(SymbolValue module_sym, char *member_name,
+                                  Context *ctx) {
   ttype type = module_sym.data.TYPE_MODULE.type;
   unsigned int idx = get_struct_member_index(type, member_name);
   char *mangled_name = module_sym.data.TYPE_MODULE.names[idx];
@@ -140,9 +132,9 @@ LLVMValueRef codegen_module(AST *ast, Context *ctx) {
     save_langmod(resolved_path, lang_module);
   }
 
-  // Deprecated in favor of treating module as a separate lookup table type rather than a struct
-  // LLVMValueRef module_struct = build_module_struct(ast->type, module_name, ctx);
-  // return module_struct;
+  // Deprecated in favor of treating module as a separate lookup table type
+  // rather than a struct LLVMValueRef module_struct =
+  // build_module_struct(ast->type, module_name, ctx); return module_struct;
   bind_module(ast->type, module_name, ctx);
   return LLVMConstInt(LLVMInt1Type(), 0, 0);
 }

@@ -30,8 +30,8 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value, AST *expr) {
   switch (t.tag) {
   case T_BOOL:
   case T_INT: {
-    int val = ((int (*)())fp)();
-    fprintf(stderr, "(%d)\n", val);
+    uint32_t val = ((uint32_t (*)())fp)();
+    fprintf(stderr, "(%u)\n", val);
     break;
   }
   case T_NUM: {
@@ -108,9 +108,30 @@ int init_lang_ctx(Context *ctx) {
   return 0;
 }
 
+LLVMModuleRef clone_module(LLVMModuleRef module, Context *ctx) {
+  // Iterate over global variables
+  printf("Global Variables:\n");
+  for (LLVMValueRef global = LLVMGetFirstGlobal(module); global != NULL;
+       global = LLVMGetNextGlobal(global)) {
+    char *globalName = LLVMGetValueName(global);
+    printf("Name: %s", globalName);
+
+    void *addr = (void *)LLVMGetPointerToGlobal(ctx->engine, global);
+    printf("%p",addr);
+    LLVMAddGlobalMapping(ctx->engine, global, addr);
+
+    // LLVMDumpValue(LLVMGetInitializer(global));
+    // printf("\n");
+
+    // LLVMDisposeMessage(globalName);
+  }
+
+  return LLVMCloneModule(module);
+}
+
 int reinit_lang_ctx(Context *ctx) {
   LLVMModuleRef newModule = LLVMCloneModule(ctx->module);
-  // LLVMBuilderRef builder = LLVMCreateBuilderInContext(ctx->context);
+
   LLVMExecutionEngineRef engine;
 
   char *error = NULL;
@@ -120,12 +141,26 @@ int reinit_lang_ctx(Context *ctx) {
     return 1;
   }
 
-  LLVMDisposeModule(ctx->module);
-  ctx->module = newModule;
-  // ctx->builder = builder;
-  ctx->engine = engine;
+  LLVMModuleRef oldModule = ctx->module;
+  LLVMExecutionEngineRef oldEngine = ctx->engine;
 
+  // for (LLVMValueRef global = LLVMGetFirstGlobal(oldModule); global != NULL;
+  //      global = LLVMGetNextGlobal(global)) {
+  //   char *globalName = LLVMGetValueName(global);
+  //   uint64_t val_addr = LLVMGetGlobalValueAddress(oldEngine, globalName);
+  //   printf("Name: %s addr: %llu ", globalName, val_addr);
+  //
+  //
+  //   void *addr = (void *)LLVMGetPointerToGlobal(oldEngine, global);
+  //   printf("%p\n", addr);
+  //   LLVMAddGlobalMapping(engine, global, addr);
+  // }
+
+  ctx->module = newModule;
+  ctx->engine = engine;
   init_symbol_table(ctx->symbol_table);
+
+  LLVMDisposeModule(oldModule);
   return 0;
 }
 
@@ -191,7 +226,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
     }
 
     dump_ast(ast);
-    typecheck_in_ctx(ast, path, &tcheck_ctx);
+    if (typecheck_in_ctx(ast, path, &tcheck_ctx) != 0) {
+      printf("typecheck error:");
+      return 1;
+    };
     LLVMValueRef value = codegen(ast, &ctx);
     dump_module(ctx.module);
 
@@ -230,7 +268,10 @@ int LLVMRuntime(int repl, char *path, char *output) {
     AST *ast = parse(input);
 
     dump_ast(ast);
-    typecheck_in_ctx(ast, cwd, &tcheck_ctx);
+    if (typecheck_in_ctx(ast, cwd, &tcheck_ctx) != 0) {
+      printf("type error");
+      continue;
+    };
 
     LLVMValueRef value = codegen(ast, &ctx);
 

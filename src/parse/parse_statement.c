@@ -83,8 +83,9 @@ static AST *type_declaration() {
   }
   char *name = parser.previous.as.vstr;
   if (!match(TOKEN_ASSIGNMENT)) {
-    fprintf(stderr, "Error: expected = after type declaration name");
-    return NULL;
+    fprintf(stderr, "Error: expected = after type declaration name %s", name);
+
+    return AST_NEW(TYPE_DECLARATION, name, NULL);
   }
   AST *type_expression;
   if (match(TOKEN_FN)) {

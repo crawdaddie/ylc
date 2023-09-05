@@ -28,6 +28,7 @@ typedef struct {
 } ParseRule;
 
 AST *parse_expression();
+AST *parse_type_expression();
 
 AST *parse_scoped_block(bool can_assign);
 

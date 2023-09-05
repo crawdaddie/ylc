@@ -118,6 +118,7 @@ static ttype lookup_explicit_type(char *type_identifier,
 
   AST *sym;
   if (AST_table_lookup(ctx->symbol_table, type_identifier, sym) == 0) {
+    printf("lookup %s/??\n", type_identifier);
     return sym->type;
   }
 }
@@ -216,6 +217,9 @@ static void typecheck_object_member_call(AST *ast, TypeCheckContext *ctx) {
 
 static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
   switch (ast->tag) {
+    case AST_IDENTIFIER: {
+      return lookup_explicit_type(ast->data.AST_IDENTIFIER.identifier, ctx);
+    }
 
   case AST_TUPLE: {
     int len = ast->data.AST_TUPLE.length;
@@ -254,6 +258,18 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
 
     ttype tuple_type = tstruct(member_types, metadata, len);
     return tuple_type;
+  }
+  case AST_UNOP: {
+    if (ast->data.AST_UNOP.op == TOKEN_AMPERSAND) {
+      AST *operand = ast->data.AST_UNOP.operand;
+      ttype *pointed_to = malloc(sizeof(ttype));
+      *pointed_to = compute_type_expression(operand, ctx);
+        printf("ampersand type\n");
+        print_ttype(*pointed_to);
+      ttype t= tptr(pointed_to);
+        return t;
+    }
+    return ast->type;
   }
   }
 }
@@ -443,7 +459,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       }
 
       fn_members[length - 1] =
-          lookup_explicit_type(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
+          compute_type_expression(prototype_ast->data.AST_FN_PROTOTYPE.type, ctx);
+
       ttype *fn_type = malloc(sizeof(ttype));
       *fn_type = tfn(fn_members, length);
 
@@ -605,8 +622,14 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       break;
     }
 
+    if (ast->data.AST_TYPE_DECLARATION.type_expr == NULL) {
+      AST_table_insert(ctx->symbol_table, name, (AST){});
+      break;
+    }
+
     ttype t =
         compute_type_expression(ast->data.AST_TYPE_DECLARATION.type_expr, ctx);
+
 
     ast->type.tag = t.tag;
     ast->type.as = t.as;
@@ -647,10 +670,21 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_ARRAY: {
 
     int len = ast->data.AST_ARRAY.length;
+    if (len == 0) {
+      break;
+    }
     ttype array_type;
 
-    AST *member_ast = ast->data.AST_TUPLE.members[0];
-    array_type = tarray(&member_ast->type, len);
+    AST *member_ast_0 = ast->data.AST_TUPLE.members[0];
+
+    for (int i = 0; i < len; i++) {
+      AST *member_ast = ast->data.AST_TUPLE.members[i];
+      generate_equations(member_ast, ctx);
+      if (i > 0) {
+        push_type_equation(&member_ast->type, &member_ast_0->type, ctx);
+      }
+    }
+    array_type = tarray(&member_ast_0->type, len);
     push_type_equation(&ast->type, &array_type, ctx);
 
     break;
@@ -749,6 +783,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   default:
     break;
   }
+
+  if (_typecheck_error_flag == 1) {
+    return;
+  }
 }
 
 void print_env(TypeEnv *env) {
@@ -779,6 +817,7 @@ void update_expression_types(AST *ast, TypeEnv *env) {
   case AST_FN_DECLARATION: {
     update_expression_types(ast->data.AST_FN_DECLARATION.prototype, env);
     update_expression_types(ast->data.AST_FN_DECLARATION.body, env);
+
     for (int i = 0; i < ast->type.as.T_FN.length; i++) {
       ast->type.as.T_FN.members[i] =
           *follow_links(env, &ast->type.as.T_FN.members[i]);
@@ -887,7 +926,9 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
 
   ctx->type_equations.equations = calloc(sizeof(TypeEquation), MAX_TEQ_LIST);
   ctx->type_equations.length = 0;
+
   generate_equations(ast, ctx);
+
   for (int i = 0; i < ctx->type_equations.length; i++) {
     unify(ctx->type_equations.equations[i], &ctx->type_env);
   }
@@ -900,7 +941,7 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
   if (_typecheck_error_flag) {
     return 1;
   }
-  return _typecheck_error_flag;
+  return 0;
 }
 
 ttype get_last_entered_type(AST *ast) {

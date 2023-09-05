@@ -1,6 +1,5 @@
-let f = fn (i) {
+let f = fn (int i) {
   i + 1
 }
-
 
 let x = f(0)
