@@ -5,9 +5,11 @@ type Point = struct (
 
 
 let Point p = (
-    x = 2.0,
     y = 1.0,
+    x = 2.0,
 )
+
+p.x
 
 #let zero = fn(Point p, double x) Point {
 #    p.x = x

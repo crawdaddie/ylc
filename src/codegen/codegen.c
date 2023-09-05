@@ -174,25 +174,20 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       return NULL;
     }
 
-    LLVMDumpValue(object);
-    printf("\n");
-    print_ttype(object_type);
-    printf("\n");
     if (is_ptr_to_struct(object_type)) {
       object_type = *object_type.as.T_PTR.item;
-        object = LLVMBuildLoad2(ctx->builder, codegen_ttype(object_type, ctx), object, "ptr_deref");
-
-      unsigned int member_idx = get_struct_member_index(object_type, member_name);
-
-      LLVMValueRef member =
-          LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
-      return member;
+      object = LLVMBuildLoad2(ctx->builder, codegen_ttype(object_type, ctx),
+                              object, "ptr_deref");
     }
 
     unsigned int member_idx = get_struct_member_index(object_type, member_name);
 
+    printf("\n member access: ");
+    LLVMDumpValue(object);
+
     LLVMValueRef member =
         LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
+
     return member;
   }
   case AST_FN_PROTOTYPE:

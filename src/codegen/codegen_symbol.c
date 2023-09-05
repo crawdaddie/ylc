@@ -129,6 +129,7 @@ LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {
     return LLVMGetParam(current_function(ctx), val.data.TYPE_FN_PARAM.arg_idx);
   }
 
+  case TYPE_EXTERN_FN:
   case TYPE_FUNCTION: {
     LLVMValueRef f = LLVMGetNamedFunction(ctx->module, name);
     if (f) {

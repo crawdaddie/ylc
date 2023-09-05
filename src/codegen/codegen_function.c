@@ -56,6 +56,28 @@ void bind_function(const char *name, LLVMValueRef func, LLVMTypeRef fn_type,
   table_insert(ctx->symbol_table, name, sym);
 }
 
+void bind_extern_function(const char *name, LLVMValueRef func,
+                          LLVMTypeRef fn_type, ttype type, Context *ctx) {
+
+  SymbolValue sym;
+  sym.type = TYPE_EXTERN_FN;
+  sym.data.TYPE_FUNCTION.llvm_value = func;
+  sym.data.TYPE_FUNCTION.llvm_type = fn_type;
+  sym.data.TYPE_FUNCTION.type = type;
+  table_insert(ctx->symbol_table, name, sym);
+}
+
+void bind_sret_function(const char *name, LLVMValueRef func,
+                        LLVMTypeRef fn_type, ttype type, Context *ctx) {
+
+  SymbolValue sym;
+  sym.type = TYPE_SRET_FN;
+  sym.data.TYPE_SRET_FN.llvm_value = func;
+  sym.data.TYPE_SRET_FN.llvm_type = fn_type;
+  sym.data.TYPE_SRET_FN.type = type;
+  table_insert(ctx->symbol_table, name, sym);
+}
+
 LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   char *name = ast->data.AST_FN_DECLARATION.name;
   AST *prototype_ast = ast->data.AST_FN_DECLARATION.prototype;
@@ -102,6 +124,37 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
   return function;
 };
+LLVMTypeRef codegen_sret_fn_type(ttype type, Context *ctx) {
+
+  int len = type.as.T_FN.length;
+  printf("codegen sret fn type args: %d\n", len);
+
+  LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len);
+
+  params[0] =
+      LLVMPointerType(codegen_ttype(type.as.T_FN.members[len - 1], ctx), 0);
+
+  for (int i = 0; i < len; i++) {
+    params[i + 1] = codegen_ttype(type.as.T_FN.members[i], ctx);
+  }
+
+  LLVMTypeRef ret_type = LLVMVoidTypeInContext(ctx->context);
+  LLVMTypeRef function_type = LLVMFunctionType(ret_type, params, len, false);
+
+  return function_type;
+}
+
+LLVMValueRef codegen_sret_function(AST *ast, Context *ctx) {
+
+  char *name = ast->data.AST_FN_DECLARATION.name;
+  AST *prototype = ast->data.AST_FN_DECLARATION.prototype;
+
+  LLVMTypeRef fn_type = codegen_sret_fn_type(ast->type, ctx);
+  LLVMValueRef function = LLVMAddFunction(ctx->module, name, fn_type);
+  bind_sret_function(name, function, fn_type, ast->type, ctx);
+
+  return function;
+}
 
 LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   char *name = ast->data.AST_FN_DECLARATION.name;
@@ -109,26 +162,69 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
     fprintf(stderr, "Error: extern function must have a name");
     return NULL;
   }
-  AST *prototype = ast->data.AST_FN_DECLARATION.prototype;
   ttype type = ast->type;
+  ttype ret_type = get_fn_return_type(type);
+  if (ret_type.tag == T_TUPLE || ret_type.tag == T_STRUCT) {
+    // TODO: if return type is not simple, change to void return and add
+    // an extra pointer first arg
+    return codegen_sret_function(ast, ctx);
+  }
+
+  AST *prototype = ast->data.AST_FN_DECLARATION.prototype;
+
   LLVMTypeRef fn_type = codegen_type(ast, ctx);
   LLVMValueRef function = LLVMAddFunction(ctx->module, name, fn_type);
-
   bind_function(name, function, fn_type, type, ctx);
-
   return function;
 };
+
+static LLVMValueRef call_sret_fn(SymbolValue sym, LLVMValueRef func,
+                                 LLVMValueRef *args, unsigned int arg_count,
+                                 Context *ctx) {
+  ttype sret_fn_type = get_fn_return_type(sym.data.TYPE_SRET_FN.type);
+  printf("sret return type: arg count %d -- ", arg_count);
+  print_ttype(sret_fn_type);
+  printf("\n");
+  LLVMTypeRef ret_type_ref = codegen_ttype(sret_fn_type, ctx);
+
+  LLVMValueRef *new_args = malloc(sizeof(LLVMValueRef) * (arg_count + 1));
+
+  new_args[0] = LLVMBuildAlloca(ctx->builder, ret_type_ref, "sret_var");
+
+  for (int i = 0; i < arg_count + 1; i++) {
+    new_args[i + 1] = args[i];
+  }
+
+  LLVMValueRef val = LLVMBuildCall2(ctx->builder, LLVMGlobalGetValueType(func),
+                                    func, new_args, arg_count + 1, "");
+
+  free(args);
+  LLVMValueRef alloca_load =
+      LLVMBuildLoad2(ctx->builder, ret_type_ref, new_args[0], "sret_var_load");
+  free(new_args);
+  return alloca_load;
+}
+
 LLVMValueRef codegen_call(AST *ast, Context *ctx) {
 
   char *name = ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
 
-  LLVMValueRef func = codegen_identifier(ast->data.AST_CALL.identifier, ctx);
+  SymbolValue sym;
 
-  if (func == NULL) {
-    fprintf(stderr, "Error: function %s not found in this scope (%d)\n",
-            ast->data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier,
-            ctx->symbol_table->current_frame_index);
+  if (table_lookup(ctx->symbol_table, name, &sym) != 0) {
+    fprintf(stderr, "ident Error callable %s not found\n", name);
     return NULL;
+  }
+
+  LLVMValueRef func;
+  if (!(sym.type == TYPE_SRET_FN || sym.type == TYPE_FUNCTION)) {
+    fprintf(stderr, "ident Error %s is not callable\n", name);
+    return NULL;
+  } else {
+    func = LLVMGetNamedFunction(ctx->module, name);
+    if (!func) {
+      func = sym.data.TYPE_FUNCTION.llvm_value;
+    }
   }
 
   // Evaluate arguments.
@@ -142,6 +238,9 @@ LLVMValueRef codegen_call(AST *ast, Context *ctx) {
   unsigned int i;
   for (i = 0; i < arg_count; i++) {
     args[i] = codegen(parameters_tuple.members[i], ctx);
+  }
+  if (sym.type == TYPE_SRET_FN) {
+    return call_sret_fn(sym, func, args, arg_count, ctx);
   }
 
   // Get the return type of the function

@@ -4,20 +4,20 @@
 #include <stdio.h>
 
 LLVMValueRef codegen_struct(AST *ast, Context *ctx) {
+  printf("codegen struct: ");
+  print_ttype(ast->type);
+  struct AST_STRUCT data = AST_DATA(ast, STRUCT);
+  LLVMValueRef *members = malloc(sizeof(LLVMValueRef) * data.length);
+  for (int i = 0; i < data.length; i++) {
+    char *name = data.members[i]->data.AST_SYMBOL_DECLARATION.identifier;
+    AST *expr = data.members[i]->data.AST_SYMBOL_DECLARATION.expression;
+    print_ast(*data.members[i], 0);
 
-  // int num_members = ast->data.AST_STRUCT.length;
-  // AST **members = ast->data.AST_STRUCT.members;
-  //
-  // LLVMTypeRef *structFields = malloc(sizeof(LLVMTypeRef) * num_members);
-  // for (int i = 0; i < num_members; i++) {
-  //   AST *member = members[i];
-  //
-  //   structFields[i] =
-  //       type_lookup(member->data.AST_SYMBOL_DECLARATION.type, ctx);
-  // }
-  // LLVMStructSetBody(structType, structFields, num_members, 0);
-
-  return NULL;
+    int idx = get_struct_member_index(ast->type, name);
+    members[idx] = codegen(expr, ctx);
+  }
+  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+  return tuple_struct;
 };
 
 LLVMValueRef codegen_tuple(AST *ast, Context *ctx) {

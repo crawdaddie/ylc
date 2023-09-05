@@ -33,6 +33,7 @@ typedef struct SymbolValue {
     TYPE_EXTERN_FN,
     TYPE_TYPE_DECLARATION,
     TYPE_FUNCTION,
+    TYPE_SRET_FN,
     TYPE_MODULE,
   } type;
 
@@ -55,6 +56,13 @@ typedef struct SymbolValue {
       LLVMTypeRef ret_type;
       ttype type;
     } TYPE_FUNCTION;
+
+    struct TYPE_SRET_FN {
+      LLVMValueRef llvm_value;
+      LLVMTypeRef llvm_type;
+      LLVMTypeRef ret_type;
+      ttype type;
+    } TYPE_SRET_FN;
 
     struct TYPE_RECURSIVE_REF {
       LLVMValueRef llvm_value;

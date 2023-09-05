@@ -260,13 +260,10 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
   }
   case AST_UNOP: {
     if (ast->data.AST_UNOP.op == TOKEN_AMPERSAND) {
-      printf("ampersand type\n");
       AST *operand = ast->data.AST_UNOP.operand;
       ttype *pointed_to = malloc(sizeof(ttype));
       *pointed_to = compute_type_expression(operand, ctx);
-      print_ttype(*pointed_to);
-      ttype t = tptr(pointed_to);
-      return t;
+      return tptr(pointed_to);
     }
     return ast->type;
   }
@@ -596,10 +593,12 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
                          &ast->data.AST_ASSIGNMENT.expression->type, ctx);
       break;
     }
+
     // if (ast->data.AST_ASSIGNMENT.type != NULL) {
     //   ttype t = lookup_explicit_type(ast->data.AST_ASSIGNMENT.type, ctx);
     //   push_type_equation(&ast->type, &t);
     // }
+
     assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
 
     AST_table_insert(ctx->symbol_table, name,

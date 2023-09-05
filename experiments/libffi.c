@@ -23,7 +23,7 @@ double randfloat(double max) {
   // Generate a random integer in the range [0, RAND_MAX]
   int randomInt = rand();
 
-  // Scale the andom integer to the range [0, N)
+  // Scale the random integer to the range [0, N)
   return ((double)randomInt / RAND_MAX) * max;
 }
 
@@ -32,9 +32,10 @@ struct Point {
   double y;
 };
 
-struct Point *get_point(double x, double y) {
-  struct Point *p = malloc(sizeof(struct Point));
-  p->x = x;
-  p->y = y;
+struct Point get_point(double x, double y) {
+  struct Point p;
+  p.x = x;
+  p.y = y;
+  printf("%p (x: %f y: %f)\n", &p, p.x, p.y);
   return p;
 }
