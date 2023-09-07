@@ -66,8 +66,11 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   if (ctx->symbol_table->current_frame_index == 0) {
 
+    // variable = LLVMBuildAlloca(ctx->builder, type_ref, name);
     variable = LLVMAddGlobal(ctx->module, type_ref, name);
+    LLVMSetAlignment(variable, 8);
     LLVMSetInitializer(variable, LLVMConstNull(type_ref));
+
     val.type = TYPE_GLOBAL_VARIABLE;
     val.data.TYPE_GLOBAL_VARIABLE.llvm_value = variable;
     val.data.TYPE_GLOBAL_VARIABLE.llvm_type = type_ref;
@@ -87,17 +90,22 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
   if (expr) {
     value = codegen(expr, ctx);
     LLVMBuildStore(ctx->builder, value, variable);
+
     return variable;
   };
 
   return variable;
 }
 
-static LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
-                                              Context *ctx) {
+LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
+                                       Context *ctx) {
   LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
   return LLVMBuildLoad2(ctx->builder, val.data.TYPE_GLOBAL_VARIABLE.llvm_type,
                         global, "");
+
+  // LLVMValueRef variable = val.data.TYPE_VARIABLE.llvm_value;
+  // return LLVMBuildLoad2(ctx->builder, val.data.TYPE_VARIABLE.llvm_type,
+  // variable, "");
 }
 
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {

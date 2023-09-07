@@ -227,7 +227,6 @@ int LLVMRuntime(int repl, char *path, char *output) {
 
     dump_ast(ast);
     if (typecheck_in_ctx(ast, path, &tcheck_ctx) != 0) {
-      printf("typecheck error:");
       return 1;
     };
     LLVMValueRef value = codegen(ast, &ctx);

@@ -7,4 +7,7 @@
 LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
                             Context *ctx);
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx);
+
+LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
+                                       Context *ctx);
 #endif

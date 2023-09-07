@@ -719,8 +719,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
             ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
             &object) != 0) {
 
-      fprintf(stderr,
-              "Error [typecheck]: object %s not found in this scope\n",
+      fprintf(stderr, "Error [typecheck]: object %s not found in this scope\n",
               obj_identifier);
       break;
     }
@@ -738,7 +737,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
 
-    ttype obj_type = is_ptr_to_struct(object.type) ? *object.type.as.T_PTR.item : object.type;
+    ttype obj_type = is_ptr_to_struct(object.type) ? *object.type.as.T_PTR.item
+                                                   : object.type;
     for (int i = 0; i < object.type.as.T_STRUCT.length; i++) {
       if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
           0) {
@@ -946,6 +946,7 @@ int typecheck_in_ctx(AST *ast, const char *module_path, TypeCheckContext *ctx) {
   if (_typecheck_error_flag) {
     return 1;
   }
+  printf("tcheck fin");
   return 0;
 }
 

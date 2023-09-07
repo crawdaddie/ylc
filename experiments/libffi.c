@@ -32,10 +32,10 @@ struct Point {
   double y;
 };
 
-struct Point get_point(double x, double y) {
-  struct Point p;
-  p.x = x;
-  p.y = y;
-  printf("%p (x: %f y: %f)\n", &p, p.x, p.y);
+struct Point *get_point(double x, double y) {
+  struct Point *p = malloc(sizeof(struct Point));
+  p->x = x;
+  p->y = y;
+  printf("%p (x: %f y: %f)\n", p, p->x, p->y);
   return p;
 }

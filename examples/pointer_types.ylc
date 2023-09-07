@@ -1,15 +1,11 @@
 import "libffi.so"
 type Point = struct (double x, double y)
 
-let get_point = extern fn (double x, double y) Point
+let get_point = extern fn (double x, double y) &Point
 
-let printf = extern fn (str fmt, double v) int
-
+let printf = extern fn (str fmt, ...) int
 let x = get_point(0.2, 1.2)
 
-#printf("%f\n", x.x)
-#printf("%f\n", x.y)
-#x
-
+printf("x: x.x: %f x.y: %f\n", 1.0, 1.0)
 
 

@@ -129,11 +129,15 @@ bool check_compound(ttype *l, ttype *r) {
   return true;
 }
 void unify(TypeEquation eq, TypeEnv *env) {
+  if (eq.left == NULL || eq.right == NULL) {
+    return;
+  }
 #ifdef _TYPECHECK_DBG
   print_type_equation(eq);
 #endif
   ttype *l = eq.left;
   ttype *r = eq.right;
+
   int index = eq.index;
 
   ttype *lookup = malloc(sizeof(ttype));

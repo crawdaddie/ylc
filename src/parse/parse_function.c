@@ -106,6 +106,7 @@ AST *parse_fn_prototype() {
       }
       arg = malloc(sizeof(AST));
       arg->tag = AST_VAR_ARG;
+      arg->type = _tvar();
     } else {
       arg = parse_fn_arg();
     }
