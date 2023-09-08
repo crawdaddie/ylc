@@ -166,6 +166,14 @@ void unify(TypeEquation eq, TypeEnv *env) {
     return unify((TypeEquation){r, l, index}, env);
   }
 
+  if (l->tag != T_VAR && r->tag != l->tag) {
+    fprintf(stderr,
+            "typecheck error: cannot unify types - mismatching tags %d %d\n",
+            l->tag, r->tag);
+    _typecheck_error_flag = 1;
+    return;
+  }
+
   switch (l->tag) {
   case T_FN: {
     if (r->tag == T_VAR) {
@@ -177,6 +185,7 @@ void unify(TypeEquation eq, TypeEnv *env) {
   case T_TUPLE:
   case T_STRUCT: {
     if (!check_compound(l, r)) {
+      fprintf(stderr, "typecheck error: cannot unify structs\n");
       _typecheck_error_flag = 1;
       break;
       ;
@@ -212,6 +221,8 @@ void unify(TypeEquation eq, TypeEnv *env) {
   case T_VOID:
   case T_PTR: {
     if (l->tag != r->tag) {
+      fprintf(stderr,
+              "typecheck error: cannot unify ptrs - mismatching tags\n");
       _typecheck_error_flag = 1;
       break;
     }

@@ -149,26 +149,29 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     char *object_id =
         ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
 
-    SymbolValue val;
+    SymbolValue sym;
 
-    if (table_lookup(ctx->symbol_table, object_id, &val) != 0) {
+    if (table_lookup(ctx->symbol_table, object_id, &sym) != 0) {
       fprintf(stderr, "Error symbol %s not found\n", object_id);
       return NULL;
     }
 
     char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
+
     LLVMValueRef object;
     ttype object_type;
 
-    if (val.type == TYPE_VARIABLE) {
-      object = val.data.TYPE_VARIABLE.llvm_value;
-      object_type = val.data.TYPE_VARIABLE.type;
+    if (sym.type == TYPE_VARIABLE) {
+      object_type = sym.data.TYPE_VARIABLE.type;
+      object = LLVMBuildLoad2(ctx->builder, sym.data.TYPE_VARIABLE.llvm_type, sym.data.TYPE_VARIABLE.llvm_value, "ptr_deref");
 
-    } else if (val.type == TYPE_GLOBAL_VARIABLE) {
-      object = val.data.TYPE_GLOBAL_VARIABLE.llvm_value;
-      object_type = val.data.TYPE_GLOBAL_VARIABLE.type;
-    } else if (val.type == TYPE_MODULE) {
-      return lookup_module_member(val, member_name, ctx);
+    } else if (sym.type == TYPE_GLOBAL_VARIABLE) {
+
+      object = codegen_global_identifier(sym, object_id, ctx);
+      object_type = sym.data.TYPE_GLOBAL_VARIABLE.type;
+
+    } else if (sym.type == TYPE_MODULE) {
+      return lookup_module_member(sym, member_name, ctx);
     } else {
       fprintf(stderr, "Error: unrecognized variable type");
       return NULL;
@@ -181,9 +184,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     }
 
     unsigned int member_idx = get_struct_member_index(object_type, member_name);
-
-    printf("\n member access: ");
-    LLVMDumpValue(object);
 
     LLVMValueRef member =
         LLVMBuildExtractValue(ctx->builder, object, member_idx, "");

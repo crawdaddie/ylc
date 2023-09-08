@@ -349,10 +349,19 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
 
     return typecheck_ast_call(ast, ctx);
   }
+
   int parameters_len =
       func_ast.data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length;
 
+  int is_var_arg =
+      func_ast.data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+          .parameters[parameters_len - 1]
+          ->tag == AST_VAR_ARG;
+
   int args_len = ast->data.AST_CALL.parameters->data.AST_TUPLE.length;
+  if (is_var_arg) {
+    args_len -= 1;
+  }
 
   if (args_len < parameters_len) {
     AST **members = ast->data.AST_CALL.parameters->data.AST_TUPLE.members;
@@ -365,6 +374,10 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
     // func type with signature composed of last n types of original func
     ttype *ptypes = malloc(sizeof(ttype) * args_len);
     for (int i = 0; i < args_len; i++) {
+      print_ast(*func_ast.data.AST_FN_DECLARATION.prototype->data
+                     .AST_FN_PROTOTYPE.parameters[i],
+                0);
+
       ptypes[i] = _tvar();
       push_type_equation_index(&ptypes[i], &func_ast.type, parameters_len - i,
                                ctx);
@@ -375,6 +388,7 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
 
   for (int i = 0; i < args_len; i++) {
     AST *param_ast = ast->data.AST_CALL.parameters->data.AST_TUPLE.members[i];
+
     generate_equations(param_ast, ctx);
     push_type_equation_index(&param_ast->type, &func_ast.type, i, ctx);
   }
@@ -450,6 +464,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
       ttype *fn_members = malloc(sizeof(ttype) * length);
       for (int i = 0; i < length - 1; i++) {
         AST *param_ast = prototype_ast->data.AST_FN_PROTOTYPE.parameters[i];
+
+        if (param_ast->tag == AST_VAR_ARG) {
+          continue;
+        }
         fn_members[i] = lookup_explicit_type(
             param_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
       }
@@ -482,6 +500,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     ttype *fn_members = malloc(sizeof(ttype) * length);
     for (int i = 0; i < length - 1; i++) {
       AST *param_ast = prototype_ast->data.AST_FN_PROTOTYPE.parameters[i];
+      if (param_ast->tag == AST_VAR_ARG) {
+        continue;
+      }
+
+      if (param_ast->tag == AST_VAR_ARG) {
+        continue;
+      }
       fn_members[i] = param_ast->type;
     }
     fn_members[length - 1] = ast->data.AST_FN_DECLARATION.body->type;
@@ -496,6 +521,9 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     int length = ast->data.AST_FN_PROTOTYPE.length;
     for (int i = 0; i < length; i++) {
       AST *param_ast = ast->data.AST_FN_PROTOTYPE.parameters[i];
+      if (param_ast->tag == AST_VAR_ARG) {
+        continue;
+      }
       generate_equations(param_ast, ctx);
     }
     break;
@@ -719,8 +747,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
             ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier,
             &object) != 0) {
 
-      fprintf(stderr,
-              "Error [typecheck]: object %s not found in this scope\n",
+      fprintf(stderr, "Error [typecheck]: object %s not found in this scope\n",
               obj_identifier);
       break;
     }
@@ -738,7 +765,8 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
 
-    ttype obj_type = is_ptr_to_struct(object.type) ? *object.type.as.T_PTR.item : object.type;
+    ttype obj_type = is_ptr_to_struct(object.type) ? *object.type.as.T_PTR.item
+                                                   : object.type;
     for (int i = 0; i < object.type.as.T_STRUCT.length; i++) {
       if (strcmp(member_name, obj_type.as.T_STRUCT.struct_metadata[i].name) ==
           0) {

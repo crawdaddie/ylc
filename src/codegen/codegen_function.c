@@ -6,6 +6,33 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+LLVMTypeRef codegen_fn_type(AST *ast, Context *ctx) {
+  ttype type = ast->type;
+  int param_len =
+      ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length;
+
+  int is_var_args =
+      ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+          .parameters[param_len - 1]
+          ->tag == AST_VAR_ARG;
+
+  int len = type.as.T_FN.length;
+
+  if (is_var_args) {
+    len -= 1;
+  }
+
+  LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len - 1);
+  for (int i = 0; i < len - 1; i++) {
+    params[i] = codegen_ttype(type.as.T_FN.members[i], ctx);
+  }
+  LLVMTypeRef ret_type = codegen_ttype(type.as.T_FN.members[len - 1], ctx);
+  LLVMTypeRef function_type =
+      LLVMFunctionType(ret_type, params, len - 1, is_var_args);
+
+  return function_type;
+  return NULL;
+}
 static bool function_is_void(LLVMValueRef func) {
   // Get the return type of the function
   LLVMTypeRef returnType = LLVMGetReturnType(LLVMGlobalGetValueType(func));
@@ -84,7 +111,7 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
   AST *body_ast = ast->data.AST_FN_DECLARATION.body;
 
   ttype type = ast->type;
-  LLVMTypeRef fn_type = codegen_type(ast, ctx);
+  LLVMTypeRef fn_type = codegen_fn_type(ast, ctx);
   LLVMValueRef function =
       LLVMAddFunction(ctx->module, name ? name : "", fn_type);
 
@@ -124,10 +151,10 @@ LLVMValueRef codegen_function(AST *ast, Context *ctx) {
 
   return function;
 };
+
 LLVMTypeRef codegen_sret_fn_type(ttype type, Context *ctx) {
 
   int len = type.as.T_FN.length;
-  printf("codegen sret fn type args: %d\n", len);
 
   LLVMTypeRef *params = malloc(sizeof(LLVMTypeRef) * len);
 
@@ -164,15 +191,14 @@ LLVMValueRef codegen_extern_function(AST *ast, Context *ctx) {
   }
   ttype type = ast->type;
   ttype ret_type = get_fn_return_type(type);
-  if (ret_type.tag == T_TUPLE || ret_type.tag == T_STRUCT) {
+  if (ret_type.tag == T_TUPLE || ret_type.tag == T_STRUCT ||
+      ret_type.tag == T_PTR) {
     // TODO: if return type is not simple, change to void return and add
     // an extra pointer first arg
     return codegen_sret_function(ast, ctx);
   }
 
-  AST *prototype = ast->data.AST_FN_DECLARATION.prototype;
-
-  LLVMTypeRef fn_type = codegen_type(ast, ctx);
+  LLVMTypeRef fn_type = codegen_fn_type(ast, ctx);
   LLVMValueRef function = LLVMAddFunction(ctx->module, name, fn_type);
   bind_function(name, function, fn_type, type, ctx);
   return function;
@@ -182,9 +208,6 @@ static LLVMValueRef call_sret_fn(SymbolValue sym, LLVMValueRef func,
                                  LLVMValueRef *args, unsigned int arg_count,
                                  Context *ctx) {
   ttype sret_fn_type = get_fn_return_type(sym.data.TYPE_SRET_FN.type);
-  printf("sret return type: arg count %d -- ", arg_count);
-  print_ttype(sret_fn_type);
-  printf("\n");
   LLVMTypeRef ret_type_ref = codegen_ttype(sret_fn_type, ctx);
 
   LLVMValueRef *new_args = malloc(sizeof(LLVMValueRef) * (arg_count + 1));
