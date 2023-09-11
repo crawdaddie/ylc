@@ -41,6 +41,7 @@ int test_typedef_tuple() {
                               "    1.0,\n"
                               "    0.5,\n"
                               ")");
+  print_ast(*test, 0);
 
   mu_assert(
       types_equal(&AST_TOP_LEVEL(test, 0)->type, &AST_TOP_LEVEL(test, 1)->type),

@@ -32,4 +32,6 @@ AST *parse_type_expression();
 
 AST *parse_scoped_block(bool can_assign);
 
+AST *parse_precedence(Precedence precedence);
+
 #endif /* ifndef _LANG_EXPRESSION_H */

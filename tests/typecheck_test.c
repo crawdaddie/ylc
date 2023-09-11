@@ -303,7 +303,12 @@ int test_partially_explicitly_typed_fn() {
                               "  x + 1\n"
                               "}");
 
+  printf("fn: ");
+  print_ast(*test, 0);
+  printf("\n");
   ttype x_type = AST_TOP_LEVEL(test, 0)->AST_FN_PARAM(0)->type;
+  print_ttype(x_type);
+  printf("\n");
   mu_assert(x_type.tag == T_NUM,
             "type of parameter x (Num) is added to AST node for x");
 
@@ -389,6 +394,7 @@ int test_extern_fn() {
   AST *test = typecheck_input("let randfloat = extern fn (double max) double");
 
   AST *fn_h = AST_TOP_LEVEL(test, 0);
+
   mu_assert(fn_h->type.tag == T_FN, "function type is populated");
   mu_assert(fn_h->type.as.T_FN.length == 2,
             "function type has 1 param & 1 return val (length = 2)");

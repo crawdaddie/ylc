@@ -246,7 +246,7 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
     for (int i = 0; i < len; i++) {
       AST *member_ast = ast->data.AST_STRUCT.members[i];
 
-      ttype t = lookup_explicit_type(
+      ttype t = compute_type_expression(
           member_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
 
       member_types[i] = t;
@@ -319,6 +319,7 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
     //
     char *original_fn_name =
         curried_call.data.AST_CALL.identifier->data.AST_IDENTIFIER.identifier;
+
     int first_n = curried_call.data.AST_CALL.parameters->data.AST_TUPLE.length;
 
     AST **curried_params =
@@ -374,9 +375,6 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
     // func type with signature composed of last n types of original func
     ttype *ptypes = malloc(sizeof(ttype) * args_len);
     for (int i = 0; i < args_len; i++) {
-      print_ast(*func_ast.data.AST_FN_DECLARATION.prototype->data
-                     .AST_FN_PROTOTYPE.parameters[i],
-                0);
 
       ptypes[i] = _tvar();
       push_type_equation_index(&ptypes[i], &func_ast.type, parameters_len - i,
@@ -468,8 +466,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
         if (param_ast->tag == AST_VAR_ARG) {
           continue;
         }
-        fn_members[i] = lookup_explicit_type(
-            param_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
+        if (param_ast->data.AST_SYMBOL_DECLARATION.type) {
+          fn_members[i] = compute_type_expression(
+              param_ast->data.AST_SYMBOL_DECLARATION.type, ctx);
+        }
       }
 
       fn_members[length - 1] = compute_type_expression(
@@ -603,7 +603,7 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     if (ast->data.AST_SYMBOL_DECLARATION.type != NULL) {
       ttype t =
-          lookup_explicit_type(ast->data.AST_SYMBOL_DECLARATION.type, ctx);
+          compute_type_expression(ast->data.AST_SYMBOL_DECLARATION.type, ctx);
       push_type_equation(&ast->type, &t, ctx);
     }
 
@@ -626,8 +626,11 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     //   ttype t = lookup_explicit_type(ast->data.AST_ASSIGNMENT.type, ctx);
     //   push_type_equation(&ast->type, &t);
     // }
+    //
 
-    assign_explicit_type(ast, ast->data.AST_ASSIGNMENT.type, ctx);
+    if (ast->data.AST_ASSIGNMENT.type) {
+      ast->type = compute_type_expression(ast->data.AST_ASSIGNMENT.type, ctx);
+    }
 
     AST_table_insert(ctx->symbol_table, name,
                      *ast->data.AST_ASSIGNMENT.expression);

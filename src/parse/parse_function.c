@@ -74,19 +74,20 @@ AST *parse_fn_body() {
 }
 
 AST *parse_fn_arg() {
-  char *identifiers[2];
-  int i;
-  for (i = 0; match(TOKEN_IDENTIFIER); i++) {
-    identifiers[i] = strdup(parser.previous.as.vstr);
-  }
-  if (i == 0) {
-    return NULL;
-  }
-  if (i == 1) {
-    return AST_NEW(SYMBOL_DECLARATION, identifiers[0], NULL);
-  }
-
-  return AST_NEW(SYMBOL_DECLARATION, identifiers[1], identifiers[0]);
+  // char *identifiers[2];
+  // int i;
+  // for (i = 0; match(TOKEN_IDENTIFIER); i++) {
+  //   identifiers[i] = strdup(parser.previous.as.vstr);
+  // }
+  // if (i == 0) {
+  //   return NULL;
+  // }
+  // if (i == 1) {
+  //   return AST_NEW(SYMBOL_DECLARATION, identifiers[0], NULL);
+  // }
+  //
+  // return AST_NEW(SYMBOL_DECLARATION, identifiers[1], identifiers[0]);
+  return let_statement();
 }
 
 AST *parse_fn_prototype() {

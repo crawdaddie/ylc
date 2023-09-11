@@ -37,8 +37,10 @@ AST *ast_statement_list(int length, ...) {
 }
 static AST *return_statement() { return NULL; }
 static AST *assignment_statement(char *id, char *type);
-static AST *let_statement() {
+
+static AST *_let_statement() {
   advance();
+
   if (match(TOKEN_IDENTIFIER)) {
     token id_token = parser.previous;
     char *id_str = strdup(id_token.as.vstr);
@@ -54,11 +56,60 @@ static AST *let_statement() {
       // let <id> = <expr> - declaration immediately followed by assignment
       return assignment_statement(id_str, type);
     }
+
     return AST_NEW(SYMBOL_DECLARATION, id_str, type);
+
   } else {
     printf("error missing identifier");
     return NULL;
   }
+}
+
+AST *let_statement() {
+  // advance();
+  AST *type = parse_precedence(PREC_OR);
+
+  if (check(TOKEN_ASSIGNMENT) && type->tag == AST_IDENTIFIER) {
+    // let <id> = <expr> - declaration immediately followed by assignment (no
+    // type)
+    return assignment_statement(type->data.AST_IDENTIFIER.identifier, NULL);
+  }
+  if (check(TOKEN_IDENTIFIER)) {
+    advance();
+    char *id = strdup(parser.previous.as.vstr);
+    AST *expr = NULL;
+    if (check(TOKEN_ASSIGNMENT)) {
+      advance();
+      expr = parse_expression();
+      // print_ast(*expr, 0);
+      AST *ass = AST_NEW(ASSIGNMENT, id, type, expr);
+      return ass;
+    }
+    AST *decl = AST_NEW(SYMBOL_DECLARATION, id, type, NULL);
+    return decl;
+  }
+
+  AST *decl =
+      AST_NEW(SYMBOL_DECLARATION, type->data.AST_IDENTIFIER.identifier, NULL);
+
+  return decl;
+  // if (match(TOKEN_IDENTIFIER)) {
+  //   token id_token = parser.previous;
+  //   char *id_str = strdup(id_token.as.vstr);
+  //   char *type = NULL;
+  //
+  //   if (match(TOKEN_IDENTIFIER)) {
+  //     // first id was actually a type
+  //     type = id_str;
+  //     id_str = strdup(parser.previous.as.vstr);
+  //   }
+  //
+  //
+  //
+  // } else {
+  //   printf("error missing identifier");
+  //   return NULL;
+  // }
 }
 static AST *assignment_statement(char *id, char *type) {
   advance();
@@ -81,12 +132,14 @@ static AST *type_declaration() {
     fprintf(stderr, "Error: expected name after type keyword");
     return NULL;
   }
+
   char *name = parser.previous.as.vstr;
   if (!match(TOKEN_ASSIGNMENT)) {
     fprintf(stderr, "Error: expected = after type declaration name %s", name);
 
     return AST_NEW(TYPE_DECLARATION, name, NULL);
   }
+
   AST *type_expression;
   if (match(TOKEN_FN)) {
     type_expression = parse_fn_prototype();
@@ -126,6 +179,7 @@ AST *parse_statement() {
     token token = parser.current;
     switch (token.type) {
     case TOKEN_LET: {
+      advance();
       ast = let_statement();
       break;
     }
@@ -151,8 +205,8 @@ AST *parse_statement() {
     }
     }
 
-    ast->src_offset = src_offset;
-    ast->line_info = linfo;
+    // ast->src_offset = src_offset;
+    // ast->line_info = linfo;
     return ast;
   }
   return NULL;

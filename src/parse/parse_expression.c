@@ -9,7 +9,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-static AST *parse_precedence(Precedence precedence);
+// static AST *parse_precedence(Precedence precedence);
 static ParseRule *get_rule(enum token_type type);
 
 static AST *parse_unary(bool can_assign) {
@@ -29,6 +29,7 @@ static AST *parse_unary(bool can_assign) {
 static AST *parse_binary(bool can_assign, AST *prev_expr) {
   enum token_type op_type = parser.previous.type;
   ParseRule *rule = get_rule(op_type);
+
   AST *right = parse_precedence(
       (Precedence)(rule->precedence +
                    1)); // go ahead and swallow up the RHS of this expression
@@ -68,6 +69,12 @@ static AST *parse_binary(bool can_assign, AST *prev_expr) {
     return AST_NEW(MEMBER_ACCESS, prev_expr, strdup(member_name));
   }
   case TOKEN_ASSIGNMENT: {
+    if (prev_expr->tag == AST_MEMBER_ACCESS) {
+      return AST_NEW(MEMBER_ASSIGNMENT,
+                     prev_expr->data.AST_MEMBER_ACCESS.object,
+                     prev_expr->data.AST_MEMBER_ACCESS.member_name, right);
+    }
+
     char *member_name = prev_expr->data.AST_IDENTIFIER.identifier;
     return AST_NEW(ASSIGNMENT, member_name, NULL, right);
   }
@@ -174,11 +181,11 @@ static AST *parse_call(bool can_assign, AST *prev_expr) {
 }
 static AST *identifier(bool can_assign) {
   token token = parser.previous;
-  if (match(TOKEN_ASSIGNMENT)) {
-    AST *assignment_expression = parse_expression();
-    return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), NULL,
-                   assignment_expression);
-  }
+  // if (can_assign && match(TOKEN_ASSIGNMENT)) {
+  //   AST *assignment_expression = parse_expression();
+  //   return AST_NEW(ASSIGNMENT, strdup(token.as.vstr), NULL,
+  //                  assignment_expression);
+  // }
   return AST_NEW(IDENTIFIER, strdup(token.as.vstr));
 }
 
@@ -419,7 +426,7 @@ ParseRule rules[] = {
     [TOKEN_BANG] = {parse_unary, NULL, PREC_NONE},
     [TOKEN_PIPE] = {NULL, parse_binary, PREC_PIPE},
     /* [TOKEN_BANG_EQUAL] = {NULL, binary, PREC_EQUALITY}, */
-    [TOKEN_ASSIGNMENT] = {NULL, parse_binary, PREC_NONE},
+    [TOKEN_ASSIGNMENT] = {NULL, parse_binary, PREC_ASSIGNMENT},
     /* [TOKEN_EQUAL_EQUAL] = {NULL, binary, PREC_EQUALITY}, */
     /* [TOKEN_GREATER] = {NULL, binary, PREC_COMPARISON}, */
     /* [TOKEN_GREATER_EQUAL] = {NULL, binary, PREC_COMPARISON}, */
@@ -460,7 +467,8 @@ ParseRule rules[] = {
 
 static ParseRule *get_rule(enum token_type type) { return &(rules[type]); }
 
-static AST *parse_precedence(Precedence precedence) {
+AST *parse_precedence(Precedence precedence) {
+
   if (check(TOKEN_EOF)) {
     return NULL;
   }
@@ -468,6 +476,7 @@ static AST *parse_precedence(Precedence precedence) {
   while (check(TOKEN_NL)) {
     advance();
   }
+
   advance();
 
   ParseFn prefix_rule = get_rule(parser.previous.type)->prefix;
@@ -483,13 +492,19 @@ static AST *parse_precedence(Precedence precedence) {
       PREC_ASSIGNMENT; // guard against expressions like a * b = c + d
   //
   AST *expr = prefix_rule(can_assign);
+
   while (precedence <= get_rule(parser.current.type)->precedence) {
+
     advance();
+
     ParseFnInfix infix_rule = get_rule(parser.previous.type)->infix;
+
     AST *tmp = infix_rule(can_assign, expr);
+
     if (tmp == NULL) {
       printf("intermediate null\n");
     }
+
     expr = tmp;
   }
 
@@ -501,11 +516,13 @@ static AST *parse_precedence(Precedence precedence) {
 };
 
 AST *parse_expression() {
-  const char *src_offset = get_scanner_current() - 5;
-  line_info linfo = get_line_info();
+  // const char *src_offset = get_scanner_current();
+  // line_info linfo = get_line_info();
+
   AST *ast = parse_precedence(PREC_ASSIGNMENT);
-  ast->src_offset = src_offset;
-  ast->line_info = linfo;
+
+  // ast->src_offset = src_offset;
+  // ast->line_info = linfo;
 
   return ast;
 }

@@ -49,34 +49,31 @@ static int test_parse(AST *ast, int length, ...) {
   return res;
 }
 
+#define TEST_PARSE(SRC, N, ...)                                                \
+  mu_assert(test_parse(parse(SRC), N, ##__VA_ARGS__), SRC)
+
 int addition() {
-  char *src = "let a = 1 + 2";
-  mu_assert(test_parse(parse(src), 1,
-                       AST_NEW(ASSIGNMENT, "a", NULL,
-                               AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
-                                       AST_NEW(INTEGER, 2)))),
-            "let a = 1 + 2");
+  TEST_PARSE("let a = 1 + 2", 1,
+             AST_NEW(ASSIGNMENT, "a", NULL,
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                             AST_NEW(INTEGER, 2))));
   return 0;
 }
 
 int symbol_decl() {
-  mu_assert(test_parse(parse("let a\n"
-                             "a = 1 + 2"),
-                       2, AST_NEW(SYMBOL_DECLARATION, "a"),
-                       AST_NEW(ASSIGNMENT, "a", NULL,
-                               AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
-                                       AST_NEW(INTEGER, 2)))),
-            "let a\n"
-            "a = 1 + 2");
+  TEST_PARSE("let a\n"
+             "a = 1 + 2",
+             2, AST_NEW(SYMBOL_DECLARATION, "a"),
+             AST_NEW(ASSIGNMENT, "a", NULL,
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
+                             AST_NEW(INTEGER, 2))));
   return 0;
 }
 
 int symbol_assignment_to_unop() {
-  mu_assert(
-      test_parse(parse("let a = -1"), 1,
-                 AST_NEW(ASSIGNMENT, "a", NULL,
-                         AST_NEW(UNOP, TOKEN_MINUS, AST_NEW(INTEGER, 1)))),
-      "let a = -1");
+  TEST_PARSE("let a = -1", 1,
+             AST_NEW(ASSIGNMENT, "a", NULL,
+                     AST_NEW(UNOP, TOKEN_MINUS, AST_NEW(INTEGER, 1))));
   return 0;
 }
 int simple_fn_decl() {
@@ -86,10 +83,8 @@ int simple_fn_decl() {
                        AST_NEW(SYMBOL_DECLARATION, "c", "int"));
   expected_fn_proto->data.AST_FN_PROTOTYPE.type = "int";
 
-  mu_assert(
-      test_parse(parse("let a = fn (int a, int b, int c) int {}"), 1,
-                 AST_NEW(FN_DECLARATION, expected_fn_proto, NULL, "a", false)),
-      "simple function declaration");
+  TEST_PARSE("let a = fn (int a, int b, int c) int {}", 1,
+             AST_NEW(FN_DECLARATION, expected_fn_proto, NULL, "a", false));
   return 0;
 }
 int literals() {
@@ -97,17 +92,15 @@ int literals() {
   /*
    * parse int
    * */
-  mu_assert(test_parse(parse("1"), 1, AST_NEW(INTEGER, 1)), "1 - Int");
+  TEST_PARSE("1", 1, AST_NEW(INTEGER, 1));
 
   /*
    * parse numbers / literals etc
    * */
-  mu_assert(test_parse(parse("1.0"), 1, AST_NEW(NUMBER, 1.0)), "1.0 - Num");
-  mu_assert(test_parse(parse("true"), 1, AST_NEW(BOOL, true)), "true - True");
-  mu_assert(test_parse(parse("false"), 1, AST_NEW(BOOL, false)),
-            "false - False");
-  mu_assert(test_parse(parse("\"hello\""), 1, AST_NEW(STRING, "hello", 5)),
-            "hello string");
+  TEST_PARSE("1.0", 1, AST_NEW(NUMBER, 1.0));
+  TEST_PARSE("true", 1, AST_NEW(BOOL, true));
+  TEST_PARSE("false", 1, AST_NEW(BOOL, false));
+  TEST_PARSE("\"hello\"", 1, AST_NEW(STRING, "hello", 5));
   return 0;
 }
 int binops() {
@@ -115,77 +108,65 @@ int binops() {
   /*
    * Binops
    * */
-  mu_assert(test_parse(parse("1 + 2"), 1,
-                       AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1),
-                               AST_NEW(INTEGER, 2))),
-            "");
+  TEST_PARSE(
+      "1 + 2", 1,
+      AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(INTEGER, 1), AST_NEW(INTEGER, 2)));
 
-  mu_assert(test_parse(parse("1 - 2"), 1,
-                       AST_NEW(BINOP, TOKEN_MINUS, AST_NEW(INTEGER, 1),
-                               AST_NEW(INTEGER, 2))),
-            "");
+  TEST_PARSE(
+      "1 - 2", 1,
+      AST_NEW(BINOP, TOKEN_MINUS, AST_NEW(INTEGER, 1), AST_NEW(INTEGER, 2)));
 
-  mu_assert(test_parse(parse("2 * 8"), 1,
-                       AST_NEW(BINOP, TOKEN_STAR, AST_NEW(INTEGER, 2),
-                               AST_NEW(INTEGER, 8))),
-            "");
+  TEST_PARSE(
+      "2 * 8", 1,
+      AST_NEW(BINOP, TOKEN_STAR, AST_NEW(INTEGER, 2), AST_NEW(INTEGER, 8)));
 
-  mu_assert(test_parse(parse("2 / 8"), 1,
-                       AST_NEW(BINOP, TOKEN_SLASH, AST_NEW(INTEGER, 2),
-                               AST_NEW(INTEGER, 8))),
-            "");
+  TEST_PARSE(
+      "2 / 8", 1,
+      AST_NEW(BINOP, TOKEN_SLASH, AST_NEW(INTEGER, 2), AST_NEW(INTEGER, 8)));
 
-  mu_assert(test_parse(parse("1 == 1"), 1,
-                       AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(INTEGER, 1),
-                               AST_NEW(INTEGER, 1))),
-            "");
+  TEST_PARSE(
+      "1 == 1", 1,
+      AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(INTEGER, 1), AST_NEW(INTEGER, 1)));
 
-  mu_assert(test_parse(parse("8 % 7"), 1,
-                       AST_NEW(BINOP, TOKEN_MODULO, AST_NEW(INTEGER, 8),
-                               AST_NEW(INTEGER, 7))),
-            "");
+  TEST_PARSE(
+      "8 % 7", 1,
+      AST_NEW(BINOP, TOKEN_MODULO, AST_NEW(INTEGER, 8), AST_NEW(INTEGER, 7)));
 
-  mu_assert(test_parse(parse("7 < 8"), 1,
-                       AST_NEW(BINOP, TOKEN_LT, AST_NEW(INTEGER, 7),
-                               AST_NEW(INTEGER, 8))),
-            "");
+  TEST_PARSE(
+      "7 < 8", 1,
+      AST_NEW(BINOP, TOKEN_LT, AST_NEW(INTEGER, 7), AST_NEW(INTEGER, 8)));
 
-  mu_assert(test_parse(parse("8 > 7"), 1,
-                       AST_NEW(BINOP, TOKEN_GT, AST_NEW(INTEGER, 8),
-                               AST_NEW(INTEGER, 7))),
-            "");
+  TEST_PARSE(
+      "8 > 7", 1,
+      AST_NEW(BINOP, TOKEN_GT, AST_NEW(INTEGER, 8), AST_NEW(INTEGER, 7)));
 
-  mu_assert(test_parse(parse("7 <= 8"), 1,
-                       AST_NEW(BINOP, TOKEN_LTE, AST_NEW(INTEGER, 7),
-                               AST_NEW(INTEGER, 8))),
-            "");
+  TEST_PARSE(
+      "7 <= 8", 1,
+      AST_NEW(BINOP, TOKEN_LTE, AST_NEW(INTEGER, 7), AST_NEW(INTEGER, 8)));
 
-  mu_assert(test_parse(parse("8 >= 7"), 1,
-                       AST_NEW(BINOP, TOKEN_GTE, AST_NEW(INTEGER, 8),
-                               AST_NEW(INTEGER, 7))),
-            "");
+  TEST_PARSE(
+      "8 >= 7", 1,
+      AST_NEW(BINOP, TOKEN_GTE, AST_NEW(INTEGER, 8), AST_NEW(INTEGER, 7)));
+  TEST_PARSE("(2 % 9) * 1000", 1,
+             AST_NEW(BINOP, TOKEN_STAR,
+                     AST_NEW(BINOP, TOKEN_MODULO, AST_NEW(INTEGER, 2),
+                             AST_NEW(INTEGER, 9)),
+                     AST_NEW(INTEGER, 1000)));
 
-  mu_assert(test_parse(parse("(2 % 9) * 1000"), 1,
-                       AST_NEW(BINOP, TOKEN_STAR,
-                               AST_NEW(BINOP, TOKEN_MODULO, AST_NEW(INTEGER, 2),
-                                       AST_NEW(INTEGER, 9)),
-                               AST_NEW(INTEGER, 1000))),
-            "");
+  TEST_PARSE("val -> int", 1,
+             AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(IDENTIFIER, "val"),
+                     AST_NEW(IDENTIFIER, "int")));
 
-  mu_assert(test_parse(parse("val -> int"), 1,
-                       AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(IDENTIFIER, "val"),
-                               AST_NEW(IDENTIFIER, "int"))),
-            "");
+  return 0;
+}
+int member_access_assignment() {
 
-  mu_assert(
-      test_parse(parse("object.x"), 1,
-                 AST_NEW(MEMBER_ACCESS, AST_NEW(IDENTIFIER, "object"), "x")),
-      "");
+  TEST_PARSE("object.x", 1,
+             AST_NEW(MEMBER_ACCESS, AST_NEW(IDENTIFIER, "object"), "x"));
 
-  mu_assert(test_parse(parse("object.x = 1"), 1,
-                       AST_NEW(MEMBER_ASSIGNMENT, AST_NEW(IDENTIFIER, "object"),
-                               "x", AST_NEW(INTEGER, 1))),
-            "");
+  TEST_PARSE("object.x = 1", 1,
+             AST_NEW(MEMBER_ASSIGNMENT, AST_NEW(IDENTIFIER, "object"), "x",
+                     AST_NEW(INTEGER, 1)));
 
   return 0;
 }
@@ -194,43 +175,35 @@ int conditionals() {
   /*
    * Test if / else
    */
-  mu_assert(
-      test_parse(parse("if (x == 1) {x = 2} else {x = 3}"), 1,
-                 AST_NEW(IF_ELSE,
-                         AST_NEW(BINOP, TOKEN_EQUALITY,
-                                 AST_NEW(IDENTIFIER, "x"), AST_NEW(INTEGER, 1)),
-                         AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
-                         AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 3)))),
-      "");
+  TEST_PARSE("if (x == 1) {x = 2} else {x = 3}", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 3))));
 
-  mu_assert(
-      test_parse(parse("if (x == 1) {x = 2}"), 1,
-                 AST_NEW(IF_ELSE,
-                         AST_NEW(BINOP, TOKEN_EQUALITY,
-                                 AST_NEW(IDENTIFIER, "x"), AST_NEW(INTEGER, 1)),
-                         AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
-                         NULL)),
-      "");
+  TEST_PARSE("if (x == 1) {x = 2}", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
+                     NULL));
 
   /*
    * Test ternary
    */
-  mu_assert(
-      test_parse(parse("(x == 1) ? 2 : 3"), 1,
-                 AST_NEW(IF_ELSE,
-                         AST_NEW(BINOP, TOKEN_EQUALITY,
-                                 AST_NEW(IDENTIFIER, "x"), AST_NEW(INTEGER, 1)),
-                         AST_NEW(INTEGER, 2), AST_NEW(INTEGER, 3))),
-      "");
+  TEST_PARSE("(x == 1) ? 2 : 3", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     AST_NEW(INTEGER, 2), AST_NEW(INTEGER, 3)));
 
-  mu_assert(
-      test_parse(parse("if (x == 1) {x = 2}"), 1,
-                 AST_NEW(IF_ELSE,
-                         AST_NEW(BINOP, TOKEN_EQUALITY,
-                                 AST_NEW(IDENTIFIER, "x"), AST_NEW(INTEGER, 1)),
-                         AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
-                         NULL)),
-      "");
+  TEST_PARSE("if (x == 1) {x = 2}", 1,
+             AST_NEW(IF_ELSE,
+                     AST_NEW(BINOP, TOKEN_EQUALITY, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(INTEGER, 1)),
+                     AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(INTEGER, 2)),
+                     NULL));
   return 0;
 }
 
@@ -245,24 +218,19 @@ int pattern_matching() {
       AST_NEW(BINOP, TOKEN_PIPE, AST_NEW(IDENTIFIER, "_"), AST_NEW(INTEGER, 3)),
   };
 
-  mu_assert(test_parse(
-                parse("match val -> int\n" // type hint for return of match expr
-                      "| 1 -> 1\n"
-                      "| 2 -> 2\n"
-                      "| _ -> 3"),
-                1,
-                AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches,
-                        AST_NEW(IDENTIFIER, "int"))),
-            "");
+  TEST_PARSE("match val -> int\n" // type hint for return of match expr
+             "| 1 -> 1\n"
+             "| 2 -> 2\n"
+             "| _ -> 3",
+             1,
+             AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches,
+                     AST_NEW(IDENTIFIER, "int")));
 
-  mu_assert(
-      test_parse(parse("match val\n" // no type hint
-                       "| 1 -> 1\n"
-                       "| 2 -> 2\n"
-                       "| _ -> 3"),
-                 1,
-                 AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches, NULL)),
-      "");
+  TEST_PARSE("match val\n" // no type hint
+             "| 1 -> 1\n"
+             "| 2 -> 2\n"
+             "| _ -> 3",
+             1, AST_NEW(MATCH, AST_NEW(IDENTIFIER, "val"), 3, matches, NULL));
   return 0;
 }
 int tuples() {
@@ -276,9 +244,7 @@ int tuples() {
       AST_NEW(INTEGER, 2),
       AST_NEW(NUMBER, 3.5),
   };
-  mu_assert(test_parse(parse("(1,2,3.5) # (tuple)"), 1,
-                       AST_NEW(TUPLE, 3, tuple_members)),
-            "");
+  TEST_PARSE("(1,2,3.5) # (tuple)", 1, AST_NEW(TUPLE, 3, tuple_members));
   return 0;
 }
 int arrays() {
@@ -291,9 +257,7 @@ int arrays() {
       AST_NEW(INTEGER, 2),
       AST_NEW(INTEGER, 3),
   };
-  mu_assert(test_parse(parse("[1,2,3] # (array)"), 1,
-                       AST_NEW(ARRAY, 3, array_members)),
-            "");
+  TEST_PARSE("[1,2,3] # (array)", 1, AST_NEW(ARRAY, 3, array_members));
   return 0;
 }
 int type_declarations() {
@@ -303,42 +267,35 @@ int type_declarations() {
    */
 
   /* aliasing types */
-  mu_assert(test_parse(parse("type NewType = int8"), 1,
-                       AST_NEW(TYPE_DECLARATION, "NewType",
-                               AST_NEW(IDENTIFIER, "int8"))),
-            "");
+  TEST_PARSE("type NewType = int8", 1,
+             AST_NEW(TYPE_DECLARATION, "NewType", AST_NEW(IDENTIFIER, "int8")));
 
   AST *struct_members[] = {
       AST_NEW(SYMBOL_DECLARATION, "x", "double"),
       AST_NEW(SYMBOL_DECLARATION, "y", "double"),
   };
-  mu_assert(test_parse(parse("struct (double x, double y)"), 1,
-                       AST_NEW(STRUCT, 2, struct_members)),
-            "");
+  TEST_PARSE("struct (double x, double y)", 1,
+             AST_NEW(STRUCT, 2, struct_members));
 
-  mu_assert(
-      test_parse(parse("type NewStructType = struct (double x, double y)"), 1,
-                 AST_NEW(TYPE_DECLARATION, "NewStructType",
-                         AST_NEW(STRUCT, 2, struct_members))),
-      "");
+  TEST_PARSE("type NewStructType = struct (double x, double y)", 1,
+             AST_NEW(TYPE_DECLARATION, "NewStructType",
+                     AST_NEW(STRUCT, 2, struct_members)));
 
   /* ptr types */
-  mu_assert(test_parse(parse("type PtrType = &int8"), 1,
-                       AST_NEW(TYPE_DECLARATION, "PtrType",
-                               AST_NEW(UNOP, TOKEN_AMPERSAND,
-                                       AST_NEW(IDENTIFIER, "int8")))),
-            "");
+  TEST_PARSE(
+      "type PtrType = &int8", 1,
+      AST_NEW(TYPE_DECLARATION, "PtrType",
+              AST_NEW(UNOP, TOKEN_AMPERSAND, AST_NEW(IDENTIFIER, "int8"))));
 
   /* function types */
   AST *fn_proto_params[] = {
       AST_NEW(SYMBOL_DECLARATION, "a", "int"),
       AST_NEW(SYMBOL_DECLARATION, "b", "int"),
   };
-  mu_assert(
-      test_parse(parse("type FnType = fn (int a, int b) int"), 1,
-                 AST_NEW(TYPE_DECLARATION, "FnType",
-                         AST_NEW(FN_PROTOTYPE, 2, fn_proto_params, "int"))),
-      "");
+  TEST_PARSE("type FnType = fn (int a, int b) int", 1,
+             AST_NEW(TYPE_DECLARATION, "FnType",
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params,
+                             AST_NEW(IDENTIFIER, "int"))));
 
   return 0;
 }
@@ -347,40 +304,35 @@ int function_prototypes() {
       AST_NEW(SYMBOL_DECLARATION, "a", "int"),
       AST_NEW(SYMBOL_DECLARATION, "b", "int"),
   };
-  mu_assert(
-      test_parse(parse("type FnType = fn (int a, int b) int"), 1,
-                 AST_NEW(TYPE_DECLARATION, "FnType",
-                         AST_NEW(FN_PROTOTYPE, 2, fn_proto_params, "int"))),
-      "");
+  TEST_PARSE("type FnType = fn (int a, int b) int", 1,
+             AST_NEW(TYPE_DECLARATION, "FnType",
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params,
+                             AST_NEW(IDENTIFIER, "int"))));
 
   AST *fn_proto_params2[] = {
       AST_NEW(SYMBOL_DECLARATION, "x", "int"),
       AST_NEW(SYMBOL_DECLARATION, "y", "int"),
   };
-  mu_assert(
-      test_parse(parse("let h = fn (int x, int y) int {x + y}"), 1,
-                 AST_NEW(FN_DECLARATION,
-                         AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2, "int"),
-                         AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
-                                 AST_NEW(IDENTIFIER, "y")),
-                         "h")),
-      "");
+  TEST_PARSE("let h = fn (int x, int y) int {x + y}", 1,
+             AST_NEW(FN_DECLARATION,
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2,
+                             AST_NEW(IDENTIFIER, "int")),
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(IDENTIFIER, "y")),
+                     "h"));
 
   AST *fn_proto_params3[] = {
       AST_NEW(SYMBOL_DECLARATION, "x", NULL),
       AST_NEW(SYMBOL_DECLARATION, "y", NULL),
   };
-  mu_assert(
-      test_parse(
-          parse(
-              "let h = fn (x, y) {x + y} # without optional type annotations"),
-          1,
-          AST_NEW(FN_DECLARATION,
-                  AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2, NULL),
-                  AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
-                          AST_NEW(IDENTIFIER, "y")),
-                  "h")),
-      "");
+  TEST_PARSE("let h = fn (x, y) {x + y} # without optional type "
+             "annotations",
+             1,
+             AST_NEW(FN_DECLARATION,
+                     AST_NEW(FN_PROTOTYPE, 2, fn_proto_params2, NULL),
+                     AST_NEW(BINOP, TOKEN_PLUS, AST_NEW(IDENTIFIER, "x"),
+                             AST_NEW(IDENTIFIER, "y")),
+                     "h"));
   return 0;
 }
 
@@ -392,6 +344,7 @@ int all_tests() {
   mu_run_test(simple_fn_decl);
   mu_run_test(literals);
   mu_run_test(binops);
+  mu_run_test(member_access_assignment);
   mu_run_test(tuples);
   mu_run_test(type_declarations);
   mu_run_test(function_prototypes);

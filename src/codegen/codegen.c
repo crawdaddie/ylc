@@ -95,7 +95,7 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     // symbol declaration [ let a ]- rarely used
     const char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
     ttype type = ast->type;
-    AST *expr = ast->data.AST_ASSIGNMENT.expression; // optional
+    AST *expr = ast->data.AST_SYMBOL_DECLARATION.expression; // optional
     return codegen_symbol(name, type, expr, ctx);
   }
   case AST_ASSIGNMENT: {
