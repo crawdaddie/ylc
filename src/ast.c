@@ -61,11 +61,10 @@ void print_ast(AST ast, int indent) {
 
   case AST_SYMBOL_DECLARATION: {
     if (ast.data.AST_SYMBOL_DECLARATION.type != NULL) {
-      printf("%s %s", ast.data.AST_SYMBOL_DECLARATION.type,
-             ast.data.AST_SYMBOL_DECLARATION.identifier);
-    } else {
-      printf("%s", ast.data.AST_SYMBOL_DECLARATION.identifier);
+      print_ast(*ast.data.AST_SYMBOL_DECLARATION.type, 0);
     }
+
+    printf("%s", ast.data.AST_SYMBOL_DECLARATION.identifier);
     break;
   }
 

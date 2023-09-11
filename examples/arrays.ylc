@@ -1,4 +1,9 @@
 let a = [2,1,2,3]
+
+
+let double[512] b
+b[2]
+
 #let b = []
 #let reduce = fn (f, acc, [head, ...tail]) {
 #  if (head == null)  {acc} else { reduce(f, f(acc, head), tail) }

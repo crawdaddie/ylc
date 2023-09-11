@@ -271,8 +271,8 @@ int type_declarations() {
              AST_NEW(TYPE_DECLARATION, "NewType", AST_NEW(IDENTIFIER, "int8")));
 
   AST *struct_members[] = {
-      AST_NEW(SYMBOL_DECLARATION, "x", "double"),
-      AST_NEW(SYMBOL_DECLARATION, "y", "double"),
+      AST_NEW(SYMBOL_DECLARATION, "x", AST_NEW(IDENTIFIER, "double")),
+      AST_NEW(SYMBOL_DECLARATION, "y", AST_NEW(IDENTIFIER, "double")),
   };
   TEST_PARSE("struct (double x, double y)", 1,
              AST_NEW(STRUCT, 2, struct_members));
@@ -289,8 +289,8 @@ int type_declarations() {
 
   /* function types */
   AST *fn_proto_params[] = {
-      AST_NEW(SYMBOL_DECLARATION, "a", "int"),
-      AST_NEW(SYMBOL_DECLARATION, "b", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "a", AST_NEW(IDENTIFIER, "int")),
+      AST_NEW(SYMBOL_DECLARATION, "b", AST_NEW(IDENTIFIER, "int")),
   };
   TEST_PARSE("type FnType = fn (int a, int b) int", 1,
              AST_NEW(TYPE_DECLARATION, "FnType",
@@ -301,8 +301,8 @@ int type_declarations() {
 }
 int function_prototypes() {
   AST *fn_proto_params[] = {
-      AST_NEW(SYMBOL_DECLARATION, "a", "int"),
-      AST_NEW(SYMBOL_DECLARATION, "b", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "a", AST_NEW(IDENTIFIER, "int")),
+      AST_NEW(SYMBOL_DECLARATION, "b", AST_NEW(IDENTIFIER, "int")),
   };
   TEST_PARSE("type FnType = fn (int a, int b) int", 1,
              AST_NEW(TYPE_DECLARATION, "FnType",
@@ -310,8 +310,8 @@ int function_prototypes() {
                              AST_NEW(IDENTIFIER, "int"))));
 
   AST *fn_proto_params2[] = {
-      AST_NEW(SYMBOL_DECLARATION, "x", "int"),
-      AST_NEW(SYMBOL_DECLARATION, "y", "int"),
+      AST_NEW(SYMBOL_DECLARATION, "x", AST_NEW(IDENTIFIER, "int")),
+      AST_NEW(SYMBOL_DECLARATION, "y", AST_NEW(IDENTIFIER, "int")),
   };
   TEST_PARSE("let h = fn (int x, int y) int {x + y}", 1,
              AST_NEW(FN_DECLARATION,
@@ -335,6 +335,17 @@ int function_prototypes() {
                      "h"));
   return 0;
 }
+int type_expr() {
+  AST *ast = parse("let double[512] a");
+
+  mu_assert(
+      test_parse(ast, 1,
+                 AST_NEW(SYMBOL_DECLARATION, "a",
+                         AST_NEW(INDEX_ACCESS, AST_NEW(IDENTIFIER, "double"),
+                                 AST_NEW(INTEGER, 512)))),
+      "let double[512] a");
+  return 0;
+}
 
 int all_tests() {
   int test_result = 0;
@@ -348,6 +359,7 @@ int all_tests() {
   mu_run_test(tuples);
   mu_run_test(type_declarations);
   mu_run_test(function_prototypes);
+  mu_run_test(type_expr);
   return test_result;
 }
 

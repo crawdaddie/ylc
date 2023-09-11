@@ -267,6 +267,24 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
     }
     return ast->type;
   }
+
+  case AST_INDEX_ACCESS: {
+    if (ast->data.AST_INDEX_ACCESS.index_expr->tag != AST_INTEGER) {
+      fprintf(stderr,
+              "Error: indices to arrayed type expressions must be integers\n");
+    }
+
+    // ttype base_type =
+    compute_type_expression(ast->data.AST_INDEX_ACCESS.object, ctx);
+
+    int size = ast->data.AST_INDEX_ACCESS.index_expr->data.AST_INTEGER.value;
+    ttype *base_type = malloc(sizeof(ttype));
+    *base_type =
+        compute_type_expression(ast->data.AST_INDEX_ACCESS.object, ctx);
+    ttype array_type = tarray(base_type, size);
+    print_ttype(array_type);
+    return array_type;
+  }
   }
 }
 
@@ -807,6 +825,13 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
 
     break;
   }
+  case AST_INDEX_ACCESS: {
+    printf("typecheck ast index access: ");
+    print_ast(*ast, 0);
+    generate_equations(ast->data.AST_INDEX_ACCESS.object, ctx);
+    ast->type = *ast->data.AST_INDEX_ACCESS.object->type.as.T_ARRAY.member_type;
+    break;
+  }
   case AST_IMPORT_LIB: {
 
     break;
@@ -814,7 +839,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
   case AST_EXPRESSION:
   case AST_STATEMENT:
   case AST_MEMBER_ASSIGNMENT:
-  case AST_INDEX_ACCESS:
   case AST_VAR_ARG:
   default:
     break;
