@@ -1,8 +1,6 @@
-let a = [2,1,2,3]
+let a = [2.0,1.0,2.0,3.0]
 
-
-let double[512] b
-b[2]
+a[3]
 
 #let b = []
 #let reduce = fn (f, acc, [head, ...tail]) {

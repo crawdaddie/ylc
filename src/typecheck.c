@@ -281,9 +281,7 @@ static ttype compute_type_expression(AST *ast, TypeCheckContext *ctx) {
     ttype *base_type = malloc(sizeof(ttype));
     *base_type =
         compute_type_expression(ast->data.AST_INDEX_ACCESS.object, ctx);
-    ttype array_type = tarray(base_type, size);
-    print_ttype(array_type);
-    return array_type;
+    return tarray(base_type, size);
   }
   }
 }
@@ -371,11 +369,16 @@ static void typecheck_ast_call(AST *ast, TypeCheckContext *ctx) {
 
   int parameters_len =
       func_ast.data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length;
+  int is_var_arg;
 
-  int is_var_arg =
-      func_ast.data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
-          .parameters[parameters_len - 1]
-          ->tag == AST_VAR_ARG;
+  if (parameters_len == 0) {
+    is_var_arg = 0;
+  } else {
+    is_var_arg =
+        func_ast.data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+            .parameters[parameters_len - 1]
+            ->tag == AST_VAR_ARG;
+  }
 
   int args_len = ast->data.AST_CALL.parameters->data.AST_TUPLE.length;
   if (is_var_arg) {
@@ -641,10 +644,9 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     }
 
     // if (ast->data.AST_ASSIGNMENT.type != NULL) {
-    //   ttype t = lookup_explicit_type(ast->data.AST_ASSIGNMENT.type, ctx);
-    //   push_type_equation(&ast->type, &t);
+    //   ttype t = compute_type_expression(ast->data.AST_ASSIGNMENT.type, ctx);
+    //   push_type_equation(&ast->type, &t, ctx);
     // }
-    //
 
     if (ast->data.AST_ASSIGNMENT.type) {
       ast->type = compute_type_expression(ast->data.AST_ASSIGNMENT.type, ctx);
@@ -654,6 +656,10 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
                      *ast->data.AST_ASSIGNMENT.expression);
 
     ttype t = ast->data.AST_ASSIGNMENT.expression->type;
+    if (ast->type.tag == T_STRUCT && t.tag == T_TUPLE) {
+      ast->data.AST_ASSIGNMENT.expression->type = ast->type;
+      break;
+    }
 
     push_type_equation(&ast->type, &t, ctx);
     break;
@@ -826,8 +832,6 @@ static void generate_equations(AST *ast, TypeCheckContext *ctx) {
     break;
   }
   case AST_INDEX_ACCESS: {
-    printf("typecheck ast index access: ");
-    print_ast(*ast, 0);
     generate_equations(ast->data.AST_INDEX_ACCESS.object, ctx);
     ast->type = *ast->data.AST_INDEX_ACCESS.object->type.as.T_ARRAY.member_type;
     break;

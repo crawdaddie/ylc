@@ -116,7 +116,6 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
   }
   case AST_TUPLE:
     return codegen_tuple(ast, ctx);
-
   case AST_ARRAY:
     return codegen_array(ast, ctx);
   case AST_STRUCT:
@@ -146,54 +145,35 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     // printf(". %s\n", ast->data.AST_MEMBER_ACCESS.member_name);
     // print_ttype(ast->type);
     //
-    char *object_id =
-        ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
+    return codegen_member_access(ast, ctx);
+  }
+  case AST_MEMBER_ASSIGNMENT: {
+    return codegen_member_assignment(ast, ctx);
+  }
+  case AST_TYPE_DECLARATION: {
+    // ttype type = ast->type;
+    // if (type.tag != T_STRUCT) {
+    //   break;
+    // }
+    // LLVMTypeRef type_ref = codegen_ttype(ast->type, ctx);
+    // LLVMTypeRef *member_types =
+    //     malloc(sizeof(LLVMTypeRef) * type.as.T_STRUCT.length);
+    //
+    // LLVMGetStructElementTypes(type_ref, member_types);
+    //
+    // LLVMTypeRef named_struct_ty = LLVMStructCreateNamed(
+    //     ctx->context, ast->data.AST_TYPE_DECLARATION.name);
+    //
+    // LLVMStructSetBody(named_struct_ty, member_types, type.as.T_STRUCT.length,
+    //                   true);
+    //
 
-    SymbolValue sym;
-
-    if (table_lookup(ctx->symbol_table, object_id, &sym) != 0) {
-      fprintf(stderr, "Error symbol %s not found\n", object_id);
-      return NULL;
-    }
-
-    char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
-
-    LLVMValueRef object;
-    ttype object_type;
-
-    if (sym.type == TYPE_VARIABLE) {
-      object_type = sym.data.TYPE_VARIABLE.type;
-      object = LLVMBuildLoad2(ctx->builder, sym.data.TYPE_VARIABLE.llvm_type, sym.data.TYPE_VARIABLE.llvm_value, "ptr_deref");
-
-    } else if (sym.type == TYPE_GLOBAL_VARIABLE) {
-
-      object = codegen_global_identifier(sym, object_id, ctx);
-      object_type = sym.data.TYPE_GLOBAL_VARIABLE.type;
-
-    } else if (sym.type == TYPE_MODULE) {
-      return lookup_module_member(sym, member_name, ctx);
-    } else {
-      fprintf(stderr, "Error: unrecognized variable type");
-      return NULL;
-    }
-
-    if (is_ptr_to_struct(object_type)) {
-      object_type = *object_type.as.T_PTR.item;
-      object = LLVMBuildLoad2(ctx->builder, codegen_ttype(object_type, ctx),
-                              object, "ptr_deref");
-    }
-
-    unsigned int member_idx = get_struct_member_index(object_type, member_name);
-
-    LLVMValueRef member =
-        LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
-
-    return member;
+    break;
+  }
+  case AST_INDEX_ACCESS: {
+    return codegen_index_access(ast, ctx);
   }
   case AST_FN_PROTOTYPE:
-  case AST_TYPE_DECLARATION:
-  case AST_MEMBER_ASSIGNMENT:
-  case AST_INDEX_ACCESS:
   case AST_VAR_ARG:
   default:
     break;

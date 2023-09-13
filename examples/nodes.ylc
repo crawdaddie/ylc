@@ -1,40 +1,41 @@
 import "libffi.so"
+
 type Signal = struct (
   double[512] data,
   int layout
 )
-let print_signal = extern fn (&Signal s) int
+
+type Node = struct (
+  Signal add,
+  Signal mul,
+  Signal out,
+)
+
+let printf = extern fn (str fmt, ...) int
+
+let print_signal = extern fn (&Signal s) &Signal
 
 let Signal s
-
-#s.data[0]
+s.layout = 2
+printf("s layout: %d\n", s.layout)
 
 print_signal(&s)
 
-let printf = extern fn (str fmt, ...) int
-printf("sig 0: %f\n", s.data[0])
-
-
-
+#printf("sig layout %d\n", s.layout)
 #typedef struct Node {
 #  Signal *ins;
 #  int num_ins;
-#
 #  Signal add;
 #  Signal mul;
 #  Signal out;
-#
 #  node_perform perform;
 #  void *data;
 #  const char *name;
-#
 #  // 'ephemeral value' for offsetting the calculation of a node's frames into
 #  // a block - should be accessed by `int get_block_offset(Node *node)` that
 #  // resets it to 0 after reading
 #  int _block_offset;
-#
 #  bool killed;
-#
 #  struct Node *next;
 #  struct Node *prev;
 #  struct Node *parent;

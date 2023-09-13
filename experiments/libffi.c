@@ -47,3 +47,16 @@ struct Point *get_point(double x, double y) {
   printf("%p (x: %f y: %f)\n", p, p->x, p->y);
   return p;
 }
+
+typedef struct {
+  double data[512];
+  int layout;
+} Signal;
+
+Signal *print_signal(Signal *s) {
+  s->data[0] = 1.02;
+  printf("start C-----\n");
+  printf("signal %p\ndata val: %f\nlayout: %d\n", s, s->data[0], s->layout);
+  printf("end C-----\n");
+  return s;
+}

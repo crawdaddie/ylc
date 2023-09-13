@@ -6,4 +6,9 @@
 LLVMValueRef codegen_struct(AST *ast, Context *ctx);
 LLVMValueRef codegen_tuple(AST *ast, Context *ctx);
 LLVMValueRef codegen_array(AST *ast, Context *ctx);
+
+LLVMValueRef codegen_member_access(AST *ast, Context *ctx);
+LLVMValueRef codegen_member_assignment(AST *ast, Context *ctx);
+
+LLVMValueRef codegen_index_access(AST *ast, Context *ctx);
 #endif

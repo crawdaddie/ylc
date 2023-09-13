@@ -1,6 +1,7 @@
 #include "codegen_op.h"
 #include "../lexer.h"
 #include "codegen.h"
+#include "codegen_types.h"
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -97,6 +98,14 @@ LLVMValueRef codegen_unop(AST *ast, Context *ctx) {
   }
   case TOKEN_BANG: {
     return LLVMBuildNot(ctx->builder, operand, inst_name("not"));
+  }
+
+  case TOKEN_AMPERSAND: {
+    LLVMValueRef alloca =
+        LLVMBuildAlloca(ctx->builder, LLVMTypeOf(operand), "ptr");
+    LLVMBuildStore(ctx->builder, operand, alloca);
+
+    return alloca;
   }
   }
   return NULL;

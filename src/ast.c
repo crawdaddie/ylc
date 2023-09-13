@@ -111,11 +111,9 @@ void print_ast(AST ast, int indent) {
   case AST_ASSIGNMENT: {
 
     if (ast.data.AST_ASSIGNMENT.type != NULL) {
-      printf("%s %s", ast.data.AST_ASSIGNMENT.type,
-             ast.data.AST_ASSIGNMENT.identifier);
-    } else {
-      printf("%s", ast.data.AST_ASSIGNMENT.identifier);
+      print_ast(*ast.data.AST_ASSIGNMENT.type, 0);
     }
+    printf("%s", ast.data.AST_ASSIGNMENT.identifier);
     printf(" = ");
     print_ast(*ast.data.AST_ASSIGNMENT.expression, 0);
     break;
@@ -224,7 +222,7 @@ void print_ast(AST ast, int indent) {
 
   case AST_MEMBER_ASSIGNMENT: {
     print_ast(*ast.data.AST_MEMBER_ASSIGNMENT.object, indent);
-    printf(" . %s", ast.data.AST_MEMBER_ASSIGNMENT.member_name);
+    printf(".%s", ast.data.AST_MEMBER_ASSIGNMENT.member_name);
     printf(" = ");
     print_ast(*ast.data.AST_MEMBER_ASSIGNMENT.expression, 0);
     break;
@@ -238,6 +236,7 @@ void print_ast(AST ast, int indent) {
     break;
   }
 
+  case AST_IMPORT_LIB:
   case AST_IMPORT: {
     printf("import %s\n", ast.data.AST_IMPORT.module_name);
     if (ast.data.AST_IMPORT.module_ast) {

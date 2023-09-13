@@ -1,5 +1,7 @@
 #include "codegen_compound.h"
 #include "codegen.h"
+#include "codegen_module.h"
+#include "codegen_symbol.h"
 #include "codegen_types.h"
 #include <stdio.h>
 
@@ -16,7 +18,7 @@ LLVMValueRef codegen_struct(AST *ast, Context *ctx) {
     int idx = get_struct_member_index(ast->type, name);
     members[idx] = codegen(expr, ctx);
   }
-  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, false);
   return tuple_struct;
 };
 
@@ -26,9 +28,103 @@ LLVMValueRef codegen_tuple(AST *ast, Context *ctx) {
   for (int i = 0; i < data.length; i++) {
     members[i] = codegen(data.members[i], ctx);
   }
-  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
+  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, false);
   return tuple_struct;
 };
+
+static void get_compound_object(SymbolValue sym, char *object_id,
+                                LLVMValueRef *object, ttype *object_type,
+                                Context *ctx) {
+  if (sym.type == TYPE_VARIABLE) {
+    *object_type = sym.data.TYPE_VARIABLE.type;
+    *object = LLVMBuildLoad2(ctx->builder, sym.data.TYPE_VARIABLE.llvm_type,
+                             sym.data.TYPE_VARIABLE.llvm_value, "ptr_deref");
+
+  } else if (sym.type == TYPE_GLOBAL_VARIABLE) {
+
+    *object = codegen_global_identifier(sym, object_id, ctx);
+    *object_type = sym.data.TYPE_GLOBAL_VARIABLE.type;
+
+  } else {
+    fprintf(stderr, "Error: unrecognized variable type");
+    return;
+    // return NULL;
+  }
+
+  if (is_ptr_to_struct(*object_type)) {
+    *object_type = *object_type->as.T_PTR.item;
+    *object = LLVMBuildLoad2(ctx->builder, codegen_ttype(*object_type, ctx),
+                             *object, "ptr_deref");
+  }
+}
+
+LLVMValueRef codegen_member_access(AST *ast, Context *ctx) {
+
+  char *object_id =
+      ast->data.AST_MEMBER_ACCESS.object->data.AST_IDENTIFIER.identifier;
+  char *member_name = ast->data.AST_MEMBER_ACCESS.member_name;
+
+  SymbolValue sym;
+
+  if (table_lookup(ctx->symbol_table, object_id, &sym) != 0) {
+    fprintf(stderr, "Error symbol %s not found\n", object_id);
+    return NULL;
+  }
+  if (sym.type == TYPE_MODULE) {
+    return lookup_module_member(sym, member_name, ctx);
+  }
+
+  LLVMValueRef object;
+  ttype object_type;
+
+  get_compound_object(sym, object_id, &object, &object_type, ctx);
+
+  unsigned int member_idx = get_struct_member_index(object_type, member_name);
+
+  LLVMValueRef member =
+      LLVMBuildExtractValue(ctx->builder, object, member_idx, "");
+
+  // LLVMValueRef indices[] = {
+  //     LLVMConstInt(LLVMInt32TypeInContext(ctx->context), member_idx, false)};
+  //
+  // LLVMValueRef member = LLVMBuildGEP2(ctx->builder, LLVMTypeOf(object),
+  // object,
+  //                                     indices, 1, "get_member_ptr");
+
+  return member;
+}
+
+LLVMValueRef codegen_member_assignment(AST *ast, Context *ctx) {
+
+  char *object_id =
+      ast->data.AST_MEMBER_ASSIGNMENT.object->data.AST_IDENTIFIER.identifier;
+  char *member_name = ast->data.AST_MEMBER_ASSIGNMENT.member_name;
+
+  SymbolValue sym;
+
+  if (table_lookup(ctx->symbol_table, object_id, &sym) != 0) {
+    fprintf(stderr, "Error symbol %s not found\n", object_id);
+    return NULL;
+  }
+
+  if (sym.type == TYPE_MODULE) {
+    fprintf(stderr, "Error cannot set module member");
+    return NULL;
+  }
+
+  LLVMValueRef object;
+  ttype object_type;
+
+  get_compound_object(sym, object_id, &object, &object_type, ctx);
+
+  unsigned int member_idx = get_struct_member_index(object_type, member_name);
+
+  LLVMValueRef value = codegen(ast->data.AST_MEMBER_ASSIGNMENT.expression, ctx);
+  LLVMValueRef member = LLVMBuildInsertValue(ctx->builder, object, value,
+                                             member_idx, "set_member_val");
+
+  return member;
+}
 
 LLVMValueRef codegen_array(AST *ast, Context *ctx) {
   // return NULL;
@@ -41,3 +137,22 @@ LLVMValueRef codegen_array(AST *ast, Context *ctx) {
   LLVMValueRef array = LLVMConstArray(type, vals, len);
   return array;
 };
+
+LLVMValueRef codegen_index_access(AST *ast, Context *ctx) {
+
+  AST *object_ast = ast->data.AST_INDEX_ACCESS.object;
+  if (object_ast->type.tag != T_ARRAY) {
+    return NULL;
+  }
+  LLVMValueRef object = codegen(object_ast, ctx);
+  LLVMValueRef indices[] = {
+      codegen(ast->data.AST_INDEX_ACCESS.index_expr, ctx)};
+
+  LLVMValueRef alloca =
+      LLVMBuildAlloca(ctx->builder, LLVMTypeOf(object), "arr_ptr");
+
+  LLVMBuildStore(ctx->builder, object, alloca);
+
+  return LLVMBuildInBoundsGEP2(ctx->builder, LLVMTypeOf(object), alloca,
+                               indices, 1, "get_at_index");
+}

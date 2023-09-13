@@ -4,7 +4,7 @@ type Point = struct (
 )
 
 
-let Point p = (
+let p = struct (
     y = 1.0,
     x = 2.0,
 )

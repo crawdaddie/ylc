@@ -247,6 +247,25 @@ int tuples() {
   TEST_PARSE("(1,2,3.5) # (tuple)", 1, AST_NEW(TUPLE, 3, tuple_members));
   return 0;
 }
+
+int structs() {
+
+  /*
+   * test tuple
+   * */
+
+  AST *tuple_members[] = {
+      AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(NUMBER, 1.0)),
+      AST_NEW(ASSIGNMENT, "y", NULL, AST_NEW(NUMBER, 2.0)),
+  };
+  TEST_PARSE("(\n"
+             "    x = 1.0,\n"
+             "    y = 2.0,\n"
+             ")\n",
+             1, AST_NEW(STRUCT, 2, tuple_members));
+  return 0;
+}
+
 int arrays() {
   /*
    * test array
@@ -357,6 +376,7 @@ int all_tests() {
   mu_run_test(binops);
   mu_run_test(member_access_assignment);
   mu_run_test(tuples);
+  mu_run_test(structs);
   mu_run_test(type_declarations);
   mu_run_test(function_prototypes);
   mu_run_test(type_expr);

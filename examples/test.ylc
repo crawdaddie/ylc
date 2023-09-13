@@ -1,5 +1,7 @@
-let f = fn (int i) {
-  i + 1
-}
+import "libffi.so"
+let printf = extern fn (str fmt, ...) int
 
-let x = f(0)
+let x = 2
+
+
+printf("result: %d\n", x)

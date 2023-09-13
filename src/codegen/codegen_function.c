@@ -10,11 +10,14 @@ LLVMTypeRef codegen_fn_type(AST *ast, Context *ctx) {
   ttype type = ast->type;
   int param_len =
       ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE.length;
-
-  int is_var_args =
-      ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
-          .parameters[param_len - 1]
-          ->tag == AST_VAR_ARG;
+  int is_var_args = 0;
+  if (param_len == 0) {
+    is_var_args = 0;
+  } else {
+    is_var_args = ast->data.AST_FN_DECLARATION.prototype->data.AST_FN_PROTOTYPE
+                      .parameters[param_len - 1]
+                      ->tag == AST_VAR_ARG;
+  }
 
   int len = type.as.T_FN.length;
 
@@ -224,6 +227,7 @@ static LLVMValueRef call_sret_fn(SymbolValue sym, LLVMValueRef func,
   free(args);
   LLVMValueRef alloca_load =
       LLVMBuildLoad2(ctx->builder, ret_type_ref, new_args[0], "sret_var_load");
+
   free(new_args);
   return alloca_load;
 }

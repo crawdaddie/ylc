@@ -65,5 +65,6 @@ LLVMTypeRef codegen_ttype(ttype type, Context *ctx) {
 
 LLVMTypeRef codegen_type(AST *ast, Context *ctx) {
   ttype type = ast->type;
+
   return codegen_ttype(type, ctx);
 }
