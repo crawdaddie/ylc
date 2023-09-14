@@ -30,7 +30,7 @@ int run_value(LLVMExecutionEngineRef engine, LLVMValueRef value, AST *expr) {
   switch (t.tag) {
   case T_BOOL:
   case T_INT: {
-    uint32_t val = ((uint32_t (*)())fp)();
+    uint32_t val = ((uint32_t(*)())fp)();
     fprintf(stderr, "(%u)\n", val);
     break;
   }
@@ -79,6 +79,7 @@ int init_lang_ctx(Context *ctx) {
   LLVMModuleRef module =
       LLVMModuleCreateWithNameInContext(inst_name("ylc"), context);
   LLVMBuilderRef builder = LLVMCreateBuilderInContext(context);
+  LLVMLinkInMCJIT();
   LLVMExecutionEngineRef engine;
 
   LLVMPassManagerRef pass_manager =
@@ -94,7 +95,9 @@ int init_lang_ctx(Context *ctx) {
   LLVMInitializeFunctionPassManager(pass_manager);
 
   char *error = NULL;
-  if (LLVMCreateJITCompilerForModule(&engine, module, 2, &error) != 0) {
+  struct LLVMMCJITCompilerOptions *Options = malloc(sizeof(struct LLVMMCJITCompilerOptions));
+  Options->OptLevel = 2;
+  if (LLVMCreateMCJITCompilerForModule(&engine, module, Options, 1, &error) != 0) {
     fprintf(stderr, "Failed to create execution engine: %s\n", error);
     LLVMDisposeMessage(error);
     return 1;
@@ -117,7 +120,7 @@ LLVMModuleRef clone_module(LLVMModuleRef module, Context *ctx) {
     printf("Name: %s", globalName);
 
     void *addr = (void *)LLVMGetPointerToGlobal(ctx->engine, global);
-    printf("%p",addr);
+    printf("%p", addr);
     LLVMAddGlobalMapping(ctx->engine, global, addr);
 
     // LLVMDumpValue(LLVMGetInitializer(global));

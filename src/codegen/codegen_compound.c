@@ -19,7 +19,7 @@ LLVMValueRef codegen_struct(AST *ast, Context *ctx) {
     members[idx] = codegen(expr, ctx);
   }
 
-  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, false);
+  LLVMValueRef tuple_struct = LLVMConstStruct(members, data.length, true);
   return tuple_struct;
 };
 
@@ -73,23 +73,25 @@ static void get_compound_object_ptr(SymbolValue sym, char *object_id,
     // return NULL;
   }
 
-  // if (is_ptr_to_struct(*object_type)) {
-  //   *object_type = *object_type->as.T_PTR.item;
-  //   *object = LLVMBuildLoad2(ctx->builder, codegen_ttype(*object_type, ctx),
-  //                            *object, "ptr_deref");
-  // }
+  if (is_ptr_to_struct(*object_type)) {
+    *object_type = *object_type->as.T_PTR.item;
+    *object = LLVMBuildLoad2(ctx->builder, codegen_ttype(*object_type, ctx),
+                             *object, "ptr_deref");
+  }
 }
 
 static LLVMValueRef codegen_member_ptr(LLVMValueRef object,
-                                       unsigned int member_idx, Context *ctx) {
+                                       unsigned int member_idx,
+                                       ttype object_type, Context *ctx) {
 
-  LLVMValueRef indices[2] = {
-      LLVMConstInt(LLVMInt32TypeInContext(ctx->context), 0, true),
-      LLVMConstInt(LLVMInt32TypeInContext(ctx->context), member_idx, true)};
+  LLVMValueRef indices[1] = {
+      LLVMConstInt(LLVMInt32TypeInContext(ctx->context), member_idx, false)};
 
-  LLVMValueRef member = LLVMBuildInBoundsGEP2(
-      ctx->builder, LLVMTypeOf(object), object, indices, 2, "get_member_ptr");
-  LLVMDumpValue(member);
+  LLVMValueRef member = LLVMBuildGEP2(
+      ctx->builder,
+      codegen_ttype(object_type.as.T_STRUCT.members[member_idx], ctx), object,
+      indices, 1, "get_member_ptr");
+
   return member;
 }
 
@@ -116,7 +118,8 @@ LLVMValueRef codegen_member_access(AST *ast, Context *ctx) {
   get_compound_object_ptr(sym, object_id, &object, &object_type, ctx);
   unsigned int member_idx = get_struct_member_index(object_type, member_name);
 
-  LLVMValueRef member_ptr = codegen_member_ptr(object, member_idx, ctx);
+  LLVMValueRef member_ptr =
+      codegen_member_ptr(object, member_idx, object_type, ctx);
 
   return LLVMBuildLoad2(
       ctx->builder,
@@ -149,7 +152,8 @@ LLVMValueRef codegen_member_assignment(AST *ast, Context *ctx) {
 
   unsigned int member_idx = get_struct_member_index(object_type, member_name);
 
-  LLVMValueRef member_ptr = codegen_member_ptr(object, member_idx, ctx);
+  LLVMValueRef member_ptr =
+      codegen_member_ptr(object, member_idx, object_type, ctx);
 
   LLVMValueRef value = codegen(ast->data.AST_MEMBER_ASSIGNMENT.expression, ctx);
   LLVMBuildStore(ctx->builder, value, member_ptr);

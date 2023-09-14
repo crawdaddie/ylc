@@ -12,11 +12,19 @@ CC=clang
 LD=clang
 
 C_FLAGS=-Wall -Wextra
-C_FLAGS+=-g
-#
-LLVM_CC_FLAGS=`llvm-config --cflags`
-LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
-LINK=-lpthread
+
+ifeq ($(TARGET), DEBUG)
+	LLVM_CC_FLAGS=`/Users/adam/projects/langs/llvm-project/build/bin/llvm-config --cflags`
+	LLVM_LINK_FLAGS=`/Users/adam/projects/langs/llvm-project/build/bin/llvm-config --system-libs --libs --ldflags core analysis executionengine mcjit interpreter native linker jitlink orcjit`
+	LINK=-lpthread -lzstd -lz -lstdc++
+	C_FLAGS+=-g
+else
+	LLVM_CC_FLAGS=`llvm-config --cflags`
+	LLVM_LINK_FLAGS=`llvm-config --libs --cflags --ldflags core analysis executionengine mcjit interpreter native`
+	LINK=-lpthread
+endif
+
+# LLVM_CC_FLAGS=`llvm-config --cflags`
 
 # Default target
 build/lang: $(OBJ)

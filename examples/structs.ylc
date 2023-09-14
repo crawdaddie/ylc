@@ -12,9 +12,10 @@ let Point p = (
 p.x = 3.0
 
 printf("point x: %f\n", p.x)
-
-
 printf("point y: %f\n", p.y)
+
+
+#printf("point y: %f\n", p.y)
 #let zero = fn(Point p, double x) Point {
 #    p.x = x
 #}
