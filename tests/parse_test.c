@@ -10,6 +10,7 @@
 #include <stdlib.h>
 
 static int test_parse(AST *ast, int length, ...) {
+  print_ast(*ast, 0);
 
   AST *expected_statements = AST_NEW(STATEMENT_LIST, length);
   if (length == 0) {
@@ -266,6 +267,25 @@ int structs() {
   return 0;
 }
 
+int struct_assign() {
+
+  AST *tuple_members[] = {
+      AST_NEW(ASSIGNMENT, "x", NULL, AST_NEW(NUMBER, 1.0)),
+      AST_NEW(ASSIGNMENT, "y", NULL, AST_NEW(NUMBER, 2.0)),
+  };
+  AST *ast = parse("let g = (\n"
+                   "    x = 1.0,\n"
+                   "    y = 2.0,\n"
+                   ")\n");
+  print_ast(*ast, 0);
+
+  TEST_PARSE("let g = (\n"
+             "    x = 1.0,\n"
+             "    y = 2.0,\n"
+             ")\n",
+             1, AST_NEW(ASSIGNMENT, "g", AST_NEW(STRUCT, 2, tuple_members)));
+  return 0;
+}
 int arrays() {
   /*
    * test array
@@ -377,6 +397,7 @@ int all_tests() {
   mu_run_test(member_access_assignment);
   mu_run_test(tuples);
   mu_run_test(structs);
+  // mu_run_test(struct_assign);
   mu_run_test(type_declarations);
   mu_run_test(function_prototypes);
   mu_run_test(type_expr);

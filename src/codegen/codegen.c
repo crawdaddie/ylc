@@ -96,8 +96,11 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     const char *name = ast->data.AST_SYMBOL_DECLARATION.identifier;
     ttype type = ast->type;
     AST *expr = ast->data.AST_SYMBOL_DECLARATION.expression; // optional
-    return codegen_symbol(name, type, expr, ctx);
+
+    return codegen_symbol(name, type, ast->data.AST_SYMBOL_DECLARATION.type,
+                          expr, ctx);
   }
+
   case AST_ASSIGNMENT: {
     // symbol assignment [ a = x ]
     // also handles immediate declaration + assignment [ let a = x ]
@@ -109,7 +112,9 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
       // currying a function
       return NULL;
     }
-    return codegen_symbol(name, type, expr, ctx);
+    AST *type_ast = ast->data.AST_ASSIGNMENT.type;
+
+    return codegen_symbol(name, type, type_ast, expr, ctx);
   }
   case AST_IDENTIFIER: {
     return codegen_identifier(ast, ctx);
@@ -151,23 +156,27 @@ LLVMValueRef codegen(AST *ast, Context *ctx) {
     return codegen_member_assignment(ast, ctx);
   }
   case AST_TYPE_DECLARATION: {
-    // ttype type = ast->type;
-    // if (type.tag != T_STRUCT) {
-    //   break;
-    // }
-    // LLVMTypeRef type_ref = codegen_ttype(ast->type, ctx);
-    // LLVMTypeRef *member_types =
-    //     malloc(sizeof(LLVMTypeRef) * type.as.T_STRUCT.length);
-    //
-    // LLVMGetStructElementTypes(type_ref, member_types);
-    //
-    // LLVMTypeRef named_struct_ty = LLVMStructCreateNamed(
-    //     ctx->context, ast->data.AST_TYPE_DECLARATION.name);
-    //
-    // LLVMStructSetBody(named_struct_ty, member_types, type.as.T_STRUCT.length,
-    //                   true);
-    //
+    ttype type = ast->type;
 
+    if (type.tag == T_STRUCT) {
+      LLVMTypeRef type_ref = codegen_ttype(ast->type, ctx);
+      LLVMTypeRef *member_types =
+          malloc(sizeof(LLVMTypeRef) * type.as.T_STRUCT.length);
+
+      LLVMGetStructElementTypes(type_ref, member_types);
+
+      LLVMTypeRef named_struct_ty = LLVMStructCreateNamed(
+          ctx->context, ast->data.AST_TYPE_DECLARATION.name);
+
+      LLVMStructSetBody(named_struct_ty, member_types, type.as.T_STRUCT.length,
+                        true);
+      SymbolValue type_symbol;
+      type_symbol.type = TYPE_TYPE_DECLARATION;
+      type_symbol.data.TYPE_TYPE_DECLARATION.llvm_type = named_struct_ty;
+      type_symbol.data.TYPE_TYPE_DECLARATION.type = type;
+      table_insert(ctx->symbol_table, ast->data.AST_TYPE_DECLARATION.name,
+                   type_symbol);
+    }
     break;
   }
   case AST_INDEX_ACCESS: {

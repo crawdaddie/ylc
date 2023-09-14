@@ -4,8 +4,8 @@
 #include "../llvm_backend.h"
 #include <llvm-c/Core.h>
 
-LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
-                            Context *ctx);
+LLVMValueRef codegen_symbol(const char *name, ttype type, AST *type_ast,
+                            AST *expr, Context *ctx);
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx);
 
 LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,

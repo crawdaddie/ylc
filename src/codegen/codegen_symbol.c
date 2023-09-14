@@ -1,5 +1,6 @@
 #include "codegen_symbol.h"
 #include "codegen.h"
+#include "codegen_compound.h"
 #include "codegen_function.h"
 #include "codegen_types.h"
 #include <stdio.h>
@@ -43,8 +44,21 @@ static LLVMValueRef symbol_reassignment(SymbolValue val, const char *name,
 /**
  *
  * */
-LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
-                            Context *ctx) {
+static LLVMTypeRef lookup_type_symbol(AST *type, Context *ctx) {
+  if (type == NULL) {
+    return NULL;
+  }
+  if (type->tag == AST_IDENTIFIER) {
+    SymbolValue type_decl;
+    if (table_lookup(ctx->symbol_table, type->data.AST_IDENTIFIER.identifier,
+                     &type_decl) == 0) {
+      return type_decl.data.TYPE_TYPE_DECLARATION.llvm_type;
+    }
+  }
+  return NULL;
+}
+LLVMValueRef codegen_symbol(const char *name, ttype type, AST *type_ast,
+                            AST *expr, Context *ctx) {
 
   SymbolValue val;
   if (table_lookup(ctx->symbol_table, name, &val) == 0) {
@@ -53,7 +67,14 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   LLVMValueRef variable = NULL;
   LLVMValueRef value = NULL;
-  LLVMTypeRef type_ref = codegen_ttype(type, ctx);
+
+  int has_named_type = 0;
+  LLVMTypeRef type_ref = lookup_type_symbol(type_ast, ctx);
+  if (type_ref) {
+    has_named_type = 1;
+  } else {
+    type_ref = codegen_ttype(type, ctx);
+  }
 
   if (type.tag == T_FN) {
     if (expr) {
@@ -84,6 +105,12 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *expr,
 
   table_insert(ctx->symbol_table, name, val);
 
+  if (expr && has_named_type && expr->tag == AST_STRUCT) {
+    value = codegen_named_struct(expr, type_ref, ctx);
+    LLVMBuildStore(ctx->builder, value, variable);
+    return variable;
+  }
+
   if (expr) {
     value = codegen(expr, ctx);
     LLVMBuildStore(ctx->builder, value, variable);
@@ -97,8 +124,10 @@ LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
                                        Context *ctx) {
   LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
 
-  return LLVMBuildLoad2(ctx->builder, val.data.TYPE_GLOBAL_VARIABLE.llvm_type,
-                        global, "");
+  // return LLVMBuildLoad2(ctx->builder,
+  // val.data.TYPE_GLOBAL_VARIABLE.llvm_type,
+  //                       global, "");
+  return global;
 }
 
 LLVMValueRef codegen_identifier(AST *ast, Context *ctx) {

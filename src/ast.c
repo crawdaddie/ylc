@@ -196,11 +196,13 @@ void print_ast(AST ast, int indent) {
     break;
   }
   case AST_STRUCT: {
-    printf("struct\n");
+    printf("struct (\n");
     for (int i = 0; i < ast.data.AST_STRUCT.length; i++) {
+      // left_pad(indent);
       print_ast(*ast.data.AST_STRUCT.members[i], indent + 1);
       printf("\n");
     }
+    printf(")\n");
 
     break;
   }

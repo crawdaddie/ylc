@@ -2,7 +2,7 @@
 #include "typecheck.h"
 #include <stdio.h>
 
-// #define _TYPECHECK_DBG
+#define _TYPECHECK_DBG
 INIT_SYM_TABLE(ttype);
 
 static void print_type_equation(TypeEquation type_equation) {
@@ -118,6 +118,7 @@ static void unify_compound_types(ttype *l, ttype *r, TypeEnv *env) {
 }
 bool check_compound(ttype *l, ttype *r) {
   if (l->tag != r->tag)
+
     return false;
   if (l->tag == T_STRUCT && l->as.T_STRUCT.length != r->as.T_STRUCT.length) {
     return false;
@@ -188,7 +189,6 @@ void unify(TypeEquation eq, TypeEnv *env) {
       fprintf(stderr, "typecheck error: cannot unify structs\n");
       _typecheck_error_flag = 1;
       break;
-      ;
     }
 
     if (r->tag == T_VAR) {
