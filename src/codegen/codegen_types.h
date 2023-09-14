@@ -1,7 +1,7 @@
 #ifndef _LANG_CODEGEN_TYPES_H
 #define _LANG_CODEGEN_TYPES_H
 #include "../ast.h"
-#include "../llvm_backend.h"
+#include "../runner.h"
 
 LLVMTypeRef codegen_type(AST *ast, Context *ctx);
 

@@ -13,16 +13,16 @@ type Node = struct (
 
 let printf = extern fn (str fmt, ...) int
 
-let print_signal = extern fn (&Signal s) &Signal
+let print_signal = extern fn (Signal s) Signal
 
 let Signal s
-s.layout
+s.layout = 2
+printf("s.layout = %d\n", s.layout)
 
-
-print_signal(&s)
+print_signal(s)
+s.data[0]
 
 #printf("s layout: %d\ns data: %f\n", s.layout, s.data[0])
-s.data[0]
 #printf("sig layout %d\n", s.layout)
 #typedef struct Node {
 #  Signal *ins;

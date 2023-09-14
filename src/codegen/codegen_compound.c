@@ -180,7 +180,7 @@ LLVMValueRef codegen_index_access(AST *ast, Context *ctx) {
     return NULL;
   }
   LLVMValueRef object = codegen(object_ast, ctx);
-  LLVMValueRef indices[] = {
+  LLVMValueRef indices[1] = {
       codegen(ast->data.AST_INDEX_ACCESS.index_expr, ctx)};
 
   LLVMValueRef alloca =

@@ -53,10 +53,10 @@ typedef struct {
   int layout;
 } Signal;
 
-Signal *print_signal(Signal *s) {
-  s->data[0] = 1.02;
+int print_signal(Signal s) {
+  s.data[0] = 1.02;
   printf("start C-----\n");
-  printf("signal %p\ndata val: %f\nlayout: %d\n", s, s->data[0], s->layout);
+  printf("signal %p\ndata val: %f\nlayout: %d\n", &s, s.data[0], s.layout);
   printf("end C-----\n");
-  return s;
+  return s.layout;
 }
