@@ -123,10 +123,6 @@ LLVMValueRef codegen_symbol(const char *name, ttype type, AST *type_ast,
 LLVMValueRef codegen_global_identifier(SymbolValue val, char *name,
                                        Context *ctx) {
   LLVMValueRef global = LLVMGetNamedGlobal(ctx->module, name);
-
-  // return LLVMBuildLoad2(ctx->builder,
-  // val.data.TYPE_GLOBAL_VARIABLE.llvm_type,
-  //                       global, "");
   return global;
 }
 
